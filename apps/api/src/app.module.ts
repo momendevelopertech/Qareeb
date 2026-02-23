@@ -12,7 +12,11 @@ import { AdminModule } from './admin/admin.module';
 
 @Module({
     imports: [
-        ConfigModule.forRoot({ isGlobal: true }),
+        ConfigModule.forRoot({
+            isGlobal: true,
+            // Load env from workspace root (../../.env) and local (.env) so dev commands from workspace work.
+            envFilePath: ['../../.env', '.env'],
+        }),
         // Rate limiting: 100 requests per 15 minutes
         ThrottlerModule.forRoot([{
             ttl: 900000, // 15 minutes in ms
