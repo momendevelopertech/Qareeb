@@ -30,17 +30,38 @@ export default function AdminImamsPage() {
     };
 
     const handleApprove = async (id: string) => {
-        try { await adminApi.approveImam(token!, id); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.approveImam(token!, id);
+            alert(locale === 'ar' ? 'تمت الموافقة بنجاح.' : 'Approved successfully.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الموافقة.' : 'An error occurred while approving.');
+        }
     };
 
     const handleReject = async (id: string) => {
         const reason = prompt(locale === 'ar' ? 'سبب الرفض (اختياري):' : 'Rejection reason (optional):') || '';
-        try { await adminApi.rejectImam(token!, id, reason); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.rejectImam(token!, id, reason);
+            alert(locale === 'ar' ? 'تم رفض الطلب.' : 'Request rejected.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الرفض.' : 'An error occurred while rejecting.');
+        }
     };
 
     const handleDelete = async (id: string) => {
         if (!confirm(locale === 'ar' ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete?')) return;
-        try { await adminApi.deleteImam(token!, id); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.deleteImam(token!, id);
+            alert(locale === 'ar' ? 'تم حذف الإمام بنجاح.' : 'Imam deleted successfully.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الحذف.' : 'An error occurred while deleting.');
+        }
     };
 
     const statusTabs = [

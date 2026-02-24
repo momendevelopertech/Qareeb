@@ -30,7 +30,10 @@ export default function AdminUsersPage() {
         try {
             const data = await adminApi.getAdminUsers(token!);
             setUsers(Array.isArray(data) ? data : []);
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'تعذر تحميل المستخدمين.' : 'Failed to load users.');
+        }
         setLoading(false);
     };
 
@@ -38,17 +41,33 @@ export default function AdminUsersPage() {
         e.preventDefault();
         try {
             await adminApi.createAdminUser(token!, { email: newEmail, password: newPassword, role: newRole });
+            alert(locale === 'ar' ? 'تم إنشاء المستخدم بنجاح.' : 'User created successfully.');
             setShowCreate(false);
             setNewEmail(''); setNewPassword(''); setNewRole('imam_reviewer');
             fetchUsers();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء إنشاء المستخدم.' : 'An error occurred while creating the user.');
+        }
     };
 
     const handleToggle = async (id: string, currentActive: boolean) => {
         try {
             await adminApi.updateAdminUser(token!, id, { is_active: !currentActive });
+            alert(
+                locale === 'ar'
+                    ? currentActive
+                        ? 'تم تعطيل المستخدم.'
+                        : 'تم تفعيل المستخدم.'
+                    : currentActive
+                        ? 'User deactivated.'
+                        : 'User activated.',
+            );
             fetchUsers();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء تحديث حالة المستخدم.' : 'An error occurred while updating the user.');
+        }
     };
 
     const roleLabels: Record<string, string> = locale === 'ar'

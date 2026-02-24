@@ -30,12 +30,26 @@ export default function AdminMaintenancePage() {
     };
 
     const handleApprove = async (id: string) => {
-        try { await adminApi.approveMaintenance(token!, id); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.approveMaintenance(token!, id);
+            alert(locale === 'ar' ? 'تمت الموافقة على طلب الصيانة.' : 'Maintenance request approved.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الموافقة.' : 'An error occurred while approving.');
+        }
     };
 
     const handleReject = async (id: string) => {
         const reason = prompt(locale === 'ar' ? 'سبب الرفض:' : 'Rejection reason:') || '';
-        try { await adminApi.rejectMaintenance(token!, id, reason); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.rejectMaintenance(token!, id, reason);
+            alert(locale === 'ar' ? 'تم رفض طلب الصيانة.' : 'Maintenance request rejected.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الرفض.' : 'An error occurred while rejecting.');
+        }
     };
 
     const mLabels: Record<string, string> = locale === 'ar'

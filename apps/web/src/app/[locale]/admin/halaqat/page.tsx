@@ -30,12 +30,26 @@ export default function AdminHalaqatPage() {
     };
 
     const handleApprove = async (id: string) => {
-        try { await adminApi.approveHalqa(token!, id); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.approveHalqa(token!, id);
+            alert(locale === 'ar' ? 'تمت الموافقة على الحلقة.' : 'Circle approved.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الموافقة.' : 'An error occurred while approving.');
+        }
     };
 
     const handleReject = async (id: string) => {
         const reason = prompt(locale === 'ar' ? 'سبب الرفض:' : 'Rejection reason:') || '';
-        try { await adminApi.rejectHalqa(token!, id, reason); fetchData(); } catch (err) { console.error(err); }
+        try {
+            await adminApi.rejectHalqa(token!, id, reason);
+            alert(locale === 'ar' ? 'تم رفض الحلقة.' : 'Circle rejected.');
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء الرفض.' : 'An error occurred while rejecting.');
+        }
     };
 
     const typeLabels: Record<string, string> = locale === 'ar'

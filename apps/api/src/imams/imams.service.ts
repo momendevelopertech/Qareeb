@@ -12,8 +12,10 @@ export class ImamsService {
         const limit = Math.min(query.limit || 20, 50);
         const skip = (page - 1) * limit;
 
-        // If geospatial query params provided, use raw SQL with PostGIS
-        if (query.lat && query.lng) {
+        const postgisEnabled = process.env.POSTGIS_ENABLED === 'true';
+
+        // If geospatial query params provided and PostGIS is available, use raw SQL with PostGIS
+        if (postgisEnabled && query.lat && query.lng) {
             const radius = query.radius || 10000; // Default 10km
             const results = await this.prisma.$queryRaw`
         SELECT id, imam_name, mosque_name, governorate, city, district,
@@ -106,12 +108,20 @@ export class ImamsService {
             },
         });
 
-        // Sync PostGIS geography column from lat/lng
-        await this.prisma.$executeRaw`
-            UPDATE imams
-            SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
-            WHERE id = ${imam.id}::uuid
-        `;
+        // Sync PostGIS geography column from lat/lng when PostGIS is enabled
+        if (process.env.POSTGIS_ENABLED === 'true') {
+            try {
+                await this.prisma.$executeRaw`
+                    UPDATE imams
+                    SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
+                    WHERE id = ${imam.id}::uuid
+                `;
+            } catch (error) {
+                // In dev environments without PostGIS installed, fail gracefully
+                // eslint-disable-next-line no-console
+                console.warn('PostGIS update failed, continuing without location column:', error);
+            }
+        }
 
         // Link media assets if provided
         if (dto.media_ids?.length) {

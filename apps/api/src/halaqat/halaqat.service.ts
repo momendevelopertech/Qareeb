@@ -12,7 +12,9 @@ export class HalaqatService {
         const limit = Math.min(query.limit || 20, 50);
         const skip = (page - 1) * limit;
 
-        if (query.lat && query.lng) {
+        const postgisEnabled = process.env.POSTGIS_ENABLED === 'true';
+
+        if (postgisEnabled && query.lat && query.lng) {
             const radius = query.radius || 10000;
             const typeFilter = query.type
                 ? Prisma.sql`AND halqa_type = ${query.type}::\"HalqaType\"`
@@ -86,12 +88,18 @@ export class HalaqatService {
             },
         });
 
-        // Sync PostGIS geography column from lat/lng
-        await this.prisma.$executeRaw`
-            UPDATE halaqat
-            SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
-            WHERE id = ${halqa.id}::uuid
-        `;
+        if (process.env.POSTGIS_ENABLED === 'true') {
+            try {
+                await this.prisma.$executeRaw`
+                    UPDATE halaqat
+                    SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
+                    WHERE id = ${halqa.id}::uuid
+                `;
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.warn('PostGIS update failed for halqa, continuing without location column:', error);
+            }
+        }
 
         if (dto.media_ids?.length) {
             await this.prisma.mediaAsset.updateMany({
