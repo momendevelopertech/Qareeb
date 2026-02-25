@@ -20,15 +20,28 @@ export default function ImamsPage() {
     const { lat, lng, requestLocation, loading: geoLoading } = useGeolocationStore();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [governorate, setGovernorate] = useState(searchParams.get('governorate') || '');
+    const [governorates, setGovernorates] = useState<any[]>([]);
+    const [areas, setAreas] = useState<any[]>([]);
+    const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
+    const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
 
     useEffect(() => {
         requestLocation();
+        api.getGovernorates().then(setGovernorates).catch(console.error);
     }, []);
 
     useEffect(() => {
+        if (governorateId) {
+            api.getAreas(governorateId).then(setAreas).catch(console.error);
+        } else {
+            setAreas([]);
+            setAreaId('');
+        }
+    }, [governorateId]);
+
+    useEffect(() => {
         fetchData();
-    }, [lat, lng, governorate]);
+    }, [lat, lng, governorateId, areaId]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -39,7 +52,9 @@ export default function ImamsPage() {
                 params.set('lng', lng.toString());
                 params.set('radius', '10000');
             }
-            if (governorate) params.set('governorate', governorate);
+            if (governorateId) params.set('area_id', areaId || '');
+            if (governorateId && !areaId) params.set('governorateId', governorateId);
+            if (areaId) params.set('area_id', areaId);
             const result = await api.getImams(params.toString());
             setData(result);
         } catch (err) {
@@ -47,10 +62,6 @@ export default function ImamsPage() {
         }
         setLoading(false);
     };
-
-    const governorates = [
-        'القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 'البحر الأحمر', 'البحيرة', 'الفيوم', 'الغربية', 'الإسماعيلية', 'المنوفية', 'المنيا', 'القليوبية', 'الوادي الجديد', 'السويس', 'الشرقية', 'أسوان', 'أسيوط', 'بني سويف', 'بورسعيد', 'دمياط', 'جنوب سيناء', 'كفر الشيخ', 'مطروح', 'قنا', 'سوهاج', 'شمال سيناء', 'الأقصر'
-    ];
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -78,13 +89,24 @@ export default function ImamsPage() {
                             </span>
                         </div>
                         <select
-                            value={governorate}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGovernorate(e.target.value)}
+                            value={governorateId}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGovernorateId(e.target.value)}
                             className="bg-cream rounded-xl px-4 py-3 min-w-[200px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all"
                         >
-                            <option value="">{locale === 'ar' ? 'جميع محافظات مصر' : 'All Egypt Governorates'}</option>
+                            <option value="">{locale === 'ar' ? 'جميع المحافظات' : 'All governorates'}</option>
                             {governorates.map((g) => (
-                                <option key={g} value={g}>{g}</option>
+                                <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={areaId}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAreaId(e.target.value)}
+                            className="bg-cream rounded-xl px-4 py-3 min-w-[200px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all"
+                            disabled={!governorateId}
+                        >
+                            <option value="">{locale === 'ar' ? 'كل المناطق' : 'All areas'}</option>
+                            {areas.map((a) => (
+                                <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                             ))}
                         </select>
                     </div>
@@ -124,9 +146,15 @@ export default function ImamsPage() {
                                     <div className="flex flex-col gap-2 mb-6 p-4 bg-cream rounded-2xl border border-primary/5">
                                         <div className="flex items-center gap-2 text-xs font-bold text-text-muted">
                                             <span className="text-primary text-base">📍</span>
-                                            {imam.governorate} — {imam.city}
+                                            {imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : `${imam.governorate} — ${imam.city}`}
                                             {imam.district && ` — ${imam.district}`}
                                         </div>
+                                        {imam.google_maps_url && (
+                                            <div className="flex gap-3 text-[11px] font-semibold text-primary underline">
+                                                <a href={imam.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
+                                                <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(imam.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                            </div>
+                                        )}
                                         {imam.distance_meters && (
                                             <div className="flex items-center gap-2 text-xs font-black text-primary">
                                                 <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">✨</span>

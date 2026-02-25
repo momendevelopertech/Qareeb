@@ -59,7 +59,13 @@ export class HalaqatService {
         if (query.area_id) where.areaId = query.area_id;
 
         const [data, total] = await Promise.all([
-            this.prisma.halqa.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { media: true } }),
+            this.prisma.halqa.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: { media: true, area: true },
+            }),
             this.prisma.halqa.count({ where }),
         ]);
 

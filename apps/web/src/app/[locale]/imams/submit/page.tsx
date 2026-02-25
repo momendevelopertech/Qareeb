@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import Header from '@/components/layout/Header';
@@ -20,7 +20,29 @@ export default function SubmitPage() {
     const [entityType, setEntityType] = useState<'imam' | 'halqa' | 'maintenance' | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const { register, handleSubmit, formState: { errors }, watch } = useForm();
+    const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm();
+    const [governorates, setGovernorates] = useState<any[]>([]);
+    const [areas, setAreas] = useState<any[]>([]);
+
+    const selectedGovernorateId = watch('governorateId');
+    const selectedGovernorate = useMemo(
+        () => governorates.find((g) => g.id === selectedGovernorateId),
+        [governorates, selectedGovernorateId],
+    );
+
+    useEffect(() => {
+        api.getGovernorates().then(setGovernorates).catch(console.error);
+    }, []);
+
+    useEffect(() => {
+        if (selectedGovernorateId) {
+            api.getAreas(selectedGovernorateId).then(setAreas).catch(console.error);
+        } else {
+            setAreas([]);
+        }
+        // reset area selection when governorate changes
+        setValue('areaId', undefined);
+    }, [selectedGovernorateId, setValue]);
 
     const onSubmit = async (data: any) => {
         setSubmitting(true);
@@ -38,6 +60,7 @@ export default function SubmitPage() {
                     governorate: payload.governorate,
                     city: payload.city,
                     district: payload.district,
+                    area_id: payload.areaId,
                     google_maps_url: payload.googleMapsUrl,
                     video_url: payload.videoUrl,
                     lat: payload.lat,
@@ -53,6 +76,7 @@ export default function SubmitPage() {
                     governorate: payload.governorate,
                     city: payload.city,
                     district: payload.district,
+                    area_id: payload.areaId,
                     google_maps_url: payload.googleMapsUrl,
                     video_url: payload.videoUrl,
                     lat: payload.lat,
@@ -66,6 +90,7 @@ export default function SubmitPage() {
                     governorate: payload.governorate,
                     city: payload.city,
                     district: payload.district,
+                    area_id: payload.areaId,
                     google_maps_url: payload.googleMapsUrl,
                     lat: payload.lat,
                     lng: payload.lng,
@@ -222,11 +247,34 @@ export default function SubmitPage() {
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                             {ti('governorate')} <span className="text-red-500">*</span>
                                         </label>
-                                        <input {...register('governorate', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'مثال: القاهرة' : 'e.g. Cairo'} />
+                                        <select
+                                            {...register('governorateId', { required: true })}
+                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
+                                            value={selectedGovernorateId || ''}
+                                            onChange={(e) => {
+                                                setValue('governorateId', e.target.value);
+                                                const gov = governorates.find((g) => g.id === e.target.value);
+                                                setValue('governorate', gov?.nameAr || gov?.nameEn || '');
+                                            }}
+                                        >
+                                            <option value="">{locale === 'ar' ? 'اختر المحافظة' : 'Select governorate'}</option>
+                                            {governorates.map((g) => (
+                                                <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{ti('city')} <span className="text-red-500">*</span></label>
-                                        <input {...register('city', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'مثال: مدينة نصر' : 'e.g. Nasr City'} />
+                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{locale === 'ar' ? 'المنطقة' : 'Area'} <span className="text-red-500">*</span></label>
+                                        <select
+                                            {...register('areaId', { required: true })}
+                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
+                                            disabled={!selectedGovernorateId}
+                                        >
+                                            <option value="">{locale === 'ar' ? 'اختر المنطقة' : 'Select area'}</option>
+                                            {areas.map((a) => (
+                                                <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
 

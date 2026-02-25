@@ -29,6 +29,10 @@ async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promis
 // ── Public API ──
 
 export const api = {
+    // Locations
+    getGovernorates: () => fetchAPI<any>('/locations/governorates'),
+    getAreas: (governorateId?: string) => fetchAPI<any>(`/locations/areas${governorateId ? `?governorateId=${governorateId}` : ''}`),
+
     // Imams
     getImams: (params?: string) => fetchAPI<any>(`/imams${params ? `?${params}` : ''}`),
     getImam: (id: string) => fetchAPI<any>(`/imams/${id}`),

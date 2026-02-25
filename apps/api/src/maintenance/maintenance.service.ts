@@ -53,7 +53,13 @@ export class MaintenanceService {
         if (query.area_id) where.areaId = query.area_id;
 
         const [data, total] = await Promise.all([
-            this.prisma.maintenanceRequest.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { media: true } }),
+            this.prisma.maintenanceRequest.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: 'desc' },
+                include: { media: true, area: true },
+            }),
             this.prisma.maintenanceRequest.count({ where }),
         ]);
 

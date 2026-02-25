@@ -68,7 +68,7 @@ export class ImamsService {
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
-                include: { media: true },
+                include: { media: true, area: true },
             }),
             this.prisma.imam.count({ where }),
         ]);

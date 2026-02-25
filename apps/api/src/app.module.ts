@@ -9,6 +9,7 @@ import { HalaqatModule } from './halaqat/halaqat.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { MediaModule } from './media/media.module';
 import { AdminModule } from './admin/admin.module';
+import { LocationsModule } from './locations/locations.module';
 
 @Module({
     imports: [
@@ -29,6 +30,7 @@ import { AdminModule } from './admin/admin.module';
         MaintenanceModule,
         MediaModule,
         AdminModule,
+        LocationsModule,
     ],
     providers: [
         {
