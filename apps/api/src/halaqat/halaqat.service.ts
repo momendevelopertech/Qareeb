@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHalqaDto, HalqaQueryDto } from './dto/halqa.dto';
-import { Prisma } from '@prisma/client';
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -56,7 +55,7 @@ export class HalaqatService {
             };
         }
 
-        const where: Prisma.HalqaWhereInput = {
+        const where: any = {
             status: (query.status as any) || 'approved',
         };
         if (query.type) where.halqaType = query.type as any;
@@ -133,7 +132,7 @@ export class HalaqatService {
         }
 
         await this.notifications.createForType(
-            NotificationType.halqa,
+            'halqa',
             halqa.id,
             'Halqa submission',
             `New circle submitted: ${halqa.circleName} (${halqa.mosqueName})`,

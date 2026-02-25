@@ -20,7 +20,7 @@ export class NotificationsService {
         });
         if (!recipients.length) return;
         await this.prisma.notification.createMany({
-            data: recipients.map((r) => ({
+            data: recipients.map((r: { id: string }) => ({
                 userId: r.id,
                 type,
                 referenceId,

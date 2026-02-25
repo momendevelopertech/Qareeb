@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateImamDto, ImamQueryDto } from './dto/imam.dto';
-import { Prisma } from '@prisma/client';
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -60,7 +59,7 @@ export class ImamsService {
         }
 
         // Fallback: standard Prisma query with filters
-        const where: Prisma.ImamWhereInput = {
+        const where: any = {
             status: (query.status as any) || 'approved',
         };
         if (query.governorate) where.governorate = query.governorate;
@@ -151,7 +150,7 @@ export class ImamsService {
         }
 
         await this.notifications.createForType(
-            NotificationType.imam,
+            'imam',
             imam.id,
             'Imam submission',
             `New Imam submitted: ${imam.imamName} (${imam.mosqueName})`,
