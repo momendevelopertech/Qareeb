@@ -24,8 +24,8 @@ export class HalaqatService {
         if (postgisEnabled && query.lat && query.lng) {
             const radius = query.radius || 10000;
             const typeFilter = query.type
-                ? Prisma.raw(`AND halqa_type = '${query.type}'::"HalqaType"`)
-                : Prisma.raw('');
+                ? `AND halqa_type = '${query.type}'::"HalqaType"`
+                : '';
 
             const results = await this.prisma.$queryRaw`
         SELECT id, circle_name, mosque_name, halqa_type, governorate, city, district,

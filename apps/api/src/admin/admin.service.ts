@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -146,7 +145,7 @@ export class AdminService {
         const limit = Math.min(params.limit || 20, 100);
         const skip = (page - 1) * limit;
 
-        const where: Prisma.AuditLogWhereInput = {};
+        const where: any = {};
         if (params.entityType) where.entityType = params.entityType;
         if (params.entityId) where.entityId = params.entityId;
 
