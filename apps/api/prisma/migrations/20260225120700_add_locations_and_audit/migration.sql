@@ -1,7 +1,30 @@
 -- AlterEnum
 BEGIN;
 CREATE TYPE "MaintenanceType_new" AS ENUM ('Plumbing', 'Electrical', 'Carpentry', 'Painting', 'AC_Repair', 'Cleaning', 'Other');
-ALTER TABLE "maintenance_requests" ALTER COLUMN "maintenance_types" TYPE "MaintenanceType_new"[] USING ("maintenance_types"::text::"MaintenanceType_new"[]);
+ALTER TABLE "maintenance_requests"
+ALTER COLUMN "maintenance_types"
+TYPE "MaintenanceType_new"[]
+USING (
+  array_replace(
+    array_replace(
+      array_replace(
+        array_replace(
+          array_replace(
+            array_replace(
+              array_replace(("maintenance_types"::text[]), 'plumbing', 'Plumbing'),
+              'electrical', 'Electrical'
+            ),
+            'painting', 'Painting'
+          ),
+          'furniture', 'Carpentry'
+        ),
+        'flooring', 'Carpentry'
+      ),
+      'ac', 'AC_Repair'
+    ),
+    'other', 'Other'
+  )::"MaintenanceType_new"[]
+);
 ALTER TYPE "MaintenanceType" RENAME TO "MaintenanceType_old";
 ALTER TYPE "MaintenanceType_new" RENAME TO "MaintenanceType";
 DROP TYPE "MaintenanceType_old";

@@ -13,7 +13,7 @@ export class NotificationsService {
     constructor(private readonly prisma: PrismaService) { }
 
     async createForType(type: 'imam' | 'halqa' | 'maintenance', referenceId: string, title: string, message: string, createdBy?: string) {
-        const roles = ROLE_MAP[type];
+        const roles = [...ROLE_MAP[type]];
         const recipients = await this.prisma.admin.findMany({
             where: { role: { in: roles }, isActive: true },
             select: { id: true },

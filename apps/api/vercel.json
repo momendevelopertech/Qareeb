@@ -1,7 +1,7 @@
 {
   "framework": "node",
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "env": {
     "SERVERLESS": "true"
