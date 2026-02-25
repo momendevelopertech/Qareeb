@@ -7,6 +7,5 @@
     "api/index.ts": {
       "runtime": "nodejs20.x"
     }
-  },
-  "ignoreCommand": "echo \"Set up as separate project with Root Directory apps/api\""
+  }
 }
