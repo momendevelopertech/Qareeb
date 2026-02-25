@@ -146,17 +146,20 @@ export default function HalaqatPage() {
                                     </div>
 
                                     <div className="flex flex-col gap-2 mb-6 p-4 bg-cream rounded-2xl border border-primary/5 flex-1">
-                                        <p className="flex flex-col gap-1 text-xs font-bold text-text-muted mb-2">
-                                            <span className="flex items-center gap-2"><span className="text-primary">📍</span>{halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : `${halqa.governorate} — ${halqa.city}`}</span>
-                                            {halqa.google_maps_url && (
-                                                <span className="flex gap-3 text-[11px] font-semibold text-primary underline">
-                                                    <a href={halqa.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
+                                            <p className="flex flex-col gap-1 text-xs font-bold text-text-muted mb-2">
+                                                <span className="flex items-center gap-2"><span className="text-primary">📍</span>{halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : `${halqa.governorate} — ${halqa.city}`}</span>
+                                                {halqa.google_maps_url && (
+                                                    <span className="flex gap-3 text-[11px] font-semibold text-primary underline">
+                                                        <a href={halqa.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
                                                     <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(halqa.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                                </span>
-                                            )}
-                                            {halqa.video_url && (
-                                                <a className="text-[11px] font-bold text-accent underline" href={halqa.video_url} target="_blank" rel="noreferrer">
-                                                    {locale === 'ar' ? 'رابط الفيديو' : 'Video link'}
+                                                    <button type="button" onClick={() => navigator.clipboard.writeText(halqa.google_maps_url)} className="text-primary underline">
+                                                        {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                                    </button>
+                                                    </span>
+                                                )}
+                                                {halqa.video_url && (
+                                                    <a className="text-[11px] font-bold text-accent underline" href={halqa.video_url} target="_blank" rel="noreferrer">
+                                                        {locale === 'ar' ? 'رابط الفيديو' : 'Video link'}
                                                 </a>
                                             )}
                                         </p>

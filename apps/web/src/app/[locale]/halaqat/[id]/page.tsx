@@ -65,9 +65,12 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                                     <h3 className="font-black text-primary text-sm uppercase tracking-wider">{locale === 'ar' ? 'الموقع' : 'Location'}</h3>
                                     <p className="text-dark font-bold text-lg">{halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : `${halqa.governorate} — ${halqa.city}${halqa.district ? ` — ${halqa.district}` : ''}`}</p>
                                     {halqa.google_maps_url && (
-                                        <div className="flex gap-3 text-sm font-bold text-primary underline">
+                                        <div className="flex gap-3 text-sm font-bold text-primary underline flex-wrap">
                                             <a href={halqa.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
                                             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(halqa.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                            <button type="button" onClick={() => navigator.clipboard.writeText(halqa.google_maps_url)} className="text-primary underline">
+                                                {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                            </button>
                                         </div>
                                     )}
                                     {halqa.video_url && (

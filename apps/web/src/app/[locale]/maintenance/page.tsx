@@ -106,9 +106,12 @@ export default function MaintenancePage() {
                                             <div className="flex flex-col gap-1 text-text-muted font-bold text-sm">
                                                 <span className="flex items-center gap-1.5"><span className="text-primary text-lg">🕌</span>{item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : `${item.governorate} — ${item.city}`}</span>
                                                 {item.google_maps_url && (
-                                                    <span className="flex gap-3 text-[11px] font-semibold text-primary underline">
+                                                    <span className="flex gap-3 text-[11px] font-semibold text-primary underline flex-wrap">
                                                         <a href={item.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
                                                         <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                                        <button type="button" onClick={() => navigator.clipboard.writeText(item.google_maps_url)} className="text-primary underline">
+                                                            {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                                        </button>
                                                     </span>
                                                 )}
                                             </div>

@@ -65,19 +65,6 @@ export default function AdminHalaqatPage() {
         }
     };
 
-    const handleEdit = async (halqa: any) => {
-        const newName = prompt(locale === 'ar' ? 'اسم الحلقة' : 'Circle name', halqa.circleName) || halqa.circleName;
-        const newMosque = prompt(locale === 'ar' ? 'اسم المسجد' : 'Mosque name', halqa.mosqueName) || halqa.mosqueName;
-        const newWhatsapp = prompt('WhatsApp', halqa.whatsapp) || halqa.whatsapp;
-        try {
-            await adminApi.updateHalqa(token!, halqa.id, { circle_name: newName, mosque_name: newMosque, whatsapp: newWhatsapp });
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert(locale === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Error updating record.');
-        }
-    };
-
     const typeLabels: Record<string, string> = locale === 'ar'
         ? { men: 'رجال', women: 'نساء', children: 'أطفال', mixed: 'مختلط' }
         : { men: 'Men', women: 'Women', children: 'Children', mixed: 'Mixed' };

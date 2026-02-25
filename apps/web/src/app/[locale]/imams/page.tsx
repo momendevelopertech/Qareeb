@@ -150,9 +150,12 @@ export default function ImamsPage() {
                                             {imam.district && ` — ${imam.district}`}
                                         </div>
                                         {imam.google_maps_url && (
-                                            <div className="flex gap-3 text-[11px] font-semibold text-primary underline">
+                                            <div className="flex gap-3 text-[11px] font-semibold text-primary underline flex-wrap">
                                                 <a href={imam.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
                                                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(imam.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                                <button type="button" onClick={() => navigator.clipboard.writeText(imam.google_maps_url)} className="text-primary underline">
+                                                    {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                                </button>
                                             </div>
                                         )}
                                         {imam.distance_meters && (
