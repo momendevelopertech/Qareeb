@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useChatStore } from '@/lib/store';
+import { useChatStore, useGeolocationStore } from '@/lib/store';
+import { api } from '@/lib/api';
 
 interface Intent {
     keywords: string[];
@@ -39,6 +40,7 @@ export default function ChatWidget() {
     const locale = useLocale();
     const router = useRouter();
     const { isOpen, messages, toggleChat, addMessage } = useChatStore();
+    const { lat, lng, requestLocation } = useGeolocationStore();
     const [input, setInput] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -46,22 +48,31 @@ export default function ChatWidget() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = () => {
+    useEffect(() => { requestLocation(); }, []);
+
+    const handleSend = async () => {
         if (!input.trim()) return;
         addMessage('user', input);
         const intent = matchIntent(input);
 
-        if (intent) {
-            if (intent.action === 'help') {
-                addMessage('bot', t('helpOptions'));
-            } else if (intent.url) {
-                addMessage('bot', locale === 'ar' ? 'جاري التوجيه...' : 'Redirecting...');
-                setTimeout(() => router.push(`/${locale}${intent.url}`), 800);
+        try {
+            const chatRes = await api.chatNearest({ text: input, lat, lng });
+            if (chatRes?.message) {
+                addMessage('bot', chatRes.message);
+            } else if (intent) {
+                if (intent.action === 'help') {
+                    addMessage('bot', t('helpOptions'));
+                } else if (intent.url) {
+                    addMessage('bot', locale === 'ar' ? 'جاري التوجيه...' : 'Redirecting...');
+                    setTimeout(() => router.push(`/${locale}${intent.url}`), 800);
+                }
+            } else {
+                addMessage('bot', locale === 'ar'
+                    ? 'عذراً، لم أفهم طلبك. يمكنك السؤال عن: الأئمة، حلقات التحفيظ، صيانة المساجد، أو إضافة خدمة جديدة.'
+                    : "Sorry, I didn't understand. You can ask about: imams, Quran circles, mosque maintenance, or adding a new service.");
             }
-        } else {
-            addMessage('bot', locale === 'ar'
-                ? 'عذراً، لم أفهم طلبك. يمكنك السؤال عن: الأئمة، حلقات التحفيظ، صيانة المساجد، أو إضافة خدمة جديدة.'
-                : "Sorry, I didn't understand. You can ask about: imams, Quran circles, mosque maintenance, or adding a new service.");
+        } catch {
+            addMessage('bot', locale === 'ar' ? 'حدث خطأ أثناء المعالجة.' : 'Something went wrong processing your request.');
         }
         setInput('');
     };

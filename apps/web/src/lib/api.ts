@@ -50,6 +50,10 @@ export const api = {
 
     // Media
     getSignedUploadParams: () => fetchAPI<any>('/media/sign', { method: 'POST' }),
+
+    // Chat
+    chatNearest: (data: { text: string; lat?: number; lng?: number }) =>
+        fetchAPI<any>('/chat/nearest', { method: 'POST', body: JSON.stringify(data) }),
 };
 
 // ── Admin API ──
