@@ -64,6 +64,19 @@ export default function AdminImamsPage() {
         }
     };
 
+    const handleEdit = async (imam: any) => {
+        const newName = prompt(locale === 'ar' ? 'اسم الإمام' : 'Imam name', imam.imamName) || imam.imamName;
+        const newMosque = prompt(locale === 'ar' ? 'اسم المسجد' : 'Mosque name', imam.mosqueName) || imam.mosqueName;
+        const newWhatsapp = prompt('WhatsApp', imam.whatsapp) || imam.whatsapp;
+        try {
+            await adminApi.updateImam(token!, imam.id, { imam_name: newName, mosque_name: newMosque, whatsapp: newWhatsapp });
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Error updating record.');
+        }
+    };
+
     const statusTabs = [
         { value: 'pending', label: t('pending'), color: 'bg-yellow-500' },
         { value: 'approved', label: t('approved'), color: 'bg-green-500' },
@@ -127,6 +140,7 @@ export default function AdminImamsPage() {
                                                         <button onClick={() => handleReject(imam.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t('reject')}</button>
                                                     </>
                                                 )}
+                                                <button onClick={() => handleEdit(imam)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">{locale === 'ar' ? 'تعديل' : 'Edit'}</button>
                                                 {admin?.role === 'super_admin' && (
                                                     <button onClick={() => handleDelete(imam.id)} className="text-gray-400 hover:text-red-600 text-sm">{locale === 'ar' ? 'حذف' : 'Delete'}</button>
                                                 )}

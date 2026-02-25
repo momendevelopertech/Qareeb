@@ -166,6 +166,33 @@ export class ImamsService {
         return updated;
     }
 
+    async update(id: string, adminId: string, data: Partial<CreateImamDto>) {
+        const before = await this.prisma.imam.findUnique({ where: { id } });
+        if (!before) throw new Error('Imam not found');
+        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+
+        const updated = await this.prisma.imam.update({
+            where: { id },
+            data: {
+                imamName: data.imam_name ?? before.imamName,
+                mosqueName: data.mosque_name ?? before.mosqueName,
+                governorate: data.governorate ?? before.governorate,
+                city: data.city ?? before.city,
+                district: data.district ?? before.district,
+                areaId: data.area_id ?? before.areaId,
+                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                videoUrl: data.video_url ?? before.videoUrl,
+                latitude: coords ? coords.lat : before.latitude,
+                longitude: coords ? coords.lng : before.longitude,
+                whatsapp: data.whatsapp ?? before.whatsapp,
+                recitationUrl: data.recitation_url ?? before.recitationUrl,
+            },
+        });
+
+        await this.audit.log({ adminId, entityType: 'imam', entityId: id, action: 'update', oldData: before, newData: updated });
+        return updated;
+    }
+
     async remove(id: string) {
         // Delete associated media first
         await this.prisma.mediaAsset.deleteMany({

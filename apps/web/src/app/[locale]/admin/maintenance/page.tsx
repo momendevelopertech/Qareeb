@@ -52,6 +52,19 @@ export default function AdminMaintenancePage() {
         }
     };
 
+    const handleEdit = async (item: any) => {
+        const newName = prompt(locale === 'ar' ? 'اسم المسجد' : 'Mosque name', item.mosqueName) || item.mosqueName;
+        const newWhatsapp = prompt('WhatsApp', item.whatsapp) || item.whatsapp;
+        const newDesc = prompt(locale === 'ar' ? 'الوصف' : 'Description', item.description) || item.description;
+        try {
+            await adminApi.updateMaintenance(token!, item.id, { mosque_name: newName, whatsapp: newWhatsapp, description: newDesc });
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert(locale === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Error updating record.');
+        }
+    };
+
     const mLabels: Record<string, string> = locale === 'ar'
         ? { flooring: 'أرضيات', ac: 'تكييف', plumbing: 'سباكة', painting: 'دهان', furniture: 'أثاث', electrical: 'كهرباء', other: 'أخرى' }
         : {};
@@ -84,12 +97,15 @@ export default function AdminMaintenancePage() {
                                     <td className="px-4 py-4"><div className="flex flex-wrap gap-1">{(item.maintenanceTypes || []).map((type: string) => (<span key={type} className="badge bg-red-100 text-red-800 text-xs">{mLabels[type] || type}</span>))}</div></td>
                                     <td className="px-4 py-4 text-text-muted text-sm">{item.governorate} — {item.city}</td>
                                     <td className="px-4 py-4">
-                                        {item.status === 'pending' && (
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleApprove(item.id)} className="text-green-600 hover:text-green-700 text-sm font-medium">{t('approve')}</button>
-                                                <button onClick={() => handleReject(item.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t('reject')}</button>
-                                            </div>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {item.status === 'pending' && (
+                                                <>
+                                                    <button onClick={() => handleApprove(item.id)} className="text-green-600 hover:text-green-700 text-sm font-medium">{t('approve')}</button>
+                                                    <button onClick={() => handleReject(item.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t('reject')}</button>
+                                                </>
+                                            )}
+                                            <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">{locale === 'ar' ? 'تعديل' : 'Edit'}</button>
+                                        </div>
                                     </td>
                                 </tr>
                             )) : (

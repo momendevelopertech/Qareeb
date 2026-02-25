@@ -135,6 +135,34 @@ export class MaintenanceService {
         return updated;
     }
 
+    async update(id: string, adminId: string, data: Partial<CreateMaintenanceDto>) {
+        const before = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
+        if (!before) throw new Error('Maintenance not found');
+        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+
+        const updated = await this.prisma.maintenanceRequest.update({
+            where: { id },
+            data: {
+                mosqueName: data.mosque_name ?? before.mosqueName,
+                governorate: data.governorate ?? before.governorate,
+                city: data.city ?? before.city,
+                district: data.district ?? before.district,
+                areaId: data.area_id ?? before.areaId,
+                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                latitude: coords ? coords.lat : before.latitude,
+                longitude: coords ? coords.lng : before.longitude,
+                maintenanceTypes: (data.maintenance_types as any) ?? before.maintenanceTypes,
+                description: data.description ?? before.description,
+                estimatedCostMin: data.estimated_cost_min ?? before.estimatedCostMin,
+                estimatedCostMax: data.estimated_cost_max ?? before.estimatedCostMax,
+                whatsapp: data.whatsapp ?? before.whatsapp,
+            },
+        });
+
+        await this.audit.log({ adminId, entityType: 'maintenance', entityId: id, action: 'update', oldData: before, newData: updated });
+        return updated;
+    }
+
     async remove(id: string) {
         await this.prisma.mediaAsset.deleteMany({ where: { entityId: id, entityType: 'maintenance' } });
         return this.prisma.maintenanceRequest.delete({ where: { id } });

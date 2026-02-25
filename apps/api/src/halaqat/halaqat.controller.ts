@@ -49,6 +49,13 @@ export class HalaqatController {
         return this.halaqatService.reject(id, req.user.id, body.reason);
     }
 
+    @Patch('admin/halaqat/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('super_admin', 'full_reviewer', 'halqa_reviewer')
+    update(@Param('id') id: string, @Body() body: Partial<CreateHalqaDto>, @Req() req: any) {
+        return this.halaqatService.update(id, req.user.id, body);
+    }
+
     @Delete('admin/halaqat/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')

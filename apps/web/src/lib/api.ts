@@ -90,6 +90,8 @@ export const adminApi = {
         fetchAPI<any>(`/admin/imams/${id}/reject`, { method: 'PATCH', token, body: JSON.stringify({ reason }) }),
     deleteImam: (token: string, id: string) =>
         fetchAPI<any>(`/admin/imams/${id}`, { method: 'DELETE', token }),
+    updateImam: (token: string, id: string, data: any) =>
+        fetchAPI<any>(`/admin/imams/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
 
     // Halaqat admin
     getAdminHalaqat: (token: string, params?: string) =>
@@ -98,6 +100,8 @@ export const adminApi = {
         fetchAPI<any>(`/admin/halaqat/${id}/approve`, { method: 'PATCH', token }),
     rejectHalqa: (token: string, id: string, reason?: string) =>
         fetchAPI<any>(`/admin/halaqat/${id}/reject`, { method: 'PATCH', token, body: JSON.stringify({ reason }) }),
+    updateHalqa: (token: string, id: string, data: any) =>
+        fetchAPI<any>(`/admin/halaqat/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
 
     // Maintenance admin
     getAdminMaintenance: (token: string, params?: string) =>
@@ -106,6 +110,8 @@ export const adminApi = {
         fetchAPI<any>(`/admin/maintenance/${id}/approve`, { method: 'PATCH', token }),
     rejectMaintenance: (token: string, id: string, reason?: string) =>
         fetchAPI<any>(`/admin/maintenance/${id}/reject`, { method: 'PATCH', token, body: JSON.stringify({ reason }) }),
+    updateMaintenance: (token: string, id: string, data: any) =>
+        fetchAPI<any>(`/admin/maintenance/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
 
     // Users
     getAdminUsers: (token: string) =>

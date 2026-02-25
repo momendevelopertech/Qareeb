@@ -141,6 +141,34 @@ export class HalaqatService {
         return updated;
     }
 
+    async update(id: string, adminId: string, data: Partial<CreateHalqaDto>) {
+        const before = await this.prisma.halqa.findUnique({ where: { id } });
+        if (!before) throw new Error('Halqa not found');
+        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+
+        const updated = await this.prisma.halqa.update({
+            where: { id },
+            data: {
+                circleName: data.circle_name ?? before.circleName,
+                mosqueName: data.mosque_name ?? before.mosqueName,
+                halqaType: (data.halqa_type as any) ?? before.halqaType,
+                governorate: data.governorate ?? before.governorate,
+                city: data.city ?? before.city,
+                district: data.district ?? before.district,
+                areaId: data.area_id ?? before.areaId,
+                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                videoUrl: data.video_url ?? before.videoUrl,
+                latitude: coords ? coords.lat : before.latitude,
+                longitude: coords ? coords.lng : before.longitude,
+                whatsapp: data.whatsapp ?? before.whatsapp,
+                additionalInfo: data.additional_info ?? before.additionalInfo,
+            },
+        });
+
+        await this.audit.log({ adminId, entityType: 'halqa', entityId: id, action: 'update', oldData: before, newData: updated });
+        return updated;
+    }
+
     async remove(id: string) {
         await this.prisma.mediaAsset.deleteMany({ where: { entityId: id, entityType: 'halqa' } });
         return this.prisma.halqa.delete({ where: { id } });

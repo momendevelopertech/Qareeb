@@ -55,6 +55,13 @@ export class ImamsController {
         return this.imamsService.reject(id, req.user.id, body.reason);
     }
 
+    @Patch('admin/imams/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('super_admin', 'full_reviewer', 'imam_reviewer')
+    update(@Param('id') id: string, @Body() body: Partial<CreateImamDto>, @Req() req: any) {
+        return this.imamsService.update(id, req.user.id, body);
+    }
+
     @Delete('admin/imams/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')

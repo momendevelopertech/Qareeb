@@ -54,6 +54,13 @@ export class MaintenanceController {
         return this.maintenanceService.reject(id, req.user.id, body.reason);
     }
 
+    @Patch('admin/maintenance/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('super_admin', 'full_reviewer', 'maintenance_reviewer')
+    update(@Param('id') id: string, @Body() body: Partial<CreateMaintenanceDto>, @Req() req: any) {
+        return this.maintenanceService.update(id, req.user.id, body);
+    }
+
     @Delete('admin/maintenance/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')
