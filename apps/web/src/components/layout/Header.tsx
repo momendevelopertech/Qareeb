@@ -27,6 +27,10 @@ export default function Header() {
     ];
 
     useEffect(() => {
+        if (!token || !admin?.role || !isAdminPath) {
+            setUnread(0);
+            return () => {};
+        }
         const load = async () => {
             if (!token) return setUnread(0);
             try {
@@ -37,12 +41,22 @@ export default function Header() {
         load();
         const id = setInterval(load, 30000);
         let pusher: Pusher | null = null;
-        if (token && process.env.NEXT_PUBLIC_PUSHER_KEY && admin?.role) {
+        const playBeep = () => {
+            try {
+                const audio = new Audio('/sound.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(() => {});
+            } catch { /* ignore audio errors */ }
+        };
+        if (process.env.NEXT_PUBLIC_PUSHER_KEY) {
             pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
                 cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
             });
             const channel = pusher.subscribe(`role-${admin.role}`);
-            channel.bind('notification', () => setUnread((c) => c + 1));
+            channel.bind('notification', () => {
+                setUnread((c) => c + 1);
+                playBeep();
+            });
         }
         return () => {
             clearInterval(id);

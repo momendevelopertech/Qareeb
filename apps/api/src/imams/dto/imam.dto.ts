@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsNumber, IsUrl, IsArray, IsNotEmpty, IsUUID } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CreateImamDto {
     @IsString()
@@ -15,8 +15,9 @@ export class CreateImamDto {
     governorate!: string;
 
     @IsString()
-    @IsNotEmpty()
-    city!: string;
+    @IsOptional()
+    @Transform(({ value }) => (value === '' ? undefined : value))
+    city?: string;
 
     @IsOptional()
     @IsString()
@@ -24,6 +25,7 @@ export class CreateImamDto {
 
     @IsUUID()
     @IsOptional()
+    @Transform(({ value }) => (value === '' ? undefined : value))
     area_id?: string;
 
     @IsUrl()

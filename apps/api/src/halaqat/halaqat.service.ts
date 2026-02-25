@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHalqaDto, HalqaQueryDto } from './dto/halqa.dto';
 import { NotificationType, Prisma } from '@prisma/client';
-import { extractLatLngFromGoogleMaps } from '../common/maps.util';
+import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -87,15 +87,19 @@ export class HalaqatService {
     }
 
     async create(dto: CreateHalqaDto, createdBy?: string) {
-        const coords = extractLatLngFromGoogleMaps(dto.google_maps_url) || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
-        if (!coords) throw new Error('Unable to parse coordinates from Google Maps URL');
+        const coords = extractLatLngFromGoogleMaps(dto.google_maps_url)
+            || await resolveLatLngFromGoogleMaps(dto.google_maps_url)
+            || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
+        if (!coords) {
+            throw new BadRequestException('Invalid Google Maps link. Please share a link that contains coordinates (e.g., open map > share > copy link).');
+        }
         const halqa = await this.prisma.halqa.create({
             data: {
                 circleName: dto.circle_name,
                 mosqueName: dto.mosque_name,
                 halqaType: dto.halqa_type as any,
                 governorate: dto.governorate,
-                city: dto.city,
+                city: dto.city || dto.governorate,
                 district: dto.district,
                 areaId: dto.area_id || null,
                 googleMapsUrl: dto.google_maps_url,
@@ -164,7 +168,7 @@ export class HalaqatService {
                 mosqueName: data.mosque_name ?? before.mosqueName,
                 halqaType: (data.halqa_type as any) ?? before.halqaType,
                 governorate: data.governorate ?? before.governorate,
-                city: data.city ?? before.city,
+                city: (data.city ?? data.governorate) ?? before.city,
                 district: data.district ?? before.district,
                 areaId: data.area_id ?? before.areaId,
                 googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,

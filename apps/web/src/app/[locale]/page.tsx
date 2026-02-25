@@ -26,10 +26,12 @@ type LatestItem = {
     icon: string;
 };
 
-const sortByDate = (items?: any[]) =>
-    [...(items ?? [])].sort(
-        (a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime(),
-    );
+const sortByDateDesc = (items?: any[]) =>
+    [...(items ?? [])].sort((a, b) => {
+        const ta = new Date(a.created_at || a.createdAt || a.updated_at || a.updatedAt || 0).getTime();
+        const tb = new Date(b.created_at || b.createdAt || b.updated_at || b.updatedAt || 0).getTime();
+        return tb - ta;
+    });
 
 async function fetchCollection(path: string, limit = 6): Promise<CollectionResponse> {
     try {
@@ -71,7 +73,7 @@ export default async function HomePage() {
         },
     ];
 
-    const latestImams: LatestItem[] = sortByDate(imams.data).slice(0, 3).map((item) => ({
+    const latestImams: LatestItem[] = sortByDateDesc(imams.data).slice(0, 3).map((item) => ({
         id: item.id,
         title: item.imam_name || item.imamName,
         subtitle: item.mosque_name || item.mosqueName,
@@ -82,7 +84,7 @@ export default async function HomePage() {
         icon: '🕌',
     }));
 
-    const latestHalaqat: LatestItem[] = sortByDate(halaqat.data).slice(0, 3).map((item) => ({
+    const latestHalaqat: LatestItem[] = sortByDateDesc(halaqat.data).slice(0, 3).map((item) => ({
         id: item.id,
         title: item.circle_name || item.circleName,
         subtitle: item.mosque_name || item.mosqueName,
@@ -93,7 +95,7 @@ export default async function HomePage() {
         icon: '📖',
     }));
 
-    const latestMaintenance: LatestItem[] = sortByDate(maintenance.data).slice(0, 3).map((item) => ({
+    const latestMaintenance: LatestItem[] = sortByDateDesc(maintenance.data).slice(0, 3).map((item) => ({
         id: item.id,
         title: item.mosque_name || item.mosqueName,
         subtitle: (item.maintenance_types || item.maintenanceTypes || []).join(' · '),

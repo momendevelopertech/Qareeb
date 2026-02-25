@@ -106,6 +106,7 @@ model Admin {
   reviewedHalaqat     Halqa[]
   reviewedMaintenance MaintenanceRequest[]
   auditLogs           AuditLog[]
+  notifications       Notification[]
 
   @@map("admins")
 }

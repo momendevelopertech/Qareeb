@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsNumber, IsEnum, IsArray, IsNotEmpty, IsUrl, IsUUID } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export enum HalqaType {
     MEN = 'men',
@@ -26,8 +26,9 @@ export class CreateHalqaDto {
     governorate!: string;
 
     @IsString()
-    @IsNotEmpty()
-    city!: string;
+    @IsOptional()
+    @Transform(({ value }) => (value === '' ? undefined : value))
+    city?: string;
 
     @IsString()
     @IsOptional()
@@ -35,6 +36,7 @@ export class CreateHalqaDto {
 
     @IsUUID()
     @IsOptional()
+    @Transform(({ value }) => (value === '' ? undefined : value))
     area_id?: string;
 
     @IsUrl()

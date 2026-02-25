@@ -32,7 +32,7 @@ export class NotificationsService {
 
         // Fire real-time update to role channels (non-sensitive payload)
         if (pusherServer) {
-            await Promise.all(roles.map((role) => pusherServer.trigger(
+            await Promise.all(roles.map((role) => pusherServer!.trigger(
                 `role-${role}`,
                 'notification',
                 { type, title, message },
