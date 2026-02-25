@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
 import ChatWidget from '@/components/chat/ChatWidget';
+import HomeSearchBar from '@/components/search/HomeSearchBar';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -167,22 +168,7 @@ export default async function HomePage() {
 
                 {/* Search Bar Segment */}
                 <div className="px-4 -mt-10 relative z-10">
-                    <div className="max-w-4xl mx-auto bg-white rounded-[24px] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-border flex flex-wrap gap-3 items-center">
-                        <div className="flex-1 min-w-[200px] flex items-center gap-3 bg-cream rounded-xl px-4 py-3 border-2 border-transparent focus-within:border-primary focus-within:bg-white transition-all">
-                            <span className="text-text-muted">🔍</span>
-                            <input
-                                type="text"
-                                placeholder={locale === 'ar' ? 'ابحث عن إمام، حلقة، أو مسجد...' : 'Search for imams, circles, or mosques...'}
-                                className="bg-transparent w-full outline-none text-[15px] font-medium"
-                            />
-                        </div>
-                        <select className="bg-cream rounded-xl px-4 py-3 min-w-[140px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all">
-                            <option value="">{locale === 'ar' ? 'كل المحافظات' : 'All Governorates'}</option>
-                        </select>
-                        <button className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:bg-primary-light transition-all">
-                            {locale === 'ar' ? 'بحث' : 'Search'}
-                        </button>
-                    </div>
+                    <HomeSearchBar />
                 </div>
 
                 {/* Latest Additions */}

@@ -37,6 +37,7 @@ export default function HalaqatPage() {
     const [areas, setAreas] = useState<any[]>([]);
     const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
     const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
+    const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
 
     useEffect(() => { requestLocation(); api.getGovernorates().then(setGovernorates).catch(console.error); }, []);
 
@@ -49,7 +50,7 @@ export default function HalaqatPage() {
         }
     }, [governorateId]);
 
-    useEffect(() => { fetchData(); }, [lat, lng, selectedType, governorateId, areaId]);
+    useEffect(() => { fetchData(); }, [lat, lng, selectedType, governorateId, areaId, governorates]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -57,13 +58,29 @@ export default function HalaqatPage() {
             const params = new URLSearchParams();
             if (lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '10000'); }
             if (selectedType) params.set('type', selectedType);
-            if (areaId) params.set('area_id', areaId);
-            if (governorateId && !areaId) params.set('governorateId', governorateId);
+            if (areaId) {
+                params.set('area_id', areaId);
+            } else if (governorateId) {
+                params.set('governorateId', governorateId);
+            }
             const result = await api.getHalaqat(params.toString());
             setData(result);
         } catch (err) { console.error('Error:', err); }
         setLoading(false);
     };
+
+    const filteredData = data?.data?.filter((halqa: any) => {
+        if (!searchTerm) return true;
+        const q = searchTerm.toLowerCase();
+        return [
+            halqa.circle_name || halqa.circleName,
+            halqa.mosque_name || halqa.mosqueName,
+            halqa.governorate,
+            halqa.city,
+            halqa.area?.nameEn,
+            halqa.area?.nameAr,
+        ].some((field) => (field || '').toString().toLowerCase().includes(q));
+    });
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -118,6 +135,12 @@ export default function HalaqatPage() {
                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                             ))}
                         </select>
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={locale === 'ar' ? 'بحث بالاسم أو المسجد' : 'Search name or mosque'}
+                            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-cream border-2 border-transparent focus:border-primary min-w-[220px]"
+                        />
                     </div>
                 </div>
 
@@ -128,9 +151,9 @@ export default function HalaqatPage() {
                                 <div key={i} className="card p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-3/4 mb-4" /><div className="h-3 bg-gray-200 rounded w-1/2" /></div>
                             ))}
                         </div>
-                    ) : data?.data?.length > 0 ? (
+                    ) : filteredData?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {data.data.map((halqa: any) => (
+                            {filteredData.map((halqa: any) => (
                                 <div key={halqa.id} className="bg-white rounded-[24px] overflow-hidden shadow-card border border-border group hover:-translate-y-1 transition-all duration-300 animate-fade-in p-6 flex flex-col">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">

@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHalqaDto, HalqaQueryDto } from './dto/halqa.dto';
-import { Prisma } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import { extractLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class HalaqatService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
+        private readonly notifications: NotificationsService,
     ) { }
 
     async findAll(query: HalqaQueryDto) {
@@ -59,6 +61,7 @@ export class HalaqatService {
         };
         if (query.type) where.halqaType = query.type as any;
         if (query.governorate) where.governorate = query.governorate;
+        if (query.governorateId) where.area = { governorateId: query.governorateId };
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
 
@@ -83,7 +86,7 @@ export class HalaqatService {
         return this.prisma.halqa.findUnique({ where: { id }, include: { media: true } });
     }
 
-    async create(dto: CreateHalqaDto) {
+    async create(dto: CreateHalqaDto, createdBy?: string) {
         const coords = extractLatLngFromGoogleMaps(dto.google_maps_url) || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
         if (!coords) throw new Error('Unable to parse coordinates from Google Maps URL');
         const halqa = await this.prisma.halqa.create({
@@ -124,6 +127,14 @@ export class HalaqatService {
                 data: { entityId: halqa.id, entityType: 'halqa' },
             });
         }
+
+        await this.notifications.createForType(
+            NotificationType.halqa,
+            halqa.id,
+            'Halqa submission',
+            `New circle submitted: ${halqa.circleName} (${halqa.mosqueName})`,
+            createdBy,
+        );
         return halqa;
     }
 

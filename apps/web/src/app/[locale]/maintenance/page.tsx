@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -20,13 +21,15 @@ export default function MaintenancePage() {
     const t = useTranslations('maintenance');
     const tc = useTranslations('common');
     const locale = useLocale();
+    const searchParams = useSearchParams();
     const { lat, lng, requestLocation } = useGeolocationStore();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
-    const [governorateId, setGovernorateId] = useState<string>('');
-    const [areaId, setAreaId] = useState<string>('');
+    const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
+    const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
+    const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
 
     useEffect(() => { requestLocation(); api.getGovernorates().then(setGovernorates).catch(console.error); }, []);
     useEffect(() => {
@@ -37,20 +40,36 @@ export default function MaintenancePage() {
             setAreaId('');
         }
     }, [governorateId]);
-    useEffect(() => { fetchData(); }, [lat, lng, governorateId, areaId]);
+    useEffect(() => { fetchData(); }, [lat, lng, governorateId, areaId, governorates]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '15000'); }
-            if (areaId) params.set('area_id', areaId);
-            if (governorateId && !areaId) params.set('governorateId', governorateId);
+            if (areaId) {
+                params.set('area_id', areaId);
+            } else if (governorateId) {
+                params.set('governorateId', governorateId);
+            }
             const result = await api.getMaintenance(params.toString());
             setData(result);
         } catch (err) { console.error('Error:', err); }
         setLoading(false);
     };
+
+    const filteredData = data?.data?.filter((item: any) => {
+        if (!searchTerm) return true;
+        const q = searchTerm.toLowerCase();
+        return [
+            item.mosque_name || item.mosqueName,
+            item.description,
+            item.governorate,
+            item.city,
+            item.area?.nameEn,
+            item.area?.nameAr,
+        ].some((field) => (field || '').toString().toLowerCase().includes(q));
+    });
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -89,6 +108,12 @@ export default function MaintenancePage() {
                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                             ))}
                         </select>
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={locale === 'ar' ? 'بحث بالمسجد أو الوصف' : 'Search mosque or description'}
+                            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-cream border-2 border-transparent focus:border-primary min-w-[220px]"
+                        />
                     </div>
                     {loading ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,9 +121,9 @@ export default function MaintenancePage() {
                                 <div key={i} className="card p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-3/4 mb-4" /><div className="h-3 bg-gray-200 rounded w-full mb-2" /><div className="h-3 bg-gray-200 rounded w-2/3" /></div>
                             ))}
                         </div>
-                    ) : data?.data?.length > 0 ? (
+                    ) : filteredData?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {data.data.map((item: any) => (
+                            {filteredData.map((item: any) => (
                                 <div key={item.id} className="bg-white rounded-[24px] overflow-hidden shadow-card border border-border group hover:-translate-y-1 transition-all duration-300 animate-fade-in p-6 flex flex-col">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">

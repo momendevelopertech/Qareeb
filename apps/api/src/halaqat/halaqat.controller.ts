@@ -24,8 +24,9 @@ export class HalaqatController {
     }
 
     @Post('halaqat')
-    create(@Body() dto: CreateHalqaDto) {
-        return this.halaqatService.create(dto);
+    create(@Body() dto: CreateHalqaDto, @Req() req: any) {
+        const createdBy = req.user?.email || req.user?.id || 'Guest';
+        return this.halaqatService.create(dto, createdBy);
     }
 
     @Get('admin/halaqat')

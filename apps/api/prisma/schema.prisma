@@ -45,6 +45,12 @@ enum AdminRole {
   maintenance_reviewer
 }
 
+enum NotificationType {
+  imam
+  halqa
+  maintenance
+}
+
 // ──────────────────────────────────────────────
 // Locations
 // ──────────────────────────────────────────────
@@ -225,4 +231,21 @@ model MediaAsset {
   maintenanceRequest MaintenanceRequest? @relation("MaintenanceMedia", fields: [entityId], references: [id], map: "fk_media_maintenance")
 
   @@map("media_assets")
+}
+
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  title       String           @db.VarChar(200)
+  message     String
+  type        NotificationType
+  referenceId String           @map("reference_id") @db.Uuid
+  isRead      Boolean          @default(false) @map("is_read")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+
+  user        Admin            @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([type])
+  @@map("notifications")
 }

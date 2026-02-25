@@ -106,6 +106,10 @@ export class MaintenanceQueryDto {
     area_id?: string;
 
     @IsOptional()
+    @IsUUID()
+    governorateId?: string;
+
+    @IsOptional()
     @IsNumber()
     page?: number;
 

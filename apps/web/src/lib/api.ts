@@ -123,4 +123,14 @@ export const adminApi = {
 
     getAuditLogs: (token: string, params?: string) =>
         fetchAPI<any>(`/admin/audit${params ? `?${params}` : ''}`, { token }),
+
+    // Notifications (admin JWT)
+    getNotifications: (token: string, status: 'unread' | 'all' = 'unread') =>
+        fetchAPI<any>(`/notifications?status=${status}`, { token }),
+    getNotificationCount: (token: string) =>
+        fetchAPI<any>('/notifications/count', { token }),
+    markNotificationRead: (token: string, id: string) =>
+        fetchAPI<any>(`/notifications/${id}/read`, { method: 'PATCH', token }),
+    markAllNotificationsRead: (token: string) =>
+        fetchAPI<any>('/notifications/read-all', { method: 'PATCH', token }),
 };

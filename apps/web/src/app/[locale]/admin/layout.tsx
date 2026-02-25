@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { adminApi } from '@/lib/api';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const t = useTranslations('admin');
@@ -13,6 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const router = useRouter();
     const { token, admin, clearAuth } = useAuthStore();
+    const [unreadCount, setUnreadCount] = useState(0);
 
     // If no token and not on login page, show login
     const isLoginPage = pathname.includes('/admin') && !pathname.includes('/admin/');
@@ -22,6 +24,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             // Don't redirect, just show login on the admin page
         }
     }, [token, isLoginPage]);
+
+    useEffect(() => {
+        const loadCount = async () => {
+            if (!token) return;
+            try {
+                const res = await adminApi.getNotificationCount(token);
+                setUnreadCount(res.count || 0);
+            } catch (err) {
+                console.error('Notification count error', err);
+            }
+        };
+        loadCount();
+        const interval = setInterval(loadCount, 30000);
+        return () => clearInterval(interval);
+    }, [token]);
 
     const handleLogout = () => {
         clearAuth();
@@ -38,6 +55,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: `/${locale}/admin/imams`, label: locale === 'ar' ? 'الأئمة' : 'Imams', icon: '🕌' },
         { href: `/${locale}/admin/halaqat`, label: locale === 'ar' ? 'الحلقات' : 'Circles', icon: '📖' },
         { href: `/${locale}/admin/maintenance`, label: locale === 'ar' ? 'الصيانة' : 'Maintenance', icon: '🔧' },
+        { href: `/${locale}/admin/notifications`, label: locale === 'ar' ? 'الإشعارات' : 'Notifications', icon: '🔔', badge: unreadCount },
     ];
 
     if (admin?.role === 'super_admin') {
@@ -75,7 +93,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     }`}
                             >
                                 <span>{item.icon}</span>
-                                <span>{item.label}</span>
+                                <span className="flex items-center gap-2">
+                                    {item.label}
+                                    {item.badge ? (
+                                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                                            {item.badge > 99 ? '99+' : item.badge}
+                                        </span>
+                                    ) : null}
+                                </span>
                             </Link>
                         );
                     })}

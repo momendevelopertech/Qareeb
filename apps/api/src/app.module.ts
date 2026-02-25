@@ -13,6 +13,7 @@ import { LocationsModule } from './locations/locations.module';
 import { AuditModule } from './audit/audit.module';
 import { HealthController } from './health/health.controller';
 import { ChatModule } from './chat/chat.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
     imports: [
@@ -36,6 +37,7 @@ import { ChatModule } from './chat/chat.module';
         LocationsModule,
         AuditModule,
         ChatModule,
+        NotificationsModule,
     ],
     providers: [
         {

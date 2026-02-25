@@ -91,6 +91,10 @@ export class ImamQueryDto {
     area_id?: string;
 
     @IsOptional()
+    @IsUUID()
+    governorateId?: string;
+
+    @IsOptional()
     @IsNumber()
     page?: number;
 

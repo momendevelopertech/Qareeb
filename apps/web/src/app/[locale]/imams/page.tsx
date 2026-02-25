@@ -24,6 +24,7 @@ export default function ImamsPage() {
     const [areas, setAreas] = useState<any[]>([]);
     const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
     const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
+    const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
 
     useEffect(() => {
         requestLocation();
@@ -41,7 +42,7 @@ export default function ImamsPage() {
 
     useEffect(() => {
         fetchData();
-    }, [lat, lng, governorateId, areaId]);
+    }, [lat, lng, governorateId, areaId, governorates]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -52,9 +53,11 @@ export default function ImamsPage() {
                 params.set('lng', lng.toString());
                 params.set('radius', '10000');
             }
-            if (governorateId) params.set('area_id', areaId || '');
-            if (governorateId && !areaId) params.set('governorateId', governorateId);
-            if (areaId) params.set('area_id', areaId);
+            if (areaId) {
+                params.set('area_id', areaId);
+            } else if (governorateId) {
+                params.set('governorateId', governorateId);
+            }
             const result = await api.getImams(params.toString());
             setData(result);
         } catch (err) {
@@ -62,6 +65,20 @@ export default function ImamsPage() {
         }
         setLoading(false);
     };
+
+    const filteredData = data?.data?.filter((imam: any) => {
+        if (!searchTerm) return true;
+        const q = searchTerm.toLowerCase();
+        return [
+            imam.imam_name || imam.imamName,
+            imam.mosque_name || imam.mosqueName,
+            imam.governorate,
+            imam.city,
+            imam.district,
+            imam.area?.nameEn,
+            imam.area?.nameAr,
+        ].some((field) => (field || '').toString().toLowerCase().includes(q));
+    });
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -90,7 +107,7 @@ export default function ImamsPage() {
                         </div>
                         <select
                             value={governorateId}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setGovernorateId(e.target.value)}
+                            onChange={(e) => setGovernorateId(e.target.value)}
                             className="bg-cream rounded-xl px-4 py-3 min-w-[200px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all"
                         >
                             <option value="">{locale === 'ar' ? 'جميع المحافظات' : 'All governorates'}</option>
@@ -100,7 +117,7 @@ export default function ImamsPage() {
                         </select>
                         <select
                             value={areaId}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAreaId(e.target.value)}
+                            onChange={(e) => setAreaId(e.target.value)}
                             className="bg-cream rounded-xl px-4 py-3 min-w-[200px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all"
                             disabled={!governorateId}
                         >
@@ -109,6 +126,12 @@ export default function ImamsPage() {
                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                             ))}
                         </select>
+                        <input
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder={locale === 'ar' ? 'بحث بالاسم أو المسجد' : 'Search name or mosque'}
+                            className="bg-cream rounded-xl px-4 py-3 min-w-[220px] outline-none border-2 border-transparent focus:border-primary text-sm font-medium transition-all"
+                        />
                     </div>
                 </div>
 
@@ -124,9 +147,9 @@ export default function ImamsPage() {
                                 </div>
                             ))}
                         </div>
-                    ) : data?.data?.length > 0 ? (
+                    ) : filteredData?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {data.data.map((imam: any) => (
+                            {filteredData.map((imam: any) => (
                                 <div key={imam.id} className="bg-white rounded-[24px] overflow-hidden shadow-card border border-border group hover:-translate-y-1 transition-all duration-300 animate-fade-in p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMaintenanceDto, MaintenanceQueryDto } from './dto/maintenance.dto';
 import { extractLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 
 @Injectable()
@@ -10,6 +12,7 @@ export class MaintenanceService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
+        private readonly notifications: NotificationsService,
     ) { }
 
     async findAll(query: MaintenanceQueryDto) {
@@ -49,10 +52,11 @@ export class MaintenanceService {
             };
         }
 
-        const where: { status?: any; governorate?: string; city?: string; areaId?: string } = {
+        const where: Prisma.MaintenanceRequestWhereInput = {
             status: (query.status as any) || 'approved',
         };
         if (query.governorate) where.governorate = query.governorate;
+        if (query.governorateId) where.area = { governorateId: query.governorateId };
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
 
@@ -77,7 +81,7 @@ export class MaintenanceService {
         return this.prisma.maintenanceRequest.findUnique({ where: { id }, include: { media: true } });
     }
 
-    async create(dto: CreateMaintenanceDto) {
+    async create(dto: CreateMaintenanceDto, createdBy?: string) {
         const coords = extractLatLngFromGoogleMaps(dto.google_maps_url) || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
         if (!coords) throw new Error('Unable to parse coordinates from Google Maps URL');
         const request = await this.prisma.maintenanceRequest.create({
@@ -118,6 +122,14 @@ export class MaintenanceService {
                 data: { entityId: request.id, entityType: 'maintenance' },
             });
         }
+
+        await this.notifications.createForType(
+            NotificationType.maintenance,
+            request.id,
+            'Maintenance submission',
+            `New maintenance request: ${request.mosqueName}`,
+            createdBy,
+        );
         return request;
     }
 

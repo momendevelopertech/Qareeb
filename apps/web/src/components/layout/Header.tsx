@@ -2,12 +2,20 @@
 
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuthStore } from '@/lib/store';
+import { adminApi } from '@/lib/api';
+import Pusher from 'pusher-js';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
     const t = useTranslations('nav');
     const tc = useTranslations('common');
     const locale = useLocale();
+    const { token, admin } = useAuthStore();
+    const pathname = usePathname();
+    const isAdminPath = pathname.startsWith(`/${locale}/admin`);
+    const [unread, setUnread] = useState(0);
     const otherLocale = locale === 'ar' ? 'en' : 'ar';
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -17,6 +25,30 @@ export default function Header() {
         { href: `/${locale}/halaqat`, label: t('halaqat') },
         { href: `/${locale}/maintenance`, label: t('maintenance') },
     ];
+
+    useEffect(() => {
+        const load = async () => {
+            if (!token) return setUnread(0);
+            try {
+                const res = await adminApi.getNotificationCount(token);
+                setUnread(res.count || 0);
+            } catch { /* silent */ }
+        };
+        load();
+        const id = setInterval(load, 30000);
+        let pusher: Pusher | null = null;
+        if (token && process.env.NEXT_PUBLIC_PUSHER_KEY && admin?.role) {
+            pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+                cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+            });
+            const channel = pusher.subscribe(`role-${admin.role}`);
+            channel.bind('notification', () => setUnread((c) => c + 1));
+        }
+        return () => {
+            clearInterval(id);
+            if (pusher) pusher.disconnect();
+        };
+    }, [token, admin?.role]);
 
     return (
         <header className="sticky top-0 z-[1000] bg-white/95 backdrop-blur-md border-b border-primary/10 h-[68px] shadow-sm">
@@ -46,6 +78,20 @@ export default function Header() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-3">
+                        {token && isAdminPath && (
+                            <Link
+                                href={`/${locale}/admin/notifications`}
+                                className="relative p-2 rounded-btn hover:bg-gray-100 transition-colors"
+                                aria-label="Notifications"
+                            >
+                                <span className="text-xl">🔔</span>
+                                {unread > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
+                                        {unread > 99 ? '99+' : unread}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
                         <Link
                             href={`/${locale}/imams/submit`}
                             className="hidden sm:inline-flex px-5 py-2.5 bg-accent text-white rounded-xl font-bold text-sm transition-all hover:bg-accent-dark hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(201,150,42,0.35)]"

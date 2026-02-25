@@ -29,7 +29,8 @@ export class ImamsController {
     @Post('imams')
     create(@Body() dto: CreateImamDto, @Req() req: Request) {
         const ip = req.ip || req.socket.remoteAddress;
-        return this.imamsService.create(dto, ip);
+        const createdBy = (req as any).user?.email || (req as any).user?.id || 'Guest';
+        return this.imamsService.create(dto, ip, createdBy);
     }
 
     // ── Admin Routes ──

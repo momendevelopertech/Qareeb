@@ -24,9 +24,10 @@ export class MaintenanceController {
     }
 
     @Post('maintenance')
-    create(@Body() dto: CreateMaintenanceDto) {
+    create(@Body() dto: CreateMaintenanceDto, @Req() req: any) {
         try {
-            return this.maintenanceService.create(dto);
+            const createdBy = req.user?.email || req.user?.id || 'Guest';
+            return this.maintenanceService.create(dto, createdBy);
         } catch (error) {
             console.error('Maintenance create error:', error);
             throw error;
