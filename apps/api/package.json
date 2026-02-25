@@ -10,11 +10,12 @@
         "start:prod": "node dist/main",
         "lint": "eslint \"{src,test}/**/*.ts\" --fix",
         "prisma:generate": "prisma generate",
-        "prisma:migrate": "prisma migrate dev",
-        "prisma:seed": "ts-node prisma/seed.ts"
-    },
-    "dependencies": {
-        "@nestjs/common": "^10.3.0",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "ts-node prisma/seed.ts"
+  },
+  "preinstall": "npm install @vendia/serverless-express aws-lambda --no-save || true",
+  "dependencies": {
+    "@nestjs/common": "^10.3.0",
         "@nestjs/config": "^4.0.3",
         "@nestjs/core": "^10.3.0",
         "@nestjs/jwt": "^10.2.0",

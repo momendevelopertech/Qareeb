@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
-async function bootstrap() {
+export async function createApp() {
     const app = await NestFactory.create(AppModule);
 
     // Global prefix
@@ -47,8 +47,16 @@ async function bootstrap() {
         }),
     );
 
+    return app;
+}
+
+async function bootstrap() {
+    const app = await createApp();
     const port = process.env.PORT || 3001;
     await app.listen(port);
     console.log(`🚀 Qareeb API running on http://localhost:${port}/v1`);
 }
-bootstrap();
+
+if (process.env.SERVERLESS !== 'true') {
+    bootstrap();
+}

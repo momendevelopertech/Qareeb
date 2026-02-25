@@ -2,5 +2,13 @@
   "framework": "node",
   "installCommand": "npm install",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "env": {
+    "SERVERLESS": "true"
+  }
 }
