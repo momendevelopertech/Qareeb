@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMaintenanceDto, MaintenanceQueryDto } from './dto/maintenance.dto';
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
@@ -52,7 +51,7 @@ export class MaintenanceService {
             };
         }
 
-        const where: Prisma.MaintenanceRequestWhereInput = {
+        const where: any = {
             status: (query.status as any) || 'approved',
         };
         if (query.governorate) where.governorate = query.governorate;
@@ -128,7 +127,7 @@ export class MaintenanceService {
         }
 
         await this.notifications.createForType(
-            NotificationType.maintenance,
+            'maintenance',
             request.id,
             'Maintenance submission',
             `New maintenance request: ${request.mosqueName}`,
