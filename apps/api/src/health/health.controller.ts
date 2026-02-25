@@ -6,4 +6,9 @@ export class HealthController {
     health() {
         return { ok: true, timestamp: new Date().toISOString() };
     }
+
+    @Get('healthz')
+    healthz() {
+        return { ok: true, timestamp: new Date().toISOString() };
+    }
 }
