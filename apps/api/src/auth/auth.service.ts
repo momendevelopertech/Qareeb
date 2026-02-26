@@ -30,7 +30,7 @@ export class AuthService {
         return admin;
     }
 
-    async login(email: string, password: string) {
+    async login(email: string, password: string, rememberMe = true) {
         const admin = await this.validateAdmin(email, password);
 
         const payload = {
@@ -40,7 +40,7 @@ export class AuthService {
         };
 
         const accessToken = this.jwtService.sign(payload);
-        const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+        const refreshToken = this.jwtService.sign(payload, { expiresIn: rememberMe ? '30d' : '1d' });
 
         return {
             access_token: accessToken,

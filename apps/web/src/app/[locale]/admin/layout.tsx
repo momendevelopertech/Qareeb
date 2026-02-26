@@ -14,7 +14,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const locale = useLocale();
     const pathname = usePathname();
     const router = useRouter();
-    const { token, admin, clearAuth } = useAuthStore();
+    const { token, admin, rememberMe, setAuth, clearAuth } = useAuthStore();
     const { unreadCount, addNotification, setNotifications } = useNotificationStore();
 
     // If no token and not on login page, show login
@@ -25,6 +25,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             // Don't redirect, just show login on the admin page
         }
     }, [token, isLoginPage]);
+
+    useEffect(() => {
+        let mounted = true;
+        let refreshInterval: ReturnType<typeof setInterval> | null = null;
+
+        const tryRefresh = async () => {
+            try {
+                const refreshed = await adminApi.refresh();
+                if (mounted && refreshed?.access_token && admin) {
+                    setAuth(refreshed.access_token, admin, rememberMe);
+                }
+            } catch {
+                if (mounted && !token) {
+                    clearAuth();
+                }
+            }
+        };
+
+        if (rememberMe) {
+            void tryRefresh();
+            refreshInterval = setInterval(() => {
+                void tryRefresh();
+            }, 10 * 60 * 1000);
+        }
+
+        return () => {
+            mounted = false;
+            if (refreshInterval) clearInterval(refreshInterval);
+        };
+    }, [rememberMe, admin?.id, token, setAuth, clearAuth]);
 
     useEffect(() => {
         const bootstrap = async () => {

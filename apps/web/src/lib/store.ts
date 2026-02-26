@@ -43,7 +43,8 @@ export const useGeolocationStore = create<GeolocationState>((set) => ({
 interface AuthState {
     token: string | null;
     admin: { id: string; email: string; role: string } | null;
-    setAuth: (token: string, admin: any) => void;
+    rememberMe: boolean;
+    setAuth: (token: string, admin: any, rememberMe?: boolean) => void;
     clearAuth: () => void;
 }
 
@@ -52,8 +53,9 @@ export const useAuthStore = create<AuthState>()(
         (set) => ({
             token: null,
             admin: null,
-            setAuth: (token, admin) => set({ token, admin }),
-            clearAuth: () => set({ token: null, admin: null }),
+            rememberMe: true,
+            setAuth: (token, admin, rememberMe = true) => set({ token, admin, rememberMe }),
+            clearAuth: () => set({ token: null, admin: null, rememberMe: true }),
         }),
         {
             name: 'qareeb-auth',

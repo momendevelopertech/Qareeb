@@ -71,10 +71,10 @@ export const api = {
 // ── Admin API ──
 
 export const adminApi = {
-    login: (email: string, password: string) =>
+    login: (email: string, password: string, rememberMe = true) =>
         fetchAPI<any>('/admin/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, remember_me: rememberMe }),
             credentials: 'include',
         }),
 
