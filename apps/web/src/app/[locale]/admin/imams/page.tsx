@@ -29,6 +29,19 @@ export default function AdminImamsPage() {
     const [loading, setLoading] = useState(true);
     const [editForm, setEditForm] = useState<any>({});
 
+    const shareText = async (text: string) => {
+        try {
+            if (navigator.share) {
+                await navigator.share({ text });
+                return;
+            }
+            await navigator.clipboard.writeText(text);
+            pushToast(locale === 'ar' ? 'تم نسخ النص للمشاركة' : 'Share text copied', 'success');
+        } catch {
+            pushToast(locale === 'ar' ? 'تعذر تنفيذ المشاركة' : 'Unable to share', 'error');
+        }
+    };
+
     useEffect(() => {
         if (!token) {
             router.push(`/${locale}/admin`);
@@ -143,17 +156,41 @@ export default function AdminImamsPage() {
 
             <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الإمام' : 'View Imam'} onClose={closeModal}>
                 {payload && (
-                    <div className="space-y-3 text-sm">
+                    <div className="space-y-4 text-sm">
                         <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {payload.imamName}</p>
                         <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
                         <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
                         {payload.videoUrl && (
-                            <iframe src={payload.videoUrl} className="w-full h-64 rounded-xl border" allowFullScreen title="video" />
+                            <div className="rounded-xl border border-border p-3 bg-cream/40 space-y-2">
+                                <p className="text-xs font-bold text-text-muted">{locale === 'ar' ? 'رابط الفيديو' : 'Video link'}</p>
+                                <iframe src={payload.videoUrl} className="w-full h-64 rounded-xl border" allowFullScreen title="video" />
+                                <div className="flex flex-wrap gap-2">
+                                    <a className="btn-outline !py-1.5 !px-3 text-xs" target="_blank" rel="noreferrer" href={payload.videoUrl}>
+                                        {locale === 'ar' ? 'فتح الفيديو' : 'Open video'}
+                                    </a>
+                                    <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => navigator.clipboard.writeText(payload.videoUrl)}>
+                                        {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                    </button>
+                                    <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => shareText(`${payload.imamName}\n${payload.mosqueName}\n${payload.videoUrl}`)}>
+                                        {locale === 'ar' ? 'مشاركة' : 'Share'}
+                                    </button>
+                                </div>
+                            </div>
                         )}
                         {payload.googleMapsUrl && (
-                            <div className="flex gap-2">
-                                <a className="btn-outline" target="_blank" rel="noreferrer" href={payload.googleMapsUrl}>{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a>
-                                <button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button>
+                            <div className="rounded-xl border border-border p-3 bg-cream/40 space-y-2">
+                                <p className="text-xs font-bold text-text-muted">{locale === 'ar' ? 'رابط الخريطة' : 'Map link'}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <a className="btn-outline !py-1.5 !px-3 text-xs" target="_blank" rel="noreferrer" href={payload.googleMapsUrl}>
+                                        {locale === 'ar' ? 'فتح الخريطة' : 'Open map'}
+                                    </a>
+                                    <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>
+                                        {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                                    </button>
+                                    <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => shareText(`${payload.imamName}\n${payload.mosqueName}\n${payload.googleMapsUrl}`)}>
+                                        {locale === 'ar' ? 'مشاركة' : 'Share'}
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -29,6 +29,19 @@ export default function PublicCardsTabs() {
         }).catch(() => undefined);
     }, []);
 
+    const shareText = async (text: string) => {
+        try {
+            if (navigator.share) {
+                await navigator.share({ text });
+                return;
+            }
+            await navigator.clipboard.writeText(text);
+            pushToast(locale === 'ar' ? 'تم نسخ النص للمشاركة' : 'Share text copied', 'success');
+        } catch {
+            pushToast(locale === 'ar' ? 'تعذر تنفيذ المشاركة' : 'Unable to share', 'error');
+        }
+    };
+
     const cards = useMemo(() => {
         const toCard = (item: any, entity: 'imam' | 'halqa' | 'maintenance') => ({
             id: item.id,
@@ -53,12 +66,7 @@ export default function PublicCardsTabs() {
 
     const shareCard = async (card: any) => {
         const text = `${card.name}\n${card.mosque || ''}\n${card.typeLabel}\n${card.map || ''}`.trim();
-        if (navigator.share) {
-            await navigator.share({ text });
-            return;
-        }
-        await navigator.clipboard.writeText(text);
-        pushToast(locale === 'ar' ? 'تم نسخ نص المشاركة' : 'Share text copied', 'success');
+        await shareText(text);
     };
 
     return (
@@ -90,10 +98,11 @@ export default function PublicCardsTabs() {
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => openModal('view', card.entity, card)}>{locale === 'ar' ? 'عرض التفاصيل' : 'View details'}</button>
-                            {card.map && <a href={card.map} target="_blank" rel="noreferrer" className="btn-outline !py-1.5 !px-3 text-xs">Google Maps</a>}
-                            {card.map && <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => navigator.clipboard.writeText(card.map)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy map'}</button>}
-                            <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => shareCard(card)}>{locale === 'ar' ? 'مشاركة' : 'Share'}</button>
-                            {card.video && <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => openModal('video', card.entity, card)}>{locale === 'ar' ? 'فيديو' : 'Video'}</button>}
+                            {card.map && <a href={card.map} target="_blank" rel="noreferrer" className="btn-outline !py-1.5 !px-3 text-xs">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a>}
+                            {card.map && <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => navigator.clipboard.writeText(card.map)}>{locale === 'ar' ? 'نسخ رابط الخريطة' : 'Copy map link'}</button>}
+                            {card.video && <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => openModal('video', card.entity, card)}>{locale === 'ar' ? 'عرض الفيديو' : 'View video'}</button>}
+                            {card.video && <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => shareText(`${card.name}\n${card.video}`)}>{locale === 'ar' ? 'مشاركة الفيديو' : 'Share video'}</button>}
+                            <button className="btn-outline !py-1.5 !px-3 text-xs" onClick={() => shareCard(card)}>{locale === 'ar' ? 'مشاركة البطاقة' : 'Share card'}</button>
                         </div>
                     </div>
                 ))}
@@ -104,7 +113,7 @@ export default function PublicCardsTabs() {
                     <div className="space-y-3">
                         <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {payload.name}</p>
                         <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosque}</p>
-                        {payload.map && <a className="btn-outline inline-flex" href={payload.map} target="_blank" rel="noreferrer">Google Maps</a>}
+                        {payload.map && <a className="btn-outline inline-flex" href={payload.map} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a>}
                     </div>
                 )}
             </AppModal>
