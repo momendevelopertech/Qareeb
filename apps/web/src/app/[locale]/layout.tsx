@@ -36,7 +36,7 @@ export default async function LocaleLayout({
 
     return (
         <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${tajawal.variable}`}>
-            <body className={locale === 'ar' ? 'font-arabic' : 'font-tajawal'}>
+            <body className={locale === 'ar' ? 'font-arabic' : 'font-latin'}>
                 <NextIntlClientProvider messages={messages}>
                     {children}
                     <ToastHost />

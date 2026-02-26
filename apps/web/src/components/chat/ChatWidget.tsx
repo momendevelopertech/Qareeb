@@ -32,21 +32,21 @@ export default function ChatWidget() {
             if (res?.message) addMessage('bot', res.message);
             setCards(Array.isArray(res?.cards) ? res.cards : []);
         } catch {
-            addMessage('bot', locale === 'ar' ? '??? ??? ????? ????????.' : 'Something went wrong.');
+            addMessage('bot', locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.');
             setCards([]);
         }
     };
 
     const quickButtons = [
-        '???? ????',
-        '???? ????',
-        '???? ????? ?????',
+        'أقرب مسجد',
+        'أقرب حلقة',
+        'مسجد يحتاج صيانة',
     ];
 
     if (!isOpen) {
         return (
             <button onClick={toggleChat} className="fixed bottom-6 start-6 z-40 w-16 h-16 bg-primary text-white rounded-full shadow-fab flex items-center justify-center hover:scale-110 transition-all" aria-label="chat">
-                ??
+                💬
             </button>
         );
     }
@@ -54,13 +54,13 @@ export default function ChatWidget() {
     return (
         <div className="fixed bottom-6 start-6 z-40 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-border overflow-hidden">
             <div className="bg-gradient-to-r from-primary to-primary-light px-5 py-4 flex items-center justify-between text-white">
-                <span className="font-black">{locale === 'ar' ? '????? ????' : 'Qareeb Assistant'}</span>
+                <span className="font-black">{locale === 'ar' ? 'مساعد قريب' : 'Qareeb Assistant'}</span>
                 <button onClick={toggleChat} aria-label="close">×</button>
             </div>
 
             <div className="h-80 overflow-y-auto p-4 space-y-3 bg-cream/30">
                 <div className="text-xs bg-white border border-border rounded-xl p-3">
-                    {locale === 'ar' ? '???? ?? ?????? ??????? ?? ???? ???? ????.' : 'Ask religious questions or nearest services.'}
+                    {locale === 'ar' ? 'اسأل عن الأسئلة الدينية أو أقرب خدمة حولك.' : 'Ask religious questions or nearest services.'}
                 </div>
 
                 <div className="grid gap-2">
@@ -85,7 +85,7 @@ export default function ChatWidget() {
                                 <p className="text-text-muted">{card.address}</p>
                                 <div className="flex gap-2 flex-wrap">
                                     {card.googleMapUrl && <a className="btn-outline !py-1 !px-2 text-[11px]" href={card.googleMapUrl} target="_blank" rel="noreferrer">Google Maps</a>}
-                                    <button className="btn-outline !py-1 !px-2 text-[11px]" onClick={() => router.push(`/${locale}/${card.type === 'halqa' ? 'halaqat' : card.type}/${card.id}`)}>{locale === 'ar' ? '??? ????????' : 'View details'}</button>
+                                    <button className="btn-outline !py-1 !px-2 text-[11px]" onClick={() => router.push(`/${locale}/${card.type === 'halqa' ? 'halaqat' : card.type}/${card.id}`)}>{locale === 'ar' ? 'عرض التفاصيل' : 'View details'}</button>
                                 </div>
                             </div>
                         ))}
@@ -95,8 +95,8 @@ export default function ChatWidget() {
             </div>
 
             <div className="border-t border-border p-3 bg-white flex gap-2">
-                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder={locale === 'ar' ? '???? ?????...' : 'Ask...'} className="flex-1 px-3 py-2 bg-cream rounded-xl text-sm outline-none" />
-                <button onClick={() => send()} className="bg-primary text-white px-3 rounded-xl">?</button>
+                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} placeholder={locale === 'ar' ? 'اكتب سؤالك...' : 'Ask...'} className="flex-1 px-3 py-2 bg-cream rounded-xl text-sm outline-none" />
+                <button onClick={() => send()} className="bg-primary text-white px-3 rounded-xl">↵</button>
             </div>
         </div>
     );

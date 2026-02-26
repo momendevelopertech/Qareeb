@@ -37,7 +37,7 @@ export default function AdminMaintenancePage() {
             const result = await adminApi.getAdminMaintenance(token!, `status=${statusFilter}`);
             setItems(result?.data || []);
         } catch {
-            pushToast(locale === 'ar' ? '??? ????? ????????' : 'Failed to load data', 'error');
+            pushToast(locale === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data', 'error');
         }
         setLoading(false);
     };
@@ -45,31 +45,31 @@ export default function AdminMaintenancePage() {
     const approve = async (id: string) => {
         try {
             await adminApi.approveMaintenance(token!, id);
-            pushToast(locale === 'ar' ? '??? ????????' : 'Approved', 'success');
+            pushToast(locale === 'ar' ? 'تمت الموافقة' : 'Approved', 'success');
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ????????' : 'Approve failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل في الموافقة' : 'Approve failed', 'error');
         }
     };
 
     const reject = async (id: string) => {
         try {
-            await adminApi.rejectMaintenance(token!, id, locale === 'ar' ? '?? ????? ?? ??????' : 'Rejected by admin');
-            pushToast(locale === 'ar' ? '?? ?????' : 'Rejected', 'success');
+            await adminApi.rejectMaintenance(token!, id, locale === 'ar' ? 'تم الرفض بواسطة المشرف' : 'Rejected by admin');
+            pushToast(locale === 'ar' ? 'تم الرفض' : 'Rejected', 'success');
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ?????' : 'Reject failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل الرفض' : 'Reject failed', 'error');
         }
     };
 
     const saveEdit = async () => {
         try {
             await adminApi.updateMaintenance(token!, payload.id, editForm);
-            pushToast(locale === 'ar' ? '?? ???????' : 'Updated', 'success');
+            pushToast(locale === 'ar' ? 'تم التحديث' : 'Updated', 'success');
             closeModal();
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ???????' : 'Update failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
         }
     };
 
@@ -97,18 +97,18 @@ export default function AdminMaintenancePage() {
         if (!file || !payload) return;
         const current = payload.media || [];
         if (current.length >= 4) {
-            pushToast(locale === 'ar' ? '???? ?????? 4 ???' : 'Max 4 images', 'error');
+            pushToast(locale === 'ar' ? 'الحد الأقصى 4 صور' : 'Max 4 images', 'error');
             return;
         }
         try {
             const uploaded = await uploadImageToCloudinary(file);
             setEditForm((s: any) => ({ ...s, media_uploads: [...(s.media_uploads || []), uploaded] }));
             setNewImageUrl(uploaded?.secureUrl || '');
-            pushToast(locale === 'ar' ? '?? ??? ??????' : 'Image uploaded', 'success');
+            pushToast(locale === 'ar' ? 'تم رفع الصورة' : 'Image uploaded', 'success');
         } catch (error: any) {
-            const reason = error?.message === 'size' ? (locale === 'ar' ? '???? ?????? 2MB' : 'Max size is 2MB')
-                : error?.message === 'type' ? (locale === 'ar' ? '???? ?????? ??? ??????' : 'Unsupported image type')
-                    : (locale === 'ar' ? '??? ?????' : 'Upload failed');
+            const reason = error?.message === 'size' ? (locale === 'ar' ? 'الحد الأقصى للحجم 2MB' : 'Max size is 2MB')
+                : error?.message === 'type' ? (locale === 'ar' ? 'نوع الصورة غير مدعوم' : 'Unsupported image type')
+                    : (locale === 'ar' ? 'فشل رفع الصورة' : 'Upload failed');
             pushToast(reason, 'error');
         }
     };
@@ -116,16 +116,16 @@ export default function AdminMaintenancePage() {
     const deleteExistingImage = async (publicId: string) => {
         try {
             await adminApi.deleteMediaAsset(token!, publicId);
-            pushToast(locale === 'ar' ? '?? ??? ??????' : 'Image deleted', 'success');
+            pushToast(locale === 'ar' ? 'تم حذف الصورة' : 'Image deleted', 'success');
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ??? ??????' : 'Delete image failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل حذف الصورة' : 'Delete image failed', 'error');
         }
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-black">{locale === 'ar' ? '????? ???????' : 'Manage Maintenance'}</h1>
+            <h1 className="text-2xl font-black">{locale === 'ar' ? 'إدارة الصيانة' : 'Manage Maintenance'}</h1>
             <div className="flex gap-2 flex-wrap">
                 {['pending', 'approved', 'rejected'].map((s) => (
                     <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-xl text-sm font-bold ${statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-border'}`}>
@@ -161,17 +161,17 @@ export default function AdminMaintenancePage() {
                 </div>
             </div>
 
-            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? '??? ??? ???????' : 'View Maintenance'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الصيانة' : 'View Maintenance'} onClose={closeModal}>
                 {payload && <div className="space-y-3 text-sm">
                     <p><strong>Mosque:</strong> {payload.mosqueName}</p>
                     <p><strong>Description:</strong> {payload.description}</p>
                     <p><strong>Types:</strong> {(payload.maintenanceTypes || []).join(', ')}</p>
-                    {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? '??? ???????' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? '??? ??????' : 'Copy link'}</button></div>}
+                    {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
                     {(payload.media || []).length > 0 && <div className="overflow-x-auto whitespace-nowrap space-x-2">{(payload.media || []).map((m: any) => <img key={m.id} src={m.url} alt="maintenance" className="inline-block w-40 h-28 object-cover rounded-lg border" />)}</div>}
                 </div>}
             </AppModal>
 
-            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? '????? ???????' : 'Edit Maintenance'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الصيانة' : 'Edit Maintenance'} onClose={closeModal}>
                 <div className="space-y-3">
                     <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder="Mosque" />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
@@ -192,12 +192,12 @@ export default function AdminMaintenancePage() {
                     )}
 
                     <div className="border border-dashed border-border rounded-xl p-3">
-                        <label className="text-sm font-semibold block mb-2">{locale === 'ar' ? '????? ????' : 'Add image'} (jpg/png/webp, max 2MB)</label>
+                        <label className="text-sm font-semibold block mb-2">{locale === 'ar' ? 'إضافة صورة' : 'Add image'} (jpg/png/webp, max 2MB)</label>
                         <input type="file" accept="image/jpeg,image/png,image/webp" onChange={addUploadedImage} />
                         {newImageUrl && <img src={newImageUrl} alt="uploaded" className="mt-3 w-40 h-28 object-cover rounded-lg border" />}
-                        <p className="text-xs text-text-muted mt-2">{locale === 'ar' ? '???? ?????? 4 ??? ??? ???' : 'Maximum 4 images per request'}</p>
+                        <p className="text-xs text-text-muted mt-2">{locale === 'ar' ? 'الحد الأقصى 4 صور لكل طلب' : 'Maximum 4 images per request'}</p>
                     </div>
-                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? '???' : 'Save'}</button>
+                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? 'حفظ' : 'Save'}</button>
                 </div>
             </AppModal>
         </div>

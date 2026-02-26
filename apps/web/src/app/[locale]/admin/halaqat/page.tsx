@@ -36,34 +36,34 @@ export default function AdminHalaqatPage() {
             const result = await adminApi.getAdminHalaqat(token!, `status=${statusFilter}`);
             setItems(result?.data || []);
         } catch {
-            pushToast(locale === 'ar' ? '???? ????? ????????' : 'Failed to load data', 'error');
+            pushToast(locale === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data', 'error');
         }
         setLoading(false);
     };
 
     const approve = async (id: string) => {
-        try { await adminApi.approveHalqa(token!, id); pushToast(locale === 'ar' ? '??? ????????' : 'Approved', 'success'); void fetchData(); }
-        catch { pushToast(locale === 'ar' ? '??? ????????' : 'Approve failed', 'error'); }
+        try { await adminApi.approveHalqa(token!, id); pushToast(locale === 'ar' ? 'تمت الموافقة' : 'Approved', 'success'); void fetchData(); }
+        catch { pushToast(locale === 'ar' ? 'فشل في الموافقة' : 'Approve failed', 'error'); }
     };
     const reject = async (id: string) => {
-        try { await adminApi.rejectHalqa(token!, id, locale === 'ar' ? '?? ????? ?? ??????' : 'Rejected by admin'); pushToast(locale === 'ar' ? '?? ?????' : 'Rejected', 'success'); void fetchData(); }
-        catch { pushToast(locale === 'ar' ? '??? ?????' : 'Reject failed', 'error'); }
+        try { await adminApi.rejectHalqa(token!, id, locale === 'ar' ? 'تم الرفض بواسطة المشرف' : 'Rejected by admin'); pushToast(locale === 'ar' ? 'تم الرفض' : 'Rejected', 'success'); void fetchData(); }
+        catch { pushToast(locale === 'ar' ? 'فشل الرفض' : 'Reject failed', 'error'); }
     };
 
     const saveEdit = async () => {
         try {
             await adminApi.updateHalqa(token!, payload.id, editForm);
-            pushToast(locale === 'ar' ? '?? ???????' : 'Updated', 'success');
+            pushToast(locale === 'ar' ? 'تم التحديث' : 'Updated', 'success');
             closeModal();
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ???????' : 'Update failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
         }
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-black">{locale === 'ar' ? '????? ???????' : 'Manage Halaqat'}</h1>
+            <h1 className="text-2xl font-black">{locale === 'ar' ? 'إدارة الحلقات' : 'Manage Halaqat'}</h1>
             <div className="flex gap-2 flex-wrap">
                 {['pending', 'approved', 'rejected'].map((s) => <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-xl text-sm font-bold ${statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-border'}`}>{s}</button>)}
             </div>
@@ -93,23 +93,23 @@ export default function AdminHalaqatPage() {
                 </div>
             </div>
 
-            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? '??? ??????' : 'View Halqa'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الحلقة' : 'View Halqa'} onClose={closeModal}>
                 {payload && <div className="space-y-3 text-sm">
                     <p><strong>Name:</strong> {payload.circleName}</p>
                     <p><strong>Mosque:</strong> {payload.mosqueName}</p>
                     <p><strong>Type:</strong> {payload.halqaType}</p>
                     <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
-                    {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? '??? ???????' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? '??? ??????' : 'Copy link'}</button></div>}
+                    {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
                 </div>}
             </AppModal>
 
-            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? '????? ??????' : 'Edit Halqa'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الحلقة' : 'Edit Halqa'} onClose={closeModal}>
                 <div className="space-y-3">
                     <input className="input-field" value={editForm.circle_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, circle_name: e.target.value }))} placeholder="Name" />
                     <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder="Mosque" />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
                     <textarea className="input-field" value={editForm.additional_info || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, additional_info: e.target.value }))} placeholder="Additional info" />
-                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? '???' : 'Save'}</button>
+                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? 'حفظ' : 'Save'}</button>
                 </div>
             </AppModal>
         </div>

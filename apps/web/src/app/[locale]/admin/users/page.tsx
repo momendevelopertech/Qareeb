@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
             const data = await adminApi.getAdminUsers(token!);
             setUsers(Array.isArray(data) ? data : []);
         } catch {
-            pushToast(locale === 'ar' ? '???? ????? ??????????.' : 'Failed to load users.', 'error');
+            pushToast(locale === 'ar' ? 'فشل تحميل المستخدمين.' : 'Failed to load users.', 'error');
         }
         setLoading(false);
     };
@@ -43,36 +43,36 @@ export default function AdminUsersPage() {
         e.preventDefault();
         try {
             await adminApi.createAdminUser(token!, { email: newEmail, password: newPassword, role: newRole });
-            pushToast(locale === 'ar' ? '?? ????? ????????.' : 'User created.', 'success');
+            pushToast(locale === 'ar' ? 'تم إنشاء المستخدم.' : 'User created.', 'success');
             setShowCreate(false);
             setNewEmail('');
             setNewPassword('');
             setNewRole('imam_reviewer');
             void fetchUsers();
         } catch {
-            pushToast(locale === 'ar' ? '??? ????? ????????.' : 'Create failed.', 'error');
+            pushToast(locale === 'ar' ? 'فشل إنشاء المستخدم.' : 'Create failed.', 'error');
         }
     };
 
     const handleToggle = async (id: string, currentActive: boolean) => {
         try {
             await adminApi.updateAdminUser(token!, id, { is_active: !currentActive });
-            pushToast(currentActive ? (locale === 'ar' ? '?? ???????.' : 'Deactivated.') : (locale === 'ar' ? '?? ???????.' : 'Activated.'), 'success');
+            pushToast(currentActive ? (locale === 'ar' ? 'تم التعطيل.' : 'Deactivated.') : (locale === 'ar' ? 'تم التفعيل.' : 'Activated.'), 'success');
             void fetchUsers();
         } catch {
-            pushToast(locale === 'ar' ? '??? ????? ??????.' : 'Status update failed.', 'error');
+            pushToast(locale === 'ar' ? 'فشل تحديث الحالة.' : 'Status update failed.', 'error');
         }
     };
 
     const roleLabels: Record<string, string> = locale === 'ar'
-        ? { super_admin: '???? ???', full_reviewer: '????? ????', imam_reviewer: '????? ????', halqa_reviewer: '????? ?????', maintenance_reviewer: '????? ?????' }
+        ? { super_admin: 'مشرف عام', full_reviewer: 'مراجع شامل', imam_reviewer: 'مراجع أئمة', halqa_reviewer: 'مراجع حلقات', maintenance_reviewer: 'مراجع صيانة' }
         : { super_admin: 'Super Admin', full_reviewer: 'Full Reviewer', imam_reviewer: 'Imam Reviewer', halqa_reviewer: 'Halqa Reviewer', maintenance_reviewer: 'Maint. Reviewer' };
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">{t('users')}</h1>
-                <button onClick={() => setShowCreate(!showCreate)} className="btn-primary text-sm">{showCreate ? (locale === 'ar' ? '?????' : 'Cancel') : t('addUser')}</button>
+                <button onClick={() => setShowCreate(!showCreate)} className="btn-primary text-sm">{showCreate ? (locale === 'ar' ? 'إلغاء' : 'Cancel') : t('addUser')}</button>
             </div>
 
             {showCreate && (
@@ -84,21 +84,21 @@ export default function AdminUsersPage() {
                             {Object.entries(roleLabels).filter(([k]) => k !== 'super_admin').map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                         </select>
                     </div>
-                    <button type="submit" className="btn-primary">{locale === 'ar' ? '?????' : 'Create'}</button>
+                    <button type="submit" className="btn-primary">{locale === 'ar' ? 'إنشاء' : 'Create'}</button>
                 </form>
             )}
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm font-medium">{t('email')}</th><th className="text-start px-4 py-3 text-sm font-medium">{t('role')}</th><th className="text-start px-4 py-3 text-sm font-medium">{t('status')}</th><th className="text-start px-4 py-3 text-sm font-medium">{locale === 'ar' ? '?????????' : 'Actions'}</th></tr></thead>
+                        <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm font-medium">{t('email')}</th><th className="text-start px-4 py-3 text-sm font-medium">{t('role')}</th><th className="text-start px-4 py-3 text-sm font-medium">{t('status')}</th><th className="text-start px-4 py-3 text-sm font-medium">{locale === 'ar' ? 'الإجراءات' : 'Actions'}</th></tr></thead>
                         <tbody className="divide-y">
                             {loading ? <tr><td colSpan={4} className="px-4 py-8 text-center">Loading...</td></tr> : users.map((user) => (
                                 <tr key={user.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-4 font-medium">{user.email}</td>
                                     <td className="px-4 py-4"><span className="badge bg-primary-light text-primary text-xs">{roleLabels[user.role] || user.role}</span></td>
                                     <td className="px-4 py-4"><span className={`badge text-xs ${user.isActive ? 'badge-approved' : 'badge-rejected'}`}>{user.isActive ? t('active') : t('inactive')}</span></td>
-                                    <td className="px-4 py-4">{user.role !== 'super_admin' && <button onClick={() => handleToggle(user.id, user.isActive)} className="text-sm text-primary hover:text-primary-dark font-medium">{user.isActive ? (locale === 'ar' ? '?????' : 'Deactivate') : (locale === 'ar' ? '?????' : 'Activate')}</button>}</td>
+                                    <td className="px-4 py-4">{user.role !== 'super_admin' && <button onClick={() => handleToggle(user.id, user.isActive)} className="text-sm text-primary hover:text-primary-dark font-medium">{user.isActive ? (locale === 'ar' ? 'تعطيل' : 'Deactivate') : (locale === 'ar' ? 'تفعيل' : 'Activate')}</button>}</td>
                                 </tr>
                             ))}
                         </tbody>

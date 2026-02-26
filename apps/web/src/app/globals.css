@@ -18,7 +18,7 @@
   }
 
   .font-arabic { font-family: var(--font-cairo), var(--font-tajawal), sans-serif; }
-  .font-tajawal { font-family: var(--font-tajawal), var(--font-cairo), sans-serif; }
+  .font-latin { font-family: var(--font-cairo), "Segoe UI", Tahoma, sans-serif; }
 }
 
 /* Component classes */

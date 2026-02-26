@@ -155,7 +155,7 @@ export default function SubmitPage() {
                         <h2 className="text-3xl font-black text-dark mb-4">{t('successTitle')}</h2>
                         <p className="text-text-muted text-lg mb-10 leading-relaxed">{t('successMessage')}</p>
                         <a href={`/${locale}`} className="btn-primary inline-flex items-center gap-2 group px-8">
-                            {locale === 'ar' ? 'Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„Ù„Ø±Ø¦ÙŠØ³ÙŠØ©' : 'Back to Home'}
+                            {locale === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
                             <svg className="w-5 h-5 rtl:rotate-180 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                             </svg>
@@ -174,16 +174,16 @@ export default function SubmitPage() {
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
                         <h1 className="text-4xl font-black text-dark mb-3">{t('title')}</h1>
-                        <p className="text-text-muted font-medium">{locale === 'ar' ? 'Ø³Ø§Ù‡Ù… ÙÙŠ Ø¨Ù†Ø§Ø¡ Ù…Ø¬ØªÙ…Ø¹Ù†Ø§ Ø§Ù„Ù…Ø³Ù„Ù… ÙÙŠ Ù…ØµØ±' : 'Contribute to building our Muslim community in Egypt'}</p>
+                        <p className="text-text-muted font-medium">{locale === 'ar' ? 'ساهم في بناء مجتمعنا المسلم في مصر' : 'Contribute to building our Muslim community in Egypt'}</p>
                     </div>
 
                     {/* Step: Select Type */}
                     {step === 'type' && (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 animate-fade-in">
                             {[
-                                { type: 'imam' as const, label: t('imam'), color: 'hover:border-primary', icon: 'ðŸ•Œ', desc: locale === 'ar' ? 'Ø¥Ø¶Ø§ÙØ© Ø¥Ù…Ø§Ù… Ù…Ø³Ø¬Ø¯' : 'Add Masjid Imam' },
-                                { type: 'halqa' as const, label: t('halqa'), color: 'hover:border-primary', icon: 'ðŸ“–', desc: locale === 'ar' ? 'Ø¥Ø¶Ø§ÙØ© Ø¯Ø§Ø± ØªØ­ÙÙŠØ¸' : 'Add Quran Center' },
-                                { type: 'maintenance' as const, label: t('maintenanceReq'), color: 'hover:border-primary', icon: 'ðŸ—ï¸', desc: locale === 'ar' ? 'Ø·Ù„Ø¨ Ø¥Ø¹Ù…Ø§Ø±' : 'Maint. Request' },
+                                { type: 'imam' as const, label: t('imam'), color: 'hover:border-primary', icon: '🕌', desc: locale === 'ar' ? 'إضافة إمام مسجد' : 'Add Masjid Imam' },
+                                { type: 'halqa' as const, label: t('halqa'), color: 'hover:border-primary', icon: '📖', desc: locale === 'ar' ? 'إضافة دار تحفيظ' : 'Add Quran Center' },
+                                { type: 'maintenance' as const, label: t('maintenanceReq'), color: 'hover:border-primary', icon: '🏗️', desc: locale === 'ar' ? 'طلب إعمار' : 'Maint. Request' },
                             ].map((item) => (
                                 <button
                                     key={item.type}
@@ -209,7 +209,7 @@ export default function SubmitPage() {
                                         <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{entityType}</p>
                                     </div>
                                 </div>
-                                <div className="text-xs font-black text-text-muted">{locale === 'ar' ? 'Ø§Ù„Ø®Ø·ÙˆØ© Ø§Ù„Ø£ÙˆÙ„Ù‰' : 'Step 1'}</div>
+                                <div className="text-xs font-black text-text-muted">{locale === 'ar' ? 'الخطوة الأولى' : 'Step 1'}</div>
                             </div>
 
                             <div className="space-y-6">
@@ -218,7 +218,7 @@ export default function SubmitPage() {
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                             {entityType === 'imam' ? ti('imamName') : th('circleName')} <span className="text-red-500">*</span>
                                         </label>
-                                        <input {...register('name', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'Ø§Ù„Ø§Ø³Ù… ÙƒØ§Ù…Ù„Ø§Ù‹...' : 'Full name...'} />
+                                        <input {...register('name', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'الاسم كاملاً...' : 'Full name...'} />
                                     </div>
                                 )}
 
@@ -226,7 +226,7 @@ export default function SubmitPage() {
                                     <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                         {entityType === 'imam' ? ti('mosqueName') : entityType === 'halqa' ? th('mosqueName') : tm('mosqueName')} <span className="text-red-500">*</span>
                                     </label>
-                                    <input {...register('mosqueName', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³Ø¬Ø¯ Ø§Ù„ØªØ§Ø¨Ø¹ Ù„Ù‡...' : 'Mosque name...'} />
+                                    <input {...register('mosqueName', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'} />
                                 </div>
 
                                 {entityType === 'halqa' && (
@@ -244,7 +244,7 @@ export default function SubmitPage() {
                                 {entityType === 'halqa' && (
                                     <label className="flex items-center gap-3 p-3 rounded-xl bg-cream border border-border">
                                         <input type="checkbox" {...register('isOnline')} className="w-5 h-5" />
-                                        <span className="text-sm font-bold">{locale === 'ar' ? 'Ø­Ù„Ù‚Ø© Ø£ÙˆÙ†Ù„Ø§ÙŠÙ†' : 'Online Halqa'}</span>
+                                        <span className="text-sm font-bold">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
                                     </label>
                                 )}
 
@@ -254,13 +254,13 @@ export default function SubmitPage() {
                                             <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{tm('maintenanceTypes')} <span className="text-red-500">*</span></label>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
                                                 {[
-                                                    { value: 'Plumbing', label: locale === 'ar' ? 'Ø³Ø¨Ø§ÙƒØ©' : 'Plumbing', icon: 'ðŸš¿' },
-                                                    { value: 'Electrical', label: locale === 'ar' ? 'ÙƒÙ‡Ø±Ø¨Ø§Ø¡' : 'Electrical', icon: 'ðŸ’¡' },
-                                                    { value: 'Carpentry', label: locale === 'ar' ? 'Ù†Ø¬Ø§Ø±Ø©' : 'Carpentry', icon: 'ðŸ”¨' },
-                                                    { value: 'Painting', label: locale === 'ar' ? 'Ø¯Ù‡Ø§Ù†' : 'Painting', icon: 'ðŸŽ¨' },
-                                                    { value: 'AC_Repair', label: locale === 'ar' ? 'ØªÙƒÙŠÙŠÙ' : 'AC Repair', icon: 'â„ï¸' },
-                                                    { value: 'Cleaning', label: locale === 'ar' ? 'ØªÙ†Ø¸ÙŠÙ' : 'Cleaning', icon: 'ðŸ§¹' },
-                                                    { value: 'Other', label: locale === 'ar' ? 'Ø£Ø®Ø±Ù‰' : 'Other', icon: 'ðŸ“‹' },
+                                                    { value: 'Plumbing', label: locale === 'ar' ? 'سباكة' : 'Plumbing', icon: '🚿' },
+                                                    { value: 'Electrical', label: locale === 'ar' ? 'كهرباء' : 'Electrical', icon: '💡' },
+                                                    { value: 'Carpentry', label: locale === 'ar' ? 'نجارة' : 'Carpentry', icon: '🔨' },
+                                                    { value: 'Painting', label: locale === 'ar' ? 'دهان' : 'Painting', icon: '🎨' },
+                                                    { value: 'AC_Repair', label: locale === 'ar' ? 'تكييف' : 'AC Repair', icon: '❄️' },
+                                                    { value: 'Cleaning', label: locale === 'ar' ? 'تنظيف' : 'Cleaning', icon: '🧹' },
+                                                    { value: 'Other', label: locale === 'ar' ? 'أخرى' : 'Other', icon: '📋' },
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center gap-2 cursor-pointer">
                                                         <input
@@ -276,7 +276,7 @@ export default function SubmitPage() {
                                         </div>
                                         <div className="group">
                                             <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{tm('description')} <span className="text-red-500">*</span></label>
-                                            <textarea {...register('description', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold min-h-[120px]" placeholder={locale === 'ar' ? 'Ø§Ø´Ø±Ø­ Ø¨Ø§Ù„ØªÙØµÙŠÙ„ Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ø³Ø¬Ø¯ ÙˆØ§Ù„Ø§Ø­ØªÙŠØ§Ø¬Ø§Øª...' : 'Describe Ù…Ø³Ø¬Ø¯ condition and needs...'} />
+                                            <textarea {...register('description', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold min-h-[120px]" placeholder={locale === 'ar' ? 'اشرح بالتفصيل حالة المسجد والاحتياجات...' : 'Describe مسجد condition and needs...'} />
                                         </div>
                                     </>
                                 )}
@@ -296,20 +296,20 @@ export default function SubmitPage() {
                                                 setValue('governorate', gov?.nameAr || gov?.nameEn || '');
                                             }}
                                         >
-                                            <option value="">{locale === 'ar' ? 'Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©' : 'Select governorate'}</option>
+                                            <option value="">{locale === 'ar' ? 'اختر المحافظة' : 'Select governorate'}</option>
                                             {governorates.map((g) => (
                                                 <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{locale === 'ar' ? 'Ø§Ù„Ù…Ù†Ø·Ù‚Ø©' : 'Area'} <span className="text-red-500">*</span></label>
+                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{locale === 'ar' ? 'المنطقة' : 'Area'} <span className="text-red-500">*</span></label>
                                         <select
                                             {...register('areaId', { required: true })}
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             disabled={!selectedGovernorateId}
                                         >
-                                            <option value="">{locale === 'ar' ? 'Ø§Ø®ØªØ± Ø§Ù„Ù…Ù†Ø·Ù‚Ø©' : 'Select area'}</option>
+                                            <option value="">{locale === 'ar' ? 'اختر المنطقة' : 'Select area'}</option>
                                             {areas.map((a) => (
                                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                                             ))}
@@ -319,7 +319,7 @@ export default function SubmitPage() {
 
                                 <div className="group">
                                     <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                        {locale === 'ar' ? 'Ø±Ø§Ø¨Ø· Ø®Ø±Ø§Ø¦Ø· Ø¬ÙˆØ¬Ù„' : 'Google Maps Link'}
+                                        {locale === 'ar' ? 'رابط خرائط جوجل' : 'Google Maps Link'}
                                     </label>
                                     <input
                                         {...register('googleMapsUrl', { required: entityType !== 'halqa' || !isOnline })}
@@ -329,18 +329,18 @@ export default function SubmitPage() {
                                         disabled={entityType === 'halqa' && isOnline}
                                     />
                                     <span className="text-[10px] text-text-muted mt-2 block ms-1 font-bold">
-                                        {locale === 'ar' ? 'Ø³Ù†Ø³ØªØ®Ø±Ø¬ Ø§Ù„Ø¥Ø­Ø¯Ø§Ø«ÙŠØ§Øª ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹ Ù…Ù† Ø§Ù„Ø±Ø§Ø¨Ø·' : 'We will extract coordinates automatically from the link'}
+                                        {locale === 'ar' ? 'سنستخرج الإحداثيات تلقائياً من الرابط' : 'We will extract coordinates automatically from the link'}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setStep('type')} className="btn-outline flex-1 rounded-2xl border-2 hover:bg-cream">
-                                    {locale === 'ar' ? 'Ø§Ù„Ø³Ø§Ø¨Ù‚' : 'Previous'}
+                                    {locale === 'ar' ? 'السابق' : 'Previous'}
                                 </button>
                                 <button type="submit" className="btn-primary flex-1 rounded-2xl group">
-                                    {locale === 'ar' ? 'Ø§Ù„ØªØ§Ù„ÙŠ' : 'Next'}
-                                    <span className="ms-2 rtl:rotate-180 inline-block transition-transform group-hover:translate-x-1">â†’</span>
+                                    {locale === 'ar' ? 'التالي' : 'Next'}
+                                    <span className="ms-2 rtl:rotate-180 inline-block transition-transform group-hover:translate-x-1">→</span>
                                 </button>
                             </div>
                         </form>
@@ -354,10 +354,10 @@ export default function SubmitPage() {
                                     <span className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center text-lg font-black shadow-btn">2</span>
                                     <div>
                                         <h3 className="font-black text-dark text-lg leading-tight">{t('contact')}</h3>
-                                        <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{locale === 'ar' ? 'Ø§Ù„ØªÙˆØ§ØµÙ„ ÙˆØ§Ù„ÙˆØ³Ø§Ø¦Ø·' : 'Communication & Media'}</p>
+                                        <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{locale === 'ar' ? 'التواصل والوسائط' : 'Communication & Media'}</p>
                                     </div>
                                 </div>
-                                <div className="text-xs font-black text-text-muted">{locale === 'ar' ? 'Ø§Ù„Ø®Ø·ÙˆØ© Ø§Ù„Ø£Ø®ÙŠØ±Ø©' : 'Final Step'}</div>
+                                <div className="text-xs font-black text-text-muted">{locale === 'ar' ? 'الخطوة الأخيرة' : 'Final Step'}</div>
                             </div>
 
                             <div className="space-y-6">
@@ -371,7 +371,7 @@ export default function SubmitPage() {
                                 {entityType === 'imam' && (
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                            {locale === 'ar' ? 'Ø±Ø§Ø¨Ø· Ø§Ù„ØªÙ„Ø§ÙˆØ© / Ø§Ù„ÙÙŠØ¯ÙŠÙˆ' : 'Recitation / Video URL'}
+                                            {locale === 'ar' ? 'رابط التلاوة / الفيديو' : 'Recitation / Video URL'}
                                         </label>
                                         <input {...register('videoUrl')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" dir="ltr" placeholder="https://..." />
                                     </div>
@@ -380,7 +380,7 @@ export default function SubmitPage() {
                                 {entityType === 'maintenance' && (
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1">
-                                            {locale === 'ar' ? 'ØµÙˆØ± Ø§Ù„ØµÙŠØ§Ù†Ø© (Ø­ØªÙ‰ 4)' : 'Maintenance images (up to 4)'}
+                                            {locale === 'ar' ? 'صور الصيانة (حتى 4)' : 'Maintenance images (up to 4)'}
                                         </label>
                                         <input
                                             type="file"
@@ -392,9 +392,9 @@ export default function SubmitPage() {
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl"
                                         />
                                         <p className="text-xs text-text-muted mt-2">
-                                            {locale === 'ar' ? 'JPG/PNG/WEBP Ø¨Ø­Ø¯ Ø£Ù‚ØµÙ‰ 2MB Ù„Ù„ØµÙˆØ±Ø©' : 'JPG/PNG/WEBP up to 2MB each'}
+                                            {locale === 'ar' ? 'JPG/PNG/WEBP بحد أقصى 2MB للصورة' : 'JPG/PNG/WEBP up to 2MB each'}
                                         </p>
-                                        {uploadingImage && <p className="text-xs text-primary mt-1">{locale === 'ar' ? 'Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø±ÙØ¹...' : 'Uploading...'}</p>}
+                                        {uploadingImage && <p className="text-xs text-primary mt-1">{locale === 'ar' ? 'جاري الرفع...' : 'Uploading...'}</p>}
                                         {!!imagePreviews.length && (
                                             <div className="mt-3 grid grid-cols-2 gap-2">
                                                 {imagePreviews.map((url, i) => (
@@ -408,7 +408,7 @@ export default function SubmitPage() {
                                                             }}
                                                             className="absolute top-1 end-1 bg-black/60 text-white rounded-full w-5 h-5 text-xs"
                                                         >
-                                                            Ã—
+                                                            ×
                                                         </button>
                                                     </div>
                                                 ))}
@@ -421,7 +421,7 @@ export default function SubmitPage() {
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{th('additionalInfo')}</label>
                                         <textarea {...register('additionalInfo')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold min-h-[100px]"
-                                            placeholder={locale === 'ar' ? 'Ù…ÙˆØ§Ø¹ÙŠØ¯ Ø§Ù„Ø­Ù„Ù‚Ø©ØŒ Ø§Ù„Ø³Ø¹Ø©ØŒ Ù…Ù„Ø§Ø­Ø¸Ø§Øª...' : 'Schedule, capacity, notes...'}
+                                            placeholder={locale === 'ar' ? 'مواعيد الحلقة، السعة، ملاحظات...' : 'Schedule, capacity, notes...'}
                                         />
                                     </div>
                                 )}
@@ -429,13 +429,13 @@ export default function SubmitPage() {
 
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setStep('info')} className="btn-outline flex-1 rounded-2xl border-2 hover:bg-cream">
-                                    {locale === 'ar' ? 'Ø§Ù„Ø³Ø§Ø¨Ù‚' : 'Previous'}
+                                    {locale === 'ar' ? 'السابق' : 'Previous'}
                                 </button>
                                 <button type="submit" disabled={submitting} className="btn-primary flex-1 rounded-2xl group flex items-center justify-center">
                                     {submitting
-                                        ? (locale === 'ar' ? 'Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø¥Ø±Ø³Ø§Ù„...' : 'Submitting...')
-                                        : (locale === 'ar' ? 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø·Ù„Ø¨' : 'Submit Request')}
-                                    {!submitting && <span className="ms-2 rtl:rotate-180 inline-block transition-transform group-hover:translate-y-[-1px]">âœ¨</span>}
+                                        ? (locale === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
+                                        : (locale === 'ar' ? 'إرسال الطلب' : 'Submit Request')}
+                                    {!submitting && <span className="ms-2 rtl:rotate-180 inline-block transition-transform group-hover:translate-y-[-1px]">✨</span>}
                                 </button>
                             </div>
                         </form>
@@ -446,3 +446,4 @@ export default function SubmitPage() {
         </div>
     );
 }
+

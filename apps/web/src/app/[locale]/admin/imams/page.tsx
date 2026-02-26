@@ -43,7 +43,7 @@ export default function AdminImamsPage() {
             const result = await adminApi.getAdminImams(token!, `status=${statusFilter}`);
             setItems(result?.data || []);
         } catch {
-            pushToast(locale === 'ar' ? '???? ????? ????????' : 'Failed to load data', 'error');
+            pushToast(locale === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data', 'error');
         }
         setLoading(false);
     };
@@ -51,48 +51,48 @@ export default function AdminImamsPage() {
     const approve = async (id: string) => {
         try {
             await adminApi.approveImam(token!, id);
-            pushToast(locale === 'ar' ? '??? ????????' : 'Approved', 'success');
+            pushToast(locale === 'ar' ? 'تمت الموافقة' : 'Approved', 'success');
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ????? ????????' : 'Approve failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل في الموافقة' : 'Approve failed', 'error');
         }
     };
 
     const reject = async (id: string) => {
         try {
-            await adminApi.rejectImam(token!, id, locale === 'ar' ? '?? ????? ?? ??????' : 'Rejected by admin');
-            pushToast(locale === 'ar' ? '?? ?????' : 'Rejected', 'success');
+            await adminApi.rejectImam(token!, id, locale === 'ar' ? 'تم الرفض بواسطة المشرف' : 'Rejected by admin');
+            pushToast(locale === 'ar' ? 'تم الرفض' : 'Rejected', 'success');
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ????? ?????' : 'Reject failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل الرفض' : 'Reject failed', 'error');
         }
     };
 
     const saveEdit = async () => {
         try {
             await adminApi.updateImam(token!, payload.id, editForm);
-            pushToast(locale === 'ar' ? '?? ???????' : 'Updated', 'success');
+            pushToast(locale === 'ar' ? 'تم التحديث' : 'Updated', 'success');
             closeModal();
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ???????' : 'Update failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
         }
     };
 
     const remove = async (id: string) => {
         try {
             await adminApi.deleteImam(token!, id);
-            pushToast(locale === 'ar' ? '?? ?????' : 'Deleted', 'success');
+            pushToast(locale === 'ar' ? 'تم الحذف' : 'Deleted', 'success');
             closeModal();
             void fetchData();
         } catch {
-            pushToast(locale === 'ar' ? '??? ?????' : 'Delete failed', 'error');
+            pushToast(locale === 'ar' ? 'فشل الحذف' : 'Delete failed', 'error');
         }
     };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-black">{locale === 'ar' ? '????? ??????' : 'Manage Imams'}</h1>
+            <h1 className="text-2xl font-black">{locale === 'ar' ? 'إدارة الأئمة' : 'Manage Imams'}</h1>
 
             <div className="flex gap-2 flex-wrap">
                 {['pending', 'approved', 'rejected'].map((s) => (
@@ -107,15 +107,15 @@ export default function AdminImamsPage() {
                     <table className="w-full min-w-[680px]">
                         <thead className="bg-gray-50 border-b">
                             <tr>
-                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? '?????' : 'Name'}</th>
-                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? '??????' : 'Mosque'}</th>
-                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? '??????' : 'Status'}</th>
-                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? '?????????' : 'Actions'}</th>
+                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الاسم' : 'Name'}</th>
+                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'المسجد' : 'Mosque'}</th>
+                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الحالة' : 'Status'}</th>
+                                <th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الإجراءات' : 'Actions'}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {loading && <tr><td colSpan={4} className="px-4 py-10 text-center">Loading...</td></tr>}
-                            {!loading && !items.length && <tr><td colSpan={4} className="px-4 py-10 text-center">{locale === 'ar' ? '?? ???? ??????' : 'No data'}</td></tr>}
+                            {!loading && !items.length && <tr><td colSpan={4} className="px-4 py-10 text-center">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>}
                             {!loading && items.map((imam) => (
                                 <tr key={imam.id}>
                                     <td className="px-4 py-4 font-semibold">{imam.imamName}</td>
@@ -141,41 +141,41 @@ export default function AdminImamsPage() {
                 </div>
             </div>
 
-            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? '??? ?????? ??????' : 'View Imam'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الإمام' : 'View Imam'} onClose={closeModal}>
                 {payload && (
                     <div className="space-y-3 text-sm">
-                        <p><strong>{locale === 'ar' ? '?????:' : 'Name:'}</strong> {payload.imamName}</p>
-                        <p><strong>{locale === 'ar' ? '??????:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
+                        <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {payload.imamName}</p>
+                        <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
                         <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
                         {payload.videoUrl && (
                             <iframe src={payload.videoUrl} className="w-full h-64 rounded-xl border" allowFullScreen title="video" />
                         )}
                         {payload.googleMapsUrl && (
                             <div className="flex gap-2">
-                                <a className="btn-outline" target="_blank" rel="noreferrer" href={payload.googleMapsUrl}>{locale === 'ar' ? '??? ???????' : 'Open map'}</a>
-                                <button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? '??? ??????' : 'Copy link'}</button>
+                                <a className="btn-outline" target="_blank" rel="noreferrer" href={payload.googleMapsUrl}>{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a>
+                                <button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button>
                             </div>
                         )}
                     </div>
                 )}
             </AppModal>
 
-            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? '????? ??????' : 'Edit Imam'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الإمام' : 'Edit Imam'} onClose={closeModal}>
                 <div className="space-y-3">
-                    <input className="input-field" value={editForm.imam_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, imam_name: e.target.value }))} placeholder={locale === 'ar' ? '??? ??????' : 'Imam name'} />
-                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? '??? ??????' : 'Mosque name'} />
+                    <input className="input-field" value={editForm.imam_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, imam_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم الإمام' : 'Imam name'} />
+                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque name'} />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
                     <input className="input-field" value={editForm.google_maps_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, google_maps_url: e.target.value }))} placeholder="Google map URL" />
                     <input className="input-field" value={editForm.video_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, video_url: e.target.value }))} placeholder="Video URL" />
-                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? '???' : 'Save'}</button>
+                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? 'حفظ' : 'Save'}</button>
                 </div>
             </AppModal>
 
-            <AppModal isOpen={isOpen && type === 'images'} type="images" title={locale === 'ar' ? '????? ?????' : 'Confirm delete'} onClose={closeModal}>
+            <AppModal isOpen={isOpen && type === 'images'} type="images" title={locale === 'ar' ? 'تأكيد الحذف' : 'Confirm delete'} onClose={closeModal}>
                 {payload && (
                     <div className="space-y-4">
-                        <p>{locale === 'ar' ? '?? ???? ??? ??? ??????' : 'Delete this record?'}</p>
-                        <button className="btn-danger w-full" onClick={() => remove(payload.id)}>{locale === 'ar' ? '???' : 'Delete'}</button>
+                        <p>{locale === 'ar' ? 'هل تريد حذف هذا السجل؟' : 'Delete this record?'}</p>
+                        <button className="btn-danger w-full" onClick={() => remove(payload.id)}>{locale === 'ar' ? 'حذف' : 'Delete'}</button>
                     </div>
                 )}
             </AppModal>
