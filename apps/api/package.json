@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "nest start --watch",
         "build": "nest build",
-        "vercel-build": "prisma migrate deploy && prisma generate && nest build",
+        "vercel-build": "node scripts/migrate-deploy-retry.js && prisma generate && nest build",
         "start": "node dist/main",
         "start:dev": "nest start --watch",
         "start:prod": "node dist/main",
