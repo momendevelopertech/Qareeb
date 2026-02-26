@@ -1,8 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+@import 'react-phone-number-input/style.css';
 
 /* Base styles */
 @layer base {
@@ -18,14 +17,8 @@
     @apply bg-background text-text antialiased;
   }
 
-  /* RTL-specific overrides */
-  [dir="rtl"] body {
-    font-family: 'Cairo', 'Tajawal', sans-serif;
-  }
-
-  [dir="ltr"] body {
-    font-family: 'Poppins', sans-serif;
-  }
+  .font-arabic { font-family: var(--font-cairo), var(--font-tajawal), sans-serif; }
+  .font-tajawal { font-family: var(--font-tajawal), var(--font-cairo), sans-serif; }
 }
 
 /* Component classes */

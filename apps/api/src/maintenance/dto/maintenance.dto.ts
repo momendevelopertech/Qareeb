@@ -73,6 +73,10 @@ export class CreateMaintenanceDto {
     @IsArray()
     @IsString({ each: true })
     media_ids?: string[];
+
+    @IsOptional()
+    @IsArray()
+    media_uploads?: { publicId: string; secureUrl: string }[];
 }
 
 export class MaintenanceQueryDto {

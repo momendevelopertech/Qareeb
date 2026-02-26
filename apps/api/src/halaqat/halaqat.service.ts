@@ -4,6 +4,7 @@ import { CreateHalqaDto, HalqaQueryDto } from './dto/halqa.dto';
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class HalaqatService {
@@ -11,7 +12,12 @@ export class HalaqatService {
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
         private readonly notifications: NotificationsService,
+        private readonly cache: CacheService,
     ) { }
+
+    private async invalidateCache() {
+        await this.cache.deleteByPrefix('approved:halaqat:');
+    }
 
     async findAll(query: HalqaQueryDto) {
         const page = query.page || 1;
@@ -64,6 +70,13 @@ export class HalaqatService {
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
 
+        const cacheable = where.status === 'approved';
+        const cacheKey = `approved:halaqat:${JSON.stringify({ query, page, limit })}`;
+        if (cacheable) {
+            const cached = await this.cache.getJSON<any>(cacheKey);
+            if (cached) return cached;
+        }
+
         const [data, total] = await Promise.all([
             this.prisma.halqa.findMany({
                 where,
@@ -75,10 +88,14 @@ export class HalaqatService {
             this.prisma.halqa.count({ where }),
         ]);
 
-        return {
+        const response = {
             data,
             meta: { page, limit, total, totalPages: Math.ceil(total / limit), hasNext: page * limit < total, hasPrev: page > 1 },
         };
+        if (cacheable) {
+            await this.cache.setJSON(cacheKey, response, 60);
+        }
+        return response;
     }
 
     async findOne(id: string) {
@@ -86,10 +103,13 @@ export class HalaqatService {
     }
 
     async create(dto: CreateHalqaDto, createdBy?: string) {
-        const coords = extractLatLngFromGoogleMaps(dto.google_maps_url)
-            || await resolveLatLngFromGoogleMaps(dto.google_maps_url)
-            || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
-        if (!coords) {
+        const isOnline = Boolean(dto.is_online);
+        const coords = !isOnline
+            ? extractLatLngFromGoogleMaps(dto.google_maps_url)
+                || await resolveLatLngFromGoogleMaps(dto.google_maps_url)
+                || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null)
+            : null;
+        if (!isOnline && !coords) {
             throw new BadRequestException('Invalid Google Maps link. Please share a link that contains coordinates (e.g., open map > share > copy link).');
         }
         const halqa = await this.prisma.halqa.create({
@@ -101,21 +121,20 @@ export class HalaqatService {
                 city: dto.city || dto.governorate,
                 district: dto.district,
                 areaId: dto.area_id || null,
-                googleMapsUrl: dto.google_maps_url,
-                videoUrl: dto.video_url,
-                latitude: coords.lat,
-                longitude: coords.lng,
+                googleMapsUrl: isOnline ? null : dto.google_maps_url,
+                latitude: coords?.lat ?? 0,
+                longitude: coords?.lng ?? 0,
                 whatsapp: dto.whatsapp,
-                additionalInfo: dto.additional_info,
+                additionalInfo: `${isOnline ? '[ONLINE] ' : ''}${dto.additional_info || ''}`.trim() || null,
                 status: 'pending',
             },
         });
 
-        if (process.env.POSTGIS_ENABLED === 'true') {
+        if (process.env.POSTGIS_ENABLED === 'true' && coords) {
             try {
                 await this.prisma.$executeRaw`
                     UPDATE halaqat
-                    SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
+                    SET location = ST_SetSRID(ST_MakePoint(${coords.lng}, ${coords.lat}), 4326)::geography
                     WHERE id = ${halqa.id}::uuid
                 `;
             } catch (error) {
@@ -138,26 +157,35 @@ export class HalaqatService {
             `New circle submitted: ${halqa.circleName} (${halqa.mosqueName})`,
             createdBy,
         );
+        if (createdBy && /^[0-9a-fA-F-]{36}$/.test(createdBy)) {
+            await this.audit.logCreate(createdBy, 'halqa', halqa.id, halqa);
+        }
+        await this.invalidateCache();
         return halqa;
     }
 
     async approve(id: string, adminId: string) {
         const before = await this.prisma.halqa.findUnique({ where: { id } });
         const updated = await this.prisma.halqa.update({ where: { id }, data: { status: 'approved', adminId, rejectionReason: null } });
-        await this.audit.log({ adminId, entityType: 'halqa', entityId: id, action: 'approve', oldData: before, newData: updated });
+        await this.audit.logApprove(adminId, 'halqa', id, updated);
+        await this.notifications.emitAction('halqa', 'approved', id, 'Halqa approved', `Halqa ${updated.circleName} approved`);
+        await this.invalidateCache();
         return updated;
     }
 
     async reject(id: string, adminId: string, reason?: string) {
         const before = await this.prisma.halqa.findUnique({ where: { id } });
         const updated = await this.prisma.halqa.update({ where: { id }, data: { status: 'rejected', adminId, rejectionReason: reason } });
-        await this.audit.log({ adminId, entityType: 'halqa', entityId: id, action: 'reject', oldData: before, newData: updated });
+        await this.audit.logReject(adminId, 'halqa', id, updated);
+        await this.notifications.emitAction('halqa', 'rejected', id, 'Halqa rejected', `Halqa ${updated.circleName} rejected`);
+        await this.invalidateCache();
         return updated;
     }
 
     async update(id: string, adminId: string, data: Partial<CreateHalqaDto>) {
         const before = await this.prisma.halqa.findUnique({ where: { id } });
         if (!before) throw new Error('Halqa not found');
+        const nextOnline = data.is_online !== undefined ? Boolean(data.is_online) : (before.additionalInfo || '').startsWith('[ONLINE]');
         const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
 
         const updated = await this.prisma.halqa.update({
@@ -170,21 +198,29 @@ export class HalaqatService {
                 city: (data.city ?? data.governorate) ?? before.city,
                 district: data.district ?? before.district,
                 areaId: data.area_id ?? before.areaId,
-                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
-                videoUrl: data.video_url ?? before.videoUrl,
-                latitude: coords ? coords.lat : before.latitude,
-                longitude: coords ? coords.lng : before.longitude,
+                googleMapsUrl: nextOnline ? null : (data.google_maps_url ?? before.googleMapsUrl),
+                latitude: nextOnline ? 0 : (coords ? coords.lat : before.latitude),
+                longitude: nextOnline ? 0 : (coords ? coords.lng : before.longitude),
                 whatsapp: data.whatsapp ?? before.whatsapp,
-                additionalInfo: data.additional_info ?? before.additionalInfo,
+                additionalInfo: data.additional_info !== undefined
+                    ? `${nextOnline ? '[ONLINE] ' : ''}${data.additional_info || ''}`.trim() || null
+                    : before.additionalInfo,
             },
         });
 
-        await this.audit.log({ adminId, entityType: 'halqa', entityId: id, action: 'update', oldData: before, newData: updated });
+        await this.audit.logUpdate(adminId, 'halqa', id, before, updated);
+        await this.notifications.emitAction('halqa', 'updated', id, 'Halqa updated', `Halqa ${updated.circleName} updated`);
+        await this.invalidateCache();
         return updated;
     }
 
-    async remove(id: string) {
+    async remove(id: string, adminId: string) {
+        const before = await this.prisma.halqa.findUnique({ where: { id } });
         await this.prisma.mediaAsset.deleteMany({ where: { entityId: id, entityType: 'halqa' } });
-        return this.prisma.halqa.delete({ where: { id } });
+        const deleted = await this.prisma.halqa.delete({ where: { id } });
+        await this.audit.logDelete(adminId, 'halqa', id, before || deleted);
+        await this.notifications.emitAction('halqa', 'updated', id, 'Halqa deleted', `Halqa ${deleted.circleName} deleted`);
+        await this.invalidateCache();
+        return deleted;
     }
 }

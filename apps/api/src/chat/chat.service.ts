@@ -1,116 +1,79 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { SearchService } from '../search/search.service';
 
-type WithCoords = { latitude?: number | null; longitude?: number | null };
+type EntityType = 'imam' | 'halqa' | 'maintenance';
 
 @Injectable()
 export class ChatService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly searchService: SearchService) { }
 
-    private haversine(a: WithCoords, b: { lat: number; lng: number }) {
-        if (!a.latitude || !a.longitude) return Number.POSITIVE_INFINITY;
-        const toRad = (v: number) => (v * Math.PI) / 180;
-        const R = 6371e3;
-        const dLat = toRad(b.lat - a.latitude);
-        const dLng = toRad(b.lng - a.longitude);
-        const la1 = toRad(a.latitude);
-        const la2 = toRad(b.lat);
-        const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
-        return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+    private parseLocationIntent(text: string): EntityType | null {
+        if (/(أقرب\s*مسجد|imam|إمام|مسجد)/i.test(text)) return 'imam';
+        if (/(أقرب\s*حلقة|حلقة|halqa|halaqa)/i.test(text)) return 'halqa';
+        if (/(يحتاج\s*صيانة|صيانة|maintenance|إعمار)/i.test(text)) return 'maintenance';
+        return null;
     }
 
-    async findNearest(text: string, userLat?: number, userLng?: number, locale: 'ar' | 'en' = 'en') {
-        if (!text || !text.trim()) throw new BadRequestException(locale === 'ar' ? 'النص مطلوب' : 'text is required');
+    private async askGroq(text: string) {
+        const key = process.env.GROQ_API_KEY;
+        if (!key) {
+            return 'يرجى ضبط مفتاح Groq في الخادم. الإجابة الدينية غير متاحة الآن.';
+        }
 
-        const areas = await this.prisma.area.findMany({ select: { id: true, nameAr: true, nameEn: true, governorateId: true } });
-        const governorates = await this.prisma.governorate.findMany({ select: { id: true, nameAr: true, nameEn: true } });
-        const query = text.toLowerCase();
+        const systemPrompt = [
+            'أنت مساعد قريب الشرعي.',
+            'أجب بالعربية فقط.',
+            'إجابات قصيرة ومباشرة.',
+            'اعتمد على مفاهيم القرآن والسنة وأقوال العلماء المعتبرين.',
+            'لا تُصدر فتوى شخصية، واذكر أن السائل يرجع لأهل العلم عند النوازل.',
+        ].join(' ');
 
-        const intent = (() => {
-            if (/(صيانة|اعمار|maintenance)/i.test(text)) return 'maintenance';
-            if (/(حلقة|دار|تحفيظ|circle|halqa|halaqa)/i.test(text)) return 'halqa';
-            if (/(إمام|شيخ|imam)/i.test(text)) return 'imam';
-            return 'any';
-        })();
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${key}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                temperature: 0.2,
+                max_tokens: 220,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: text },
+                ],
+            }),
+        });
 
-        const matchedArea = areas.find((a: any) => query.includes((a.nameAr || '').toLowerCase()) || query.includes((a.nameEn || '').toLowerCase()));
-        const matchedGov = governorates.find((g: any) => query.includes((g.nameAr || '').toLowerCase()) || query.includes((g.nameEn || '').toLowerCase()));
-        if (!matchedArea && !matchedGov) return { match: null, message: locale === 'ar' ? 'لم يتم العثور على منطقة مطابقة' : 'No matching area found' };
+        if (!response.ok) {
+            return 'تعذر الوصول لخدمة الإجابة الآن. حاول مرة أخرى بعد قليل.';
+        }
 
-        const areaIds = matchedArea ? [matchedArea.id] : areas.filter((a: any) => a.governorateId === matchedGov?.id).map((a: any) => a.id);
+        const payload = await response.json() as any;
+        return payload?.choices?.[0]?.message?.content?.trim()
+            || 'لا أملك إجابة دقيقة الآن، راجع إمام المسجد أو أهل العلم الموثوقين.';
+    }
 
-        const candidates = [
-            ...(intent === 'maintenance' ? [] : await this.prisma.imam.findMany({ where: { areaId: { in: areaIds }, status: 'approved' }, include: { media: true } })),
-            ...(intent === 'maintenance' ? [] : await this.prisma.halqa.findMany({ where: { areaId: { in: areaIds }, status: 'approved' }, include: { media: true } })),
-            ...(intent === 'imam' || intent === 'halqa' ? [] : await this.prisma.maintenanceRequest.findMany({ where: { areaId: { in: areaIds }, status: 'approved' }, include: { media: true } })),
-        ];
+    async findNearest(text: string, userLat?: number, userLng?: number) {
+        if (!text || !text.trim()) throw new BadRequestException('text is required');
 
-        if (!candidates.length) return { match: null, message: locale === 'ar' ? 'لا توجد بيانات معتمدة في هذه المنطقة بعد' : 'No approved records in this area yet' };
-
-        const ranked = userLat !== undefined && userLng !== undefined
-            ? candidates
-                .map((c) => ({ c, dist: this.haversine(c, { lat: userLat!, lng: userLng! }) }))
-                .sort((a, b) => a.dist - b.dist)
-                .map((r) => r.c)
-            : candidates.sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
-
-        const top = ranked.slice(0, 3);
-
-        const areaLabel = locale === 'ar'
-            ? (matchedArea?.nameAr || matchedGov?.nameAr || '')
-            : (matchedArea?.nameEn || matchedGov?.nameEn || '');
-        const areaKey = matchedArea ? (locale === 'ar' ? 'المنطقة' : 'Area') : (locale === 'ar' ? 'المحافظة' : 'Governorate');
-
-        const L = locale === 'ar'
-            ? {
-                imam: 'الإمام',
-                mosque: 'المسجد',
-                area: areaKey,
-                video: 'الفيديو / التلاوة',
-                maps: 'الخريطة',
-                whatsapp: 'واتساب',
-                halqa: 'حلقة / دار تحفيظ',
-                maintenance: 'طلب صيانة مسجد',
-                item: 'عنصر'
+        const intent = this.parseLocationIntent(text);
+        if (intent && Number.isFinite(userLat) && Number.isFinite(userLng)) {
+            const result = await this.searchService.nearest(userLat!, userLng!, intent);
+            const cards = result.data || [];
+            if (!cards.length) {
+                return { mode: 'location', message: 'لا توجد نتائج معتمدة قريبة حالياً.', cards: [] };
             }
-            : {
-                imam: 'Imam', mosque: 'Mosque', area: 'Area', video: 'Video', maps: 'Maps', whatsapp: 'WhatsApp', halqa: 'Halqa', maintenance: 'Maintenance', item: 'Item'
+
+            const title = intent === 'imam' ? 'أقرب المساجد/الأئمة' : intent === 'halqa' ? 'أقرب الحلقات' : 'المساجد المحتاجة للصيانة';
+            return {
+                mode: 'location',
+                message: `${title} (أفضل 3 نتائج):`,
+                cards,
             };
+        }
 
-        const formatMessage = (pick: any) => {
-            if ('imamName' in pick) {
-                return [
-                    locale === 'ar' ? `🕌 ${L.imam}: ${pick.imamName}` : `🕌 ${L.imam}: ${pick.imamName}`,
-                    locale === 'ar' ? `🏠 ${L.mosque}: ${pick.mosqueName}` : `🏠 ${L.mosque}: ${pick.mosqueName}`,
-                    `📍 ${L.area}: ${areaLabel}`,
-                    pick.videoUrl || pick.recitationUrl ? `🎥 ${L.video}: ${pick.videoUrl || pick.recitationUrl}` : null,
-                    pick.googleMapsUrl ? `🗺️ ${L.maps}: ${pick.googleMapsUrl}` : null,
-                    pick.whatsapp ? `💬 ${L.whatsapp}: ${pick.whatsapp}` : null,
-                ].filter(Boolean).join('\n');
-            }
-            if ('circleName' in pick) {
-                return [
-                    `📖 ${L.halqa}: ${pick.circleName}`,
-                    `🏠 ${L.mosque}: ${pick.mosqueName}`,
-                    `📍 ${L.area}: ${areaLabel}`,
-                    pick.videoUrl ? `🎥 ${L.video}: ${pick.videoUrl}` : null,
-                    pick.googleMapsUrl ? `🗺️ ${L.maps}: ${pick.googleMapsUrl}` : null,
-                    pick.whatsapp ? `💬 ${L.whatsapp}: ${pick.whatsapp}` : null,
-                ].filter(Boolean).join('\n');
-            }
-            return [
-                `🔧 ${L.maintenance}: ${pick.mosqueName}`,
-                `📍 ${L.area}: ${areaLabel}`,
-                pick.googleMapsUrl ? `🗺️ ${L.maps}: ${pick.googleMapsUrl}` : null,
-                pick.whatsapp ? `💬 ${L.whatsapp}: ${pick.whatsapp}` : null,
-            ].filter(Boolean).join('\n');
-        };
-
-        const mapType = (p: any) => ('imamName' in p ? 'imam' : 'circleName' in p ? 'halqa' : 'maintenance');
-
-        return {
-            matches: top.map((item) => ({ type: mapType(item), item, area: matchedArea || matchedGov })),
-            message: top.map((item, i) => `${i + 1}) ${formatMessage(item)}`).join('\n\n'),
-        };
+        const answer = await this.askGroq(text);
+        return { mode: 'religious', message: answer, cards: [] };
     }
 }

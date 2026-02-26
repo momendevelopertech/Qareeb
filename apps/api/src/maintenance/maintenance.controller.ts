@@ -65,7 +65,7 @@ export class MaintenanceController {
     @Delete('admin/maintenance/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')
-    remove(@Param('id') id: string) {
-        return this.maintenanceService.remove(id);
+    remove(@Param('id') id: string, @Req() req: any) {
+        return this.maintenanceService.remove(id, req.user.id);
     }
 }

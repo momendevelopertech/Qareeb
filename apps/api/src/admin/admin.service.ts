@@ -140,7 +140,16 @@ export class AdminService {
     }
 
     // ── Audit Logs ──
-    async getAuditLogs(params: { entityType?: string; entityId?: string; page?: number; limit?: number }) {
+    async getAuditLogs(params: {
+        entityType?: string;
+        entityId?: string;
+        userId?: string;
+        action?: string;
+        from?: string;
+        to?: string;
+        page?: number;
+        limit?: number;
+    }) {
         const page = params.page || 1;
         const limit = Math.min(params.limit || 20, 100);
         const skip = (page - 1) * limit;
@@ -148,6 +157,14 @@ export class AdminService {
         const where: any = {};
         if (params.entityType) where.entityType = params.entityType;
         if (params.entityId) where.entityId = params.entityId;
+        if (params.userId) where.adminId = params.userId;
+        if (params.action) where.action = params.action;
+        if (params.from || params.to) {
+            where.createdAt = {
+                ...(params.from ? { gte: new Date(params.from) } : {}),
+                ...(params.to ? { lte: new Date(params.to) } : {}),
+            };
+        }
 
         const [data, total] = await Promise.all([
             this.prisma.auditLog.findMany({

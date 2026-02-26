@@ -4,6 +4,7 @@ import { CreateMaintenanceDto, MaintenanceQueryDto } from './dto/maintenance.dto
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CacheService } from '../cache/cache.service';
 
 
 @Injectable()
@@ -12,7 +13,12 @@ export class MaintenanceService {
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
         private readonly notifications: NotificationsService,
+        private readonly cache: CacheService,
     ) { }
+
+    private async invalidateCache() {
+        await this.cache.deleteByPrefix('approved:maintenance:');
+    }
 
     async findAll(query: MaintenanceQueryDto) {
         const page = query.page || 1;
@@ -59,6 +65,13 @@ export class MaintenanceService {
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
 
+        const cacheable = where.status === 'approved';
+        const cacheKey = `approved:maintenance:${JSON.stringify({ query, page, limit })}`;
+        if (cacheable) {
+            const cached = await this.cache.getJSON<any>(cacheKey);
+            if (cached) return cached;
+        }
+
         const [data, total] = await Promise.all([
             this.prisma.maintenanceRequest.findMany({
                 where,
@@ -70,10 +83,14 @@ export class MaintenanceService {
             this.prisma.maintenanceRequest.count({ where }),
         ]);
 
-        return {
+        const response = {
             data,
             meta: { page, limit, total, totalPages: Math.ceil(total / limit), hasNext: page * limit < total, hasPrev: page > 1 },
         };
+        if (cacheable) {
+            await this.cache.setJSON(cacheKey, response, 60);
+        }
+        return response;
     }
 
     async findOne(id: string) {
@@ -125,6 +142,18 @@ export class MaintenanceService {
                 data: { entityId: request.id, entityType: 'maintenance' },
             });
         }
+        if (dto.media_uploads?.length) {
+            await this.prisma.mediaAsset.createMany({
+                data: dto.media_uploads.map((item, index) => ({
+                    entityType: 'maintenance',
+                    entityId: request.id,
+                    url: item.secureUrl,
+                    publicId: item.publicId,
+                    mediaType: 'image',
+                    sortOrder: index,
+                })),
+            });
+        }
 
         await this.notifications.createForType(
             'maintenance',
@@ -133,20 +162,28 @@ export class MaintenanceService {
             `New maintenance request: ${request.mosqueName}`,
             createdBy,
         );
+        if (createdBy && /^[0-9a-fA-F-]{36}$/.test(createdBy)) {
+            await this.audit.logCreate(createdBy, 'maintenance', request.id, request);
+        }
+        await this.invalidateCache();
         return request;
     }
 
     async approve(id: string, adminId: string) {
         const before = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
         const updated = await this.prisma.maintenanceRequest.update({ where: { id }, data: { status: 'approved', adminId, rejectionReason: null } });
-        await this.audit.log({ adminId, entityType: 'maintenance', entityId: id, action: 'approve', oldData: before, newData: updated });
+        await this.audit.logApprove(adminId, 'maintenance', id, updated);
+        await this.notifications.emitAction('maintenance', 'approved', id, 'Maintenance approved', `Maintenance ${updated.mosqueName} approved`);
+        await this.invalidateCache();
         return updated;
     }
 
     async reject(id: string, adminId: string, reason?: string) {
         const before = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
         const updated = await this.prisma.maintenanceRequest.update({ where: { id }, data: { status: 'rejected', adminId, rejectionReason: reason } });
-        await this.audit.log({ adminId, entityType: 'maintenance', entityId: id, action: 'reject', oldData: before, newData: updated });
+        await this.audit.logReject(adminId, 'maintenance', id, updated);
+        await this.notifications.emitAction('maintenance', 'rejected', id, 'Maintenance rejected', `Maintenance ${updated.mosqueName} rejected`);
+        await this.invalidateCache();
         return updated;
     }
 
@@ -174,12 +211,32 @@ export class MaintenanceService {
             },
         });
 
-        await this.audit.log({ adminId, entityType: 'maintenance', entityId: id, action: 'update', oldData: before, newData: updated });
+        if (data.media_uploads?.length) {
+            await this.prisma.mediaAsset.createMany({
+                data: data.media_uploads.map((item, index) => ({
+                    entityType: 'maintenance',
+                    entityId: id,
+                    url: item.secureUrl,
+                    publicId: item.publicId,
+                    mediaType: 'image',
+                    sortOrder: index,
+                })),
+            });
+        }
+
+        await this.audit.logUpdate(adminId, 'maintenance', id, before, updated);
+        await this.notifications.emitAction('maintenance', 'updated', id, 'Maintenance updated', `Maintenance ${updated.mosqueName} updated`);
+        await this.invalidateCache();
         return updated;
     }
 
-    async remove(id: string) {
+    async remove(id: string, adminId: string) {
+        const before = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
         await this.prisma.mediaAsset.deleteMany({ where: { entityId: id, entityType: 'maintenance' } });
-        return this.prisma.maintenanceRequest.delete({ where: { id } });
+        const deleted = await this.prisma.maintenanceRequest.delete({ where: { id } });
+        await this.audit.logDelete(adminId, 'maintenance', id, before || deleted);
+        await this.notifications.emitAction('maintenance', 'updated', id, 'Maintenance deleted', `Maintenance ${deleted.mosqueName} deleted`);
+        await this.invalidateCache();
+        return deleted;
     }
 }

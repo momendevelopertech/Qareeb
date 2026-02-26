@@ -34,8 +34,9 @@ const config: Config = {
                 maintenance: '#E74C3C',
             },
             fontFamily: {
-                arabic: ['Cairo', 'Tajawal', 'sans-serif'],
-                english: ['Poppins', 'sans-serif'],
+                arabic: ['var(--font-cairo)', 'var(--font-tajawal)', 'sans-serif'],
+                tajawal: ['var(--font-tajawal)', 'var(--font-cairo)', 'sans-serif'],
+                english: ['var(--font-tajawal)', 'sans-serif'],
             },
             borderRadius: {
                 card: '16px',

@@ -14,6 +14,9 @@ import { AuditModule } from './audit/audit.module';
 import { HealthController } from './health/health.controller';
 import { ChatModule } from './chat/chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SearchModule } from './search/search.module';
+import { CacheModule } from './cache/cache.module';
+import { GeoModule } from './geo/geo.module';
 
 @Module({
     imports: [
@@ -38,6 +41,9 @@ import { NotificationsModule } from './notifications/notifications.module';
         AuditModule,
         ChatModule,
         NotificationsModule,
+        SearchModule,
+        CacheModule,
+        GeoModule,
     ],
     providers: [
         {

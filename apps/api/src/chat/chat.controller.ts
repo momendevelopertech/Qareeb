@@ -7,8 +7,7 @@ export class ChatController {
     constructor(private readonly chatService: ChatService) { }
 
     @Post('nearest')
-    findNearest(@Body() body: NearestChatDto, @Req() req: any) {
-        const locale = (req?.headers['accept-language'] || '').startsWith('ar') ? 'ar' : 'en';
-        return this.chatService.findNearest(body.text, body.lat, body.lng, locale);
+    findNearest(@Body() body: NearestChatDto, @Req() _req: any) {
+        return this.chatService.findNearest(body.text, body.lat, body.lng);
     }
 }

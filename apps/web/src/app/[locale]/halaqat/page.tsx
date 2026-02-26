@@ -180,11 +180,6 @@ export default function HalaqatPage() {
                                                     </button>
                                                     </span>
                                                 )}
-                                                {halqa.video_url && (
-                                                    <a className="text-[11px] font-bold text-accent underline" href={halqa.video_url} target="_blank" rel="noreferrer">
-                                                        {locale === 'ar' ? 'رابط الفيديو' : 'Video link'}
-                                                </a>
-                                            )}
                                         </p>
                                         {(halqa.additional_info || halqa.additionalInfo) && (
                                             <p className="text-sm text-text font-medium leading-relaxed italic line-clamp-3">

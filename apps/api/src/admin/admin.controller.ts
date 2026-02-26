@@ -47,13 +47,16 @@ export class AdminController {
     @UseGuards(RolesGuard)
     @Roles('super_admin', 'full_reviewer')
     getAuditLogs(
-        @Req() req: any,
         @Req() request: any,
     ) {
-        const { entityType, entityId, page, limit } = request.query || {};
+        const { entityType, entityId, page, limit, userId, action, from, to } = request.query || {};
         return this.adminService.getAuditLogs({
             entityType,
             entityId,
+            userId,
+            action,
+            from,
+            to,
             page: page ? parseInt(page, 10) : undefined,
             limit: limit ? parseInt(limit, 10) : undefined,
         });

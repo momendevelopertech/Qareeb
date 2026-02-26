@@ -17,7 +17,7 @@ export class MediaService {
             timestamp,
             folder: 'qareeb',
             allowed_formats: 'jpg,jpeg,png,webp',
-            max_file_size: 5242880, // 5MB
+            max_file_size: 2097152, // 2MB
         };
 
         const signature = cloudinary.utils.api_sign_request(

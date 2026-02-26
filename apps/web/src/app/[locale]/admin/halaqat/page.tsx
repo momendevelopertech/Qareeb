@@ -1,120 +1,118 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
-import { useAuthStore } from '@/lib/store';
+import { useLocale } from 'next-intl';
+import { useAuthStore, useModalStore, useToastStore } from '@/lib/store';
 import { adminApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import AppModal from '@/components/ui/AppModal';
+import { FaCheck, FaEye, FaPenToSquare, FaXmark } from 'react-icons/fa6';
+import PhoneInputField from '@/components/form/PhoneInputField';
+
+function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+    return <button aria-label={label} title={label} onClick={onClick} className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-cream">{children}</button>;
+}
 
 export default function AdminHalaqatPage() {
-    const t = useTranslations('admin');
     const locale = useLocale();
     const router = useRouter();
     const { token } = useAuthStore();
-    const [data, setData] = useState<any>(null);
+    const { isOpen, type, payload, openModal, closeModal } = useModalStore();
+    const { pushToast } = useToastStore();
+
+    const [items, setItems] = useState<any[]>([]);
     const [statusFilter, setStatusFilter] = useState('pending');
     const [loading, setLoading] = useState(true);
+    const [editForm, setEditForm] = useState<any>({});
 
     useEffect(() => {
         if (!token) { router.push(`/${locale}/admin`); return; }
-        fetchData();
+        void fetchData();
     }, [token, statusFilter]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const result = await adminApi.getAdminHalaqat(token!, `status=${statusFilter}`);
-            setData(result);
-        } catch (err) { console.error(err); }
+            setItems(result?.data || []);
+        } catch {
+            pushToast(locale === 'ar' ? '???? ????? ????????' : 'Failed to load data', 'error');
+        }
         setLoading(false);
     };
 
-    const handleApprove = async (id: string) => {
-        try {
-            await adminApi.approveHalqa(token!, id);
-            alert(locale === 'ar' ? 'تمت الموافقة على الحلقة.' : 'Circle approved.');
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert(locale === 'ar' ? 'حدث خطأ أثناء الموافقة.' : 'An error occurred while approving.');
-        }
+    const approve = async (id: string) => {
+        try { await adminApi.approveHalqa(token!, id); pushToast(locale === 'ar' ? '??? ????????' : 'Approved', 'success'); void fetchData(); }
+        catch { pushToast(locale === 'ar' ? '??? ????????' : 'Approve failed', 'error'); }
+    };
+    const reject = async (id: string) => {
+        try { await adminApi.rejectHalqa(token!, id, locale === 'ar' ? '?? ????? ?? ??????' : 'Rejected by admin'); pushToast(locale === 'ar' ? '?? ?????' : 'Rejected', 'success'); void fetchData(); }
+        catch { pushToast(locale === 'ar' ? '??? ?????' : 'Reject failed', 'error'); }
     };
 
-    const handleReject = async (id: string) => {
-        const reason = prompt(locale === 'ar' ? 'سبب الرفض:' : 'Rejection reason:') || '';
+    const saveEdit = async () => {
         try {
-            await adminApi.rejectHalqa(token!, id, reason);
-            alert(locale === 'ar' ? 'تم رفض الحلقة.' : 'Circle rejected.');
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert(locale === 'ar' ? 'حدث خطأ أثناء الرفض.' : 'An error occurred while rejecting.');
+            await adminApi.updateHalqa(token!, payload.id, editForm);
+            pushToast(locale === 'ar' ? '?? ???????' : 'Updated', 'success');
+            closeModal();
+            void fetchData();
+        } catch {
+            pushToast(locale === 'ar' ? '??? ???????' : 'Update failed', 'error');
         }
     };
-
-    const handleEdit = async (halqa: any) => {
-        const newName = prompt(locale === 'ar' ? 'اسم الحلقة' : 'Circle name', halqa.circleName) || halqa.circleName;
-        const newMosque = prompt(locale === 'ar' ? 'اسم المسجد' : 'Mosque name', halqa.mosqueName) || halqa.mosqueName;
-        const newWhatsapp = prompt('WhatsApp', halqa.whatsapp) || halqa.whatsapp;
-        try {
-            await adminApi.updateHalqa(token!, halqa.id, { circle_name: newName, mosque_name: newMosque, whatsapp: newWhatsapp });
-            fetchData();
-        } catch (err) {
-            console.error(err);
-            alert(locale === 'ar' ? 'حدث خطأ أثناء التحديث.' : 'Error updating record.');
-        }
-    };
-
-    const typeLabels: Record<string, string> = locale === 'ar'
-        ? { men: 'رجال', women: 'نساء', children: 'أطفال', mixed: 'مختلط' }
-        : { men: 'Men', women: 'Women', children: 'Children', mixed: 'Mixed' };
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">{locale === 'ar' ? 'إدارة الحلقات' : 'Manage Circles'}</h1>
-            <div className="flex gap-2">
-                {['pending', 'approved', 'rejected'].map((s) => (
-                    <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-btn text-sm font-medium transition-all ${statusFilter === s ? 'bg-primary text-white' : 'bg-white text-text-muted hover:bg-gray-50'}`}>
-                        {s === 'pending' ? t('pending') : s === 'approved' ? t('approved') : t('rejected')}
-                    </button>
-                ))}
+            <h1 className="text-2xl font-black">{locale === 'ar' ? '????? ???????' : 'Manage Halaqat'}</h1>
+            <div className="flex gap-2 flex-wrap">
+                {['pending', 'approved', 'rejected'].map((s) => <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-xl text-sm font-bold ${statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-border'}`}>{s}</button>)}
             </div>
+
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50 border-b"><tr>
-                            <th className="text-start px-4 py-3 text-sm font-medium text-text-muted">{locale === 'ar' ? 'الحلقة' : 'Circle'}</th>
-                            <th className="text-start px-4 py-3 text-sm font-medium text-text-muted">{locale === 'ar' ? 'النوع' : 'Type'}</th>
-                            <th className="text-start px-4 py-3 text-sm font-medium text-text-muted">{locale === 'ar' ? 'الموقع' : 'Location'}</th>
-                            <th className="text-start px-4 py-3 text-sm font-medium text-text-muted">{locale === 'ar' ? 'الإجراءات' : 'Actions'}</th>
-                        </tr></thead>
-                                <tbody className="divide-y">
-                                    {loading ? (
-                                        <tr><td colSpan={4} className="px-4 py-8 text-center text-text-muted">{locale === 'ar' ? 'جاري التحميل...' : 'Loading...'}</td></tr>
-                                    ) : data?.data?.length > 0 ? data.data.map((halqa: any) => (
-                                        <tr key={halqa.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-4"><div className="font-medium">{halqa.circleName}</div><div className="text-sm text-text-muted">{halqa.mosqueName}</div></td>
-                                            <td className="px-4 py-4"><span className="badge bg-orange-100 text-orange-800 text-xs">{typeLabels[halqa.halqaType] || halqa.halqaType}</span></td>
-                                            <td className="px-4 py-4 text-text-muted text-sm">{halqa.governorate} — {halqa.city}</td>
-                                            <td className="px-4 py-4">
-                                                <div className="flex gap-2">
-                                                    {halqa.status === 'pending' && (
-                                                        <>
-                                                            <button onClick={() => handleApprove(halqa.id)} className="text-green-600 hover:text-green-700 text-sm font-medium">{t('approve')}</button>
-                                                            <button onClick={() => handleReject(halqa.id)} className="text-red-600 hover:text-red-700 text-sm font-medium">{t('reject')}</button>
-                                                        </>
-                                                    )}
-                                                    <button onClick={() => handleEdit(halqa)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">{locale === 'ar' ? 'تعديل' : 'Edit'}</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )) : (
-                                        <tr><td colSpan={4} className="px-4 py-8 text-center text-text-muted">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>
-                                    )}
+                    <table className="w-full min-w-[680px]">
+                        <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm">Name</th><th className="text-start px-4 py-3 text-sm">Mosque</th><th className="text-start px-4 py-3 text-sm">Status</th><th className="text-start px-4 py-3 text-sm">Actions</th></tr></thead>
+                        <tbody className="divide-y">
+                            {loading && <tr><td colSpan={4} className="px-4 py-10 text-center">Loading...</td></tr>}
+                            {!loading && !items.length && <tr><td colSpan={4} className="px-4 py-10 text-center">No data</td></tr>}
+                            {!loading && items.map((item) => (
+                                <tr key={item.id}>
+                                    <td className="px-4 py-4 font-semibold">{item.circleName}</td>
+                                    <td className="px-4 py-4 text-sm text-text-muted">{item.mosqueName}</td>
+                                    <td className="px-4 py-4"><span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' : item.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
+                                    <td className="px-4 py-4"><div className="flex gap-2">
+                                        <IconButton label="view" onClick={() => openModal('view', 'halqa', item)}><FaEye className="text-slate-700" /></IconButton>
+                                        <IconButton label="edit" onClick={() => { setEditForm({ circle_name: item.circleName, mosque_name: item.mosqueName, whatsapp: item.whatsapp, additional_info: item.additionalInfo || '' }); openModal('edit', 'halqa', item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
+                                        {item.status === 'pending' && <IconButton label="approve" onClick={() => approve(item.id)}><FaCheck className="text-green-700" /></IconButton>}
+                                        {item.status === 'pending' && <IconButton label="reject" onClick={() => reject(item.id)}><FaXmark className="text-red-700" /></IconButton>}
+                                    </div></td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? '??? ??????' : 'View Halqa'} onClose={closeModal}>
+                {payload && <div className="space-y-3 text-sm">
+                    <p><strong>Name:</strong> {payload.circleName}</p>
+                    <p><strong>Mosque:</strong> {payload.mosqueName}</p>
+                    <p><strong>Type:</strong> {payload.halqaType}</p>
+                    <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
+                    {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? '??? ???????' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? '??? ??????' : 'Copy link'}</button></div>}
+                </div>}
+            </AppModal>
+
+            <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? '????? ??????' : 'Edit Halqa'} onClose={closeModal}>
+                <div className="space-y-3">
+                    <input className="input-field" value={editForm.circle_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, circle_name: e.target.value }))} placeholder="Name" />
+                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder="Mosque" />
+                    <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
+                    <textarea className="input-field" value={editForm.additional_info || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, additional_info: e.target.value }))} placeholder="Additional info" />
+                    <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? '???' : 'Save'}</button>
+                </div>
+            </AppModal>
         </div>
     );
 }
+

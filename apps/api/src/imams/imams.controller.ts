@@ -66,7 +66,7 @@ export class ImamsController {
     @Delete('admin/imams/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')
-    remove(@Param('id') id: string) {
-        return this.imamsService.remove(id);
+    remove(@Param('id') id: string, @Req() req: any) {
+        return this.imamsService.remove(id, req.user.id);
     }
 }

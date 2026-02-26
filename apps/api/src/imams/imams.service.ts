@@ -4,6 +4,7 @@ import { CreateImamDto, ImamQueryDto } from './dto/imam.dto';
 import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class ImamsService {
@@ -11,7 +12,12 @@ export class ImamsService {
         private readonly prisma: PrismaService,
         private readonly audit: AuditService,
         private readonly notifications: NotificationsService,
+        private readonly cache: CacheService,
     ) { }
+
+    private async invalidateCache() {
+        await this.cache.deleteByPrefix('approved:imams:');
+    }
 
     async findAll(query: ImamQueryDto) {
         const page = query.page || 1;
@@ -68,6 +74,13 @@ export class ImamsService {
         if (query.district) where.district = query.district;
         if (query.area_id) where.areaId = query.area_id;
 
+        const cacheable = where.status === 'approved';
+        const cacheKey = `approved:imams:${JSON.stringify({ query, page, limit })}`;
+        if (cacheable) {
+            const cached = await this.cache.getJSON<any>(cacheKey);
+            if (cached) return cached;
+        }
+
         const [data, total] = await Promise.all([
             this.prisma.imam.findMany({
                 where,
@@ -79,7 +92,7 @@ export class ImamsService {
             this.prisma.imam.count({ where }),
         ]);
 
-        return {
+        const response = {
             data,
             meta: {
                 page,
@@ -90,6 +103,10 @@ export class ImamsService {
                 hasPrev: page > 1,
             },
         };
+        if (cacheable) {
+            await this.cache.setJSON(cacheKey, response, 60);
+        }
+        return response;
     }
 
     async findOne(id: string) {
@@ -156,7 +173,10 @@ export class ImamsService {
             `New Imam submitted: ${imam.imamName} (${imam.mosqueName})`,
             createdBy,
         );
-
+        if (createdBy && /^[0-9a-fA-F-]{36}$/.test(createdBy)) {
+            await this.audit.logCreate(createdBy, 'imam', imam.id, imam);
+        }
+        await this.invalidateCache();
         return imam;
     }
 
@@ -166,7 +186,9 @@ export class ImamsService {
             where: { id },
             data: { status: 'approved', adminId, rejectionReason: null },
         });
-        await this.audit.log({ adminId, entityType: 'imam', entityId: id, action: 'approve', oldData: before, newData: updated });
+        await this.audit.logApprove(adminId, 'imam', id, updated);
+        await this.notifications.emitAction('imam', 'approved', id, 'Imam approved', `Imam ${updated.imamName} approved`);
+        await this.invalidateCache();
         return updated;
     }
 
@@ -176,7 +198,9 @@ export class ImamsService {
             where: { id },
             data: { status: 'rejected', adminId, rejectionReason: reason },
         });
-        await this.audit.log({ adminId, entityType: 'imam', entityId: id, action: 'reject', oldData: before, newData: updated });
+        await this.audit.logReject(adminId, 'imam', id, updated);
+        await this.notifications.emitAction('imam', 'rejected', id, 'Imam rejected', `Imam ${updated.imamName} rejected`);
+        await this.invalidateCache();
         return updated;
     }
 
@@ -203,15 +227,22 @@ export class ImamsService {
             },
         });
 
-        await this.audit.log({ adminId, entityType: 'imam', entityId: id, action: 'update', oldData: before, newData: updated });
+        await this.audit.logUpdate(adminId, 'imam', id, before, updated);
+        await this.notifications.emitAction('imam', 'updated', id, 'Imam updated', `Imam ${updated.imamName} updated`);
+        await this.invalidateCache();
         return updated;
     }
 
-    async remove(id: string) {
+    async remove(id: string, adminId: string) {
+        const before = await this.prisma.imam.findUnique({ where: { id } });
         // Delete associated media first
         await this.prisma.mediaAsset.deleteMany({
             where: { entityId: id, entityType: 'imam' },
         });
-        return this.prisma.imam.delete({ where: { id } });
+        const deleted = await this.prisma.imam.delete({ where: { id } });
+        await this.audit.logDelete(adminId, 'imam', id, before || deleted);
+        await this.notifications.emitAction('imam', 'updated', id, 'Imam deleted', `Imam ${deleted.imamName} deleted`);
+        await this.invalidateCache();
+        return deleted;
     }
 }

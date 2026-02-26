@@ -60,7 +60,7 @@ export class HalaqatController {
     @Delete('admin/halaqat/:id')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles('super_admin')
-    remove(@Param('id') id: string) {
-        return this.halaqatService.remove(id);
+    remove(@Param('id') id: string, @Req() req: any) {
+        return this.halaqatService.remove(id, req.user.id);
     }
 }

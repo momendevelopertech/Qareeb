@@ -3,10 +3,11 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useAuthStore } from '@/lib/store';
+import { useAuthStore, useNotificationStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { adminApi } from '@/lib/api';
+import { io, Socket } from 'socket.io-client';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const t = useTranslations('admin');
@@ -14,7 +15,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const pathname = usePathname();
     const router = useRouter();
     const { token, admin, clearAuth } = useAuthStore();
-    const [unreadCount, setUnreadCount] = useState(0);
+    const { unreadCount, addNotification, setNotifications } = useNotificationStore();
 
     // If no token and not on login page, show login
     const isLoginPage = pathname.includes('/admin') && !pathname.includes('/admin/');
@@ -26,19 +27,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, [token, isLoginPage]);
 
     useEffect(() => {
-        const loadCount = async () => {
+        const bootstrap = async () => {
             if (!token) return;
             try {
-                const res = await adminApi.getNotificationCount(token);
-                setUnreadCount(res.count || 0);
+                const res = await adminApi.getNotifications(token, 'unread');
+                setNotifications((res || []).map((n: any) => ({
+                    id: n.id,
+                    type: n.type,
+                    title: n.title,
+                    message: n.message,
+                    recordId: n.referenceId,
+                    createdAt: n.createdAt,
+                    read: n.isRead,
+                })));
             } catch (err) {
                 console.error('Notification count error', err);
             }
         };
-        loadCount();
-        const interval = setInterval(loadCount, 30000);
-        return () => clearInterval(interval);
-    }, [token]);
+        void bootstrap();
+
+        let socket: Socket | null = null;
+        if (admin?.role) {
+            const base = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 'http://localhost:3001';
+            socket = io(`${base}/notifications`, {
+                transports: ['websocket'],
+                withCredentials: true,
+                query: { role: admin.role },
+            });
+            socket.on('notification', (payload: any) => {
+                addNotification({
+                    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                    type: payload?.type || 'generic',
+                    title: payload?.title || 'Notification',
+                    message: payload?.message || '',
+                    recordId: payload?.recordId || '',
+                    createdAt: payload?.createdAt || new Date().toISOString(),
+                    read: false,
+                });
+                if (document.visibilityState === 'visible') {
+                    const audio = new Audio('/sounds/notification.mp3');
+                    audio.play().catch(() => undefined);
+                }
+            });
+        }
+        return () => {
+            socket?.disconnect();
+        };
+    }, [token, admin?.role]);
 
     const handleLogout = () => {
         clearAuth();

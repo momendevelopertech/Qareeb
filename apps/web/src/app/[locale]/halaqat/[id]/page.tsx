@@ -60,6 +60,11 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                                     <span className="inline-flex items-center px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-black uppercase tracking-widest">
                                         {typeLabels[locale]?.[halqa.halqaType]}
                                     </span>
+                                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${(halqa.additionalInfo || '').startsWith('[ONLINE]') ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                        {(halqa.additionalInfo || '').startsWith('[ONLINE]')
+                                            ? (locale === 'ar' ? 'أونلاين' : 'Online')
+                                            : (locale === 'ar' ? 'حضوري' : 'Offline')}
+                                    </span>
                                 </div>
                                 <div className="p-6 bg-cream rounded-2xl border border-primary/5 space-y-2">
                                     <h3 className="font-black text-primary text-sm uppercase tracking-wider">{locale === 'ar' ? 'الموقع' : 'Location'}</h3>
@@ -72,11 +77,6 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                                                 {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
                                             </button>
                                         </div>
-                                    )}
-                                    {halqa.video_url && (
-                                        <a className="text-sm font-bold text-accent underline" href={halqa.video_url} target="_blank" rel="noreferrer">
-                                            {locale === 'ar' ? 'رابط الفيديو' : 'Video link'}
-                                        </a>
                                     )}
                                 </div>
                                 {halqa.additionalInfo && (

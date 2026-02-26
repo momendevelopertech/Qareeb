@@ -57,6 +57,9 @@ export const api = {
     // Chat
     chatNearest: (data: { text: string; lat?: number; lng?: number }) =>
         fetchAPI<any>('/chat/nearest', { method: 'POST', body: JSON.stringify(data) }),
+    nearestSearch: (lat: number, lng: number, type: 'imam' | 'halqa' | 'maintenance') =>
+        fetchAPI<any>(`/search/nearest?lat=${lat}&lng=${lng}&type=${type}`),
+    getGeoCountry: () => fetchAPI<{ country: string }>('/geo'),
 
     // Locations admin
     createGovernorate: (token: string, data: any) => fetchAPI<any>('/locations/governorates', { method: 'POST', token, body: JSON.stringify(data) }),
@@ -115,6 +118,8 @@ export const adminApi = {
         fetchAPI<any>(`/admin/maintenance/${id}/reject`, { method: 'PATCH', token, body: JSON.stringify({ reason }) }),
     updateMaintenance: (token: string, id: string, data: any) =>
         fetchAPI<any>(`/admin/maintenance/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+    deleteMediaAsset: (token: string, publicId: string) =>
+        fetchAPI<any>(`/media/${encodeURIComponent(publicId)}`, { method: 'DELETE', token }),
 
     // Users
     getAdminUsers: (token: string) =>

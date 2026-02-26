@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { pusherServer } from './pusher';
+import { NotificationsEventsService } from './notifications-events.service';
 
 const ROLE_MAP = {
     imam: ['super_admin', 'full_reviewer', 'imam_reviewer'],
@@ -10,7 +11,10 @@ const ROLE_MAP = {
 
 @Injectable()
 export class NotificationsService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly events: NotificationsEventsService,
+    ) { }
 
     async createForType(type: 'imam' | 'halqa' | 'maintenance', referenceId: string, title: string, message: string, createdBy?: string) {
         const roles = [...ROLE_MAP[type]];
@@ -30,12 +34,61 @@ export class NotificationsService {
         });
 
         // Fire real-time update to role channels (non-sensitive payload)
+        const payload = {
+            type: `${type}_created`,
+            title,
+            recordId: referenceId,
+            createdAt: new Date().toISOString(),
+            message,
+            roles,
+        };
+
+        await this.events.publish(payload);
+
         if (pusherServer) {
             await Promise.all(roles.map((role) => pusherServer!.trigger(
                 `role-${role}`,
                 'notification',
-                { type, title, message },
+                payload,
             )));
+        }
+    }
+
+    async emitAction(
+        type: 'imam' | 'halqa' | 'maintenance',
+        action: 'created' | 'updated' | 'approved' | 'rejected',
+        referenceId: string,
+        title: string,
+        message: string,
+    ) {
+        const roles = [...ROLE_MAP[type]];
+        const recipients = await this.prisma.admin.findMany({
+            where: { role: { in: roles }, isActive: true },
+            select: { id: true },
+        });
+        if (recipients.length) {
+            await this.prisma.notification.createMany({
+                data: recipients.map((r: { id: string }) => ({
+                    userId: r.id,
+                    type,
+                    referenceId,
+                    title,
+                    message,
+                })),
+            });
+        }
+        const payload = {
+            type: `${type}_${action}`,
+            title,
+            message,
+            recordId: referenceId,
+            createdAt: new Date().toISOString(),
+            roles,
+        };
+
+        await this.events.publish(payload);
+        if (pusherServer) {
+            await Promise.all(roles.map((role) => pusherServer!.trigger(`role-${role}`, 'notification', payload)));
         }
     }
 

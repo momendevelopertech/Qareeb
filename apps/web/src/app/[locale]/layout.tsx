@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import { Cairo, Poppins } from 'next/font/google';
+import { Cairo, Tajawal } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import '../globals.css';
+import ToastHost from '@/components/ui/ToastHost';
 
 const cairo = Cairo({
     subsets: ['arabic', 'latin'],
@@ -10,10 +11,10 @@ const cairo = Cairo({
     display: 'swap',
 });
 
-const poppins = Poppins({
-    subsets: ['latin'],
-    weight: ['300', '400', '500', '600', '700'],
-    variable: '--font-poppins',
+const tajawal = Tajawal({
+    subsets: ['arabic', 'latin'],
+    weight: ['300', '400', '500', '700', '800'],
+    variable: '--font-tajawal',
     display: 'swap',
 });
 
@@ -34,10 +35,11 @@ export default async function LocaleLayout({
     const messages = await getMessages();
 
     return (
-        <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${poppins.variable}`}>
-            <body className={locale === 'ar' ? 'font-arabic' : 'font-english'}>
+        <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${tajawal.variable}`}>
+            <body className={locale === 'ar' ? 'font-arabic' : 'font-tajawal'}>
                 <NextIntlClientProvider messages={messages}>
                     {children}
+                    <ToastHost />
                 </NextIntlClientProvider>
             </body>
         </html>
