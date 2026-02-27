@@ -204,6 +204,9 @@ export default function AdminImamsPage() {
                     <div className="space-y-4 text-sm">
                         <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {payload.imamName}</p>
                         <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
+                        <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
+                        {payload.city && <p><strong>{locale === 'ar' ? 'المدينة:' : 'City:'}</strong> {payload.city}</p>}
+                        {payload.district && <p><strong>{locale === 'ar' ? 'الحي:' : 'District:'}</strong> {payload.district}</p>}
                         <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
                         {payload.videoUrl && (
                             <div className="rounded-xl border border-border p-3 bg-cream/40 space-y-2">
@@ -252,6 +255,9 @@ export default function AdminImamsPage() {
                 <div className="space-y-3">
                     <input className="input-field" value={editForm.imam_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, imam_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم الإمام' : 'Imam name'} />
                     <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque name'} />
+                    <input className="input-field" value={editForm.governorate || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, governorate: e.target.value }))} placeholder={locale === 'ar' ? 'المحافظة' : 'Governorate'} />
+                    <input className="input-field" value={editForm.city || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, city: e.target.value }))} placeholder={locale === 'ar' ? 'المدينة' : 'City'} />
+                    <input className="input-field" value={editForm.district || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, district: e.target.value }))} placeholder={locale === 'ar' ? 'الحي' : 'District'} />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
                     <input className="input-field" value={editForm.google_maps_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, google_maps_url: e.target.value }))} placeholder="Google map URL" />
                     <input className="input-field" value={editForm.video_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, video_url: e.target.value }))} placeholder="Video URL" />

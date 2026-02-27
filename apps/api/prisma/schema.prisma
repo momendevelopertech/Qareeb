@@ -155,6 +155,8 @@ model Halqa {
   areaId          String?          @db.Uuid @map("area_id")
   googleMapsUrl   String?          @map("google_maps_url")
   videoUrl        String?          @map("video_url")
+  isOnline        Boolean          @default(false) @map("is_online")
+  onlineLink      String?          @map("online_link")
   latitude        Float
   longitude       Float
   whatsapp        String           @db.VarChar(20)

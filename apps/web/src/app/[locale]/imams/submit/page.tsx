@@ -312,6 +312,8 @@ export default function SubmitPage() {
                                                 setValue('governorateId', e.target.value);
                                                 const gov = governorates.find((g) => g.id === e.target.value);
                                                 setValue('governorate', gov?.nameAr || gov?.nameEn || '');
+                                                setValue('city', '');
+                                                setValue('district', '');
                                             }}
                                         >
                                             <option value="">{locale === 'ar' ? 'اختر المحافظة' : 'Select governorate'}</option>
@@ -326,12 +328,32 @@ export default function SubmitPage() {
                                             {...register('areaId', { required: true })}
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             disabled={!selectedGovernorateId}
+                                            onChange={(e) => {
+                                                setValue('areaId', e.target.value);
+                                                const area = areas.find((a) => a.id === e.target.value);
+                                                setValue('city', area?.nameAr || area?.nameEn || '');
+                                            }}
                                         >
                                             <option value="">{locale === 'ar' ? 'اختر المنطقة' : 'Select area'}</option>
                                             {areas.map((a) => (
                                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div className="group">
+                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
+                                            {locale === 'ar' ? 'المدينة' : 'City'}
+                                        </label>
+                                        <input {...register('city')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'المدينة...' : 'City...'} />
+                                    </div>
+                                    <div className="group">
+                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
+                                            {locale === 'ar' ? 'الحي / المنطقة السكنية' : 'District / Neighborhood'}
+                                        </label>
+                                        <input {...register('district')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'الحي...' : 'District...'} />
                                     </div>
                                 </div>
 

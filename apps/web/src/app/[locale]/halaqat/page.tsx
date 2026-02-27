@@ -41,6 +41,7 @@ export default function HalaqatPage() {
     const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
     const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
     const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
+    const [onlineOnly, setOnlineOnly] = useState<boolean>(searchParams.get('onlineOnly') === 'true');
     const [page, setPage] = useState<number>(Number(searchParams.get('page') || 1));
     const limit = 6;
 
@@ -55,8 +56,8 @@ export default function HalaqatPage() {
         }
     }, [governorateId]);
 
-    useEffect(() => { void fetchData(); }, [lat, lng, selectedType, governorateId, areaId, governorates, page]);
-    useEffect(() => { setPage(1); }, [selectedType, governorateId, areaId]);
+    useEffect(() => { void fetchData(); }, [lat, lng, selectedType, governorateId, areaId, governorates, onlineOnly, page]);
+    useEffect(() => { setPage(1); }, [selectedType, governorateId, areaId, onlineOnly]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -64,6 +65,7 @@ export default function HalaqatPage() {
             const params = new URLSearchParams();
             if (lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '10000'); }
             if (selectedType) params.set('type', selectedType);
+            if (onlineOnly) params.set('isOnline', 'true');
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -151,6 +153,12 @@ export default function HalaqatPage() {
                             placeholder={locale === 'ar' ? 'بحث بالاسم أو المسجد' : 'Search name or mosque'}
                             className="px-4 py-2.5 rounded-xl text-sm font-medium bg-cream border-2 border-transparent focus:border-primary min-w-[220px]"
                         />
+                        <button
+                            onClick={() => setOnlineOnly(!onlineOnly)}
+                            className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${onlineOnly ? 'bg-blue-100 text-blue-700 shadow-lg' : 'bg-cream text-text-muted hover:bg-blue-50 hover:text-blue-700'}`}
+                        >
+                            📺 {locale === 'ar' ? 'أونلاين فقط' : 'Online only'}
+                        </button>
                     </div>
                 </div>
 
@@ -172,7 +180,13 @@ export default function HalaqatPage() {
                                     mosque: halqa.mosque_name || halqa.mosqueName,
                                     location: halqa.area
                                         ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn)
-                                        : `${halqa.governorate} — ${halqa.city}`,
+                                        : [
+                                              halqa.governorate,
+                                              halqa.city,
+                                              halqa.district,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(' — '),
                                     typeLabel: typeLabels[locale]?.[halqaType] || halqaType || (locale === 'ar' ? 'حلقة' : 'Circle'),
                                     typeIcon: '📖',
                                     map: halqa.google_maps_url,

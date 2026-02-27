@@ -24,6 +24,7 @@ export default function AdminHalaqatPage() {
     const [items, setItems] = useState<any[]>([]);
     const [statusFilter, setStatusFilter] = useState('pending');
     const [searchTerm, setSearchTerm] = useState('');
+    const [onlineFilter, setOnlineFilter] = useState('all'); // 'all', 'online', 'offline'
     const [loading, setLoading] = useState(true);
     const [editForm, setEditForm] = useState<any>({});
     const [page, setPage] = useState(1);
@@ -41,6 +42,10 @@ export default function AdminHalaqatPage() {
     useEffect(() => {
         setPage(1);
     }, [searchTerm]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [onlineFilter]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -75,15 +80,20 @@ export default function AdminHalaqatPage() {
     };
 
     const filteredItems = items.filter((item) => {
-        if (!searchTerm) return true;
-        const q = searchTerm.toLowerCase();
-        return [
+        const matchesSearch = !searchTerm || [
             item.circleName,
             item.mosqueName,
             item.status,
             item.whatsapp,
             item.halqaType,
-        ].some((field: any) => (field || '').toString().toLowerCase().includes(q));
+        ].some((field: any) => (field || '').toString().toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesOnlineFilter = 
+            onlineFilter === 'all' ||
+            (onlineFilter === 'online' && item.isOnline) ||
+            (onlineFilter === 'offline' && !item.isOnline);
+
+        return matchesSearch && matchesOnlineFilter;
     });
 
     const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
@@ -100,7 +110,7 @@ export default function AdminHalaqatPage() {
                         placeholder={locale === 'ar' ? 'بحث بالاسم أو المسجد أو النوع' : 'Search by name, mosque or type'}
                         className="input-field max-w-xs text-sm"
                     />
-                    <div className="flex gap-2 flex-wrap">
+                    <div className="flex flex-wrap gap-2 flex-wrap">
                         {['pending', 'approved', 'rejected'].map((s) => (
                             <button
                                 key={s}
@@ -113,24 +123,44 @@ export default function AdminHalaqatPage() {
                             </button>
                         ))}
                     </div>
+                    <div className="flex gap-2 flex-wrap items-center">
+                        <span className="text-sm font-semibold">{locale === 'ar' ? 'نوع الحلقة:' : 'Circle type:'}</span>
+                        {['all', 'online', 'offline'].map((type) => (
+                            <button
+                                key={type}
+                                onClick={() => setOnlineFilter(type)}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold ${
+                                    onlineFilter === type ? 'bg-blue-100 text-blue-700' : 'bg-white border border-border'
+                                }`}
+                            >
+                                {type === 'all' ? (locale === 'ar' ? 'الكل' : 'All') : 
+                                 type === 'online' ? '📺 ' + (locale === 'ar' ? 'أونلاين' : 'Online') : 
+                                 '🏢 ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[680px]">
-                        <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm">Name</th><th className="text-start px-4 py-3 text-sm">Mosque</th><th className="text-start px-4 py-3 text-sm">Status</th><th className="text-start px-4 py-3 text-sm">Actions</th></tr></thead>
+                        <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm">Name</th><th className="text-start px-4 py-3 text-sm">Mosque</th><th className="text-start px-4 py-3 text-sm">Type</th><th className="text-start px-4 py-3 text-sm">Status</th><th className="text-start px-4 py-3 text-sm">Actions</th></tr></thead>
                         <tbody className="divide-y">
-                            {loading && <tr><td colSpan={4} className="px-4 py-10 text-center">Loading...</td></tr>}
-                            {!loading && !filteredItems.length && <tr><td colSpan={4} className="px-4 py-10 text-center">No data</td></tr>}
+                            {loading && <tr><td colSpan={5} className="px-4 py-10 text-center">Loading...</td></tr>}
+                            {!loading && !filteredItems.length && <tr><td colSpan={5} className="px-4 py-10 text-center">No data</td></tr>}
                             {!loading && paginatedItems.map((item) => (
                                 <tr key={item.id}>
                                     <td className="px-4 py-4 font-semibold">{item.circleName}</td>
                                     <td className="px-4 py-4 text-sm text-text-muted">{item.mosqueName}</td>
+                                    <td className="px-4 py-4 text-sm">
+                                        <span className="mr-1">{item.isOnline ? '📺' : '🏢'}</span>
+                                        {item.isOnline ? (locale === 'ar' ? 'أونلاين' : 'Online') : (locale === 'ar' ? 'في المسجد' : 'In Mosque')}
+                                    </td>
                                     <td className="px-4 py-4"><span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' : item.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
                                     <td className="px-4 py-4"><div className="flex gap-2">
                                         <IconButton label="view" onClick={() => openModal('view', 'halqa', item)}><FaEye className="text-slate-700" /></IconButton>
-                                        <IconButton label="edit" onClick={() => { setEditForm({ circle_name: item.circleName, mosque_name: item.mosqueName, whatsapp: item.whatsapp, additional_info: item.additionalInfo || '' }); openModal('edit', 'halqa', item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
+                                        <IconButton label="edit" onClick={() => { setEditForm({ circle_name: item.circleName, mosque_name: item.mosqueName, whatsapp: item.whatsapp, additional_info: item.additionalInfo || '', is_online: item.isOnline || false, online_link: item.onlineLink || '' }); openModal('edit', 'halqa', item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
                                         {item.status === 'pending' && <IconButton label="approve" onClick={() => approve(item.id)}><FaCheck className="text-green-700" /></IconButton>}
                                         {item.status === 'pending' && <IconButton label="reject" onClick={() => reject(item.id)}><FaXmark className="text-red-700" /></IconButton>}
                                     </div></td>
@@ -144,20 +174,48 @@ export default function AdminHalaqatPage() {
 
             <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الحلقة' : 'View Halqa'} onClose={closeModal}>
                 {payload && <div className="space-y-3 text-sm">
-                    <p><strong>Name:</strong> {payload.circleName}</p>
-                    <p><strong>Mosque:</strong> {payload.mosqueName}</p>
-                    <p><strong>Type:</strong> {payload.halqaType}</p>
+                    <p><strong>{locale === 'ar' ? 'الاسم:' : 'Name:'}</strong> {payload.circleName}</p>
+                    <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
+                    <p><strong>{locale === 'ar' ? 'النوع:' : 'Type:'}</strong> {payload.halqaType}</p>
+                    <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
+                    {payload.city && <p><strong>{locale === 'ar' ? 'المدينة:' : 'City:'}</strong> {payload.city}</p>}
+                    {payload.district && <p><strong>{locale === 'ar' ? 'الحي:' : 'District:'}</strong> {payload.district}</p>}
                     <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
+                    <p><strong>{locale === 'ar' ? 'نوع الحلقة' : 'Circle Type'}:</strong> {payload.isOnline ? '📺 ' + (locale === 'ar' ? 'أونلاين' : 'Online') : '🏢 ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}</p>
+                    {payload.isOnline && payload.onlineLink && <p><strong>{locale === 'ar' ? 'رابط الحضور' : 'Join Link'}:</strong> <a href={payload.onlineLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">{payload.onlineLink}</a></p>}
                     {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
                 </div>}
             </AppModal>
 
             <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الحلقة' : 'Edit Halqa'} onClose={closeModal}>
                 <div className="space-y-3">
-                    <input className="input-field" value={editForm.circle_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, circle_name: e.target.value }))} placeholder="Name" />
-                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder="Mosque" />
+                    <input className="input-field" value={editForm.circle_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, circle_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم الحلقة' : 'Name'} />
+                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque'} />
+                    <input className="input-field" value={editForm.governorate || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, governorate: e.target.value }))} placeholder={locale === 'ar' ? 'المحافظة' : 'Governorate'} />
+                    <input className="input-field" value={editForm.city || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, city: e.target.value }))} placeholder={locale === 'ar' ? 'المدينة' : 'City'} />
+                    <input className="input-field" value={editForm.district || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, district: e.target.value }))} placeholder={locale === 'ar' ? 'الحي' : 'District'} />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
-                    <textarea className="input-field" value={editForm.additional_info || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, additional_info: e.target.value }))} placeholder="Additional info" />
+                    <textarea className="input-field" value={editForm.additional_info || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, additional_info: e.target.value }))} placeholder={locale === 'ar' ? 'معلومات إضافية' : 'Additional info'} />
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={editForm.is_online || false}
+                            onChange={(e) => setEditForm((s: any) => ({ ...s, is_online: e.target.checked }))}
+                            className="w-4 h-4"
+                            id="is_online"
+                        />
+                        <label htmlFor="is_online" className="text-sm font-medium cursor-pointer">
+                            {locale === 'ar' ? 'حلقة أونلاين' : 'Online circle'}
+                        </label>
+                    </div>
+                    {editForm.is_online && (
+                        <input
+                            className="input-field"
+                            value={editForm.online_link || ''}
+                            onChange={(e) => setEditForm((s: any) => ({ ...s, online_link: e.target.value }))}
+                            placeholder={locale === 'ar' ? 'رابط الحضور (Zoom, Google Meet, etc)' : 'Join link (Zoom, Google Meet, etc)'}
+                        />
+                    )}
                     <button className="btn-primary w-full" onClick={saveEdit}>{locale === 'ar' ? 'حفظ' : 'Save'}</button>
                 </div>
             </AppModal>

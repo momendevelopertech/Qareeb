@@ -219,9 +219,12 @@ export default function AdminMaintenancePage() {
 
             <AppModal isOpen={isOpen && type === 'view'} type="view" title={locale === 'ar' ? 'عرض الصيانة' : 'View Maintenance'} onClose={closeModal}>
                 {payload && <div className="space-y-3 text-sm">
-                    <p><strong>Mosque:</strong> {payload.mosqueName}</p>
-                    <p><strong>Description:</strong> {payload.description}</p>
-                    <p><strong>Types:</strong> {(payload.maintenanceTypes || []).join(', ')}</p>
+                    <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
+                    <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
+                    {payload.city && <p><strong>{locale === 'ar' ? 'المدينة:' : 'City:'}</strong> {payload.city}</p>}
+                    {payload.district && <p><strong>{locale === 'ar' ? 'الحي:' : 'District:'}</strong> {payload.district}</p>}
+                    <p><strong>{locale === 'ar' ? 'الوصف:' : 'Description:'}</strong> {payload.description}</p>
+                    <p><strong>{locale === 'ar' ? 'الأنواع:' : 'Types:'}</strong> {(payload.maintenanceTypes || []).join(', ')}</p>
                     {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
                     {(payload.media || []).length > 0 && <div className="overflow-x-auto whitespace-nowrap space-x-2">{(payload.media || []).map((m: any) => <img key={m.id} src={m.url} alt="maintenance" className="inline-block w-40 h-28 object-cover rounded-lg border" />)}</div>}
                 </div>}
@@ -229,9 +232,12 @@ export default function AdminMaintenancePage() {
 
             <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الصيانة' : 'Edit Maintenance'} onClose={closeModal}>
                 <div className="space-y-3">
-                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder="Mosque" />
+                    <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque'} />
+                    <input className="input-field" value={editForm.governorate || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, governorate: e.target.value }))} placeholder={locale === 'ar' ? 'المحافظة' : 'Governorate'} />
+                    <input className="input-field" value={editForm.city || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, city: e.target.value }))} placeholder={locale === 'ar' ? 'المدينة' : 'City'} />
+                    <input className="input-field" value={editForm.district || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, district: e.target.value }))} placeholder={locale === 'ar' ? 'الحي' : 'District'} />
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
-                    <textarea className="input-field" value={editForm.description || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, description: e.target.value }))} placeholder="Description" />
+                    <textarea className="input-field" value={editForm.description || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, description: e.target.value }))} placeholder={locale === 'ar' ? 'الوصف' : 'Description'} />
                     <input className="input-field" value={editForm.google_maps_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, google_maps_url: e.target.value }))} placeholder="Google map URL" />
 
                     {!!payload?.media?.length && (

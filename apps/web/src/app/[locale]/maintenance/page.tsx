@@ -142,7 +142,13 @@ export default function MaintenancePage() {
                                     mosque: undefined,
                                     location: item.area
                                         ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn)
-                                        : `${item.governorate} — ${item.city}`,
+                                        : [
+                                              item.governorate,
+                                              item.city,
+                                              item.district,
+                                          ]
+                                              .filter(Boolean)
+                                              .join(' — '),
                                     typeLabel:
                                         types.length && maintenanceLabels[locale]?.[types[0]]
                                             ? maintenanceLabels[locale][types[0]]
