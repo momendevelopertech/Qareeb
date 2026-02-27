@@ -34,7 +34,7 @@ export default function MaintenancePage() {
     const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
     const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
     const [page, setPage] = useState<number>(Number(searchParams.get('page') || 1));
-    const limit = 12;
+    const limit = 6;
 
     useEffect(() => { requestLocation(); api.getGovernorates().then(setGovernorates).catch(console.error); }, []);
     useEffect(() => {
@@ -193,14 +193,6 @@ export default function MaintenancePage() {
                                                 </span>
                                             </div>
                                         )}
-                                        <a
-                                            href={getWhatsAppUrl(item.whatsapp)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)] bg-[#1B6B45]"
-                                        >
-                                            {tc('whatsapp')}
-                                        </a>
                                     </div>
                                 );
                             })}

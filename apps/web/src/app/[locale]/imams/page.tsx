@@ -29,7 +29,7 @@ export default function ImamsPage() {
     const [areaId, setAreaId] = useState<string>(searchParams.get('areaId') || '');
     const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('query') || '');
     const [page, setPage] = useState<number>(Number(searchParams.get('page') || 1));
-    const limit = 12;
+    const limit = 6;
 
     useEffect(() => {
         requestLocation();
@@ -182,31 +182,13 @@ export default function ImamsPage() {
                                 };
 
                                 return (
-                                    <div key={imam.id} className="flex flex-col gap-2">
-                                        <UnifiedCard
-                                            card={card}
-                                            showWhatsApp={false}
-                                            showImages={false}
-                                            onViewDetails={() => router.push(`/${locale}/imams/${imam.id}`)}
-                                        />
-                                        {imam.distance_meters && (
-                                            <div className="flex items-center gap-2 text-xs font-black text-primary ps-1">
-                                                <span className="bg-primary text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
-                                                    ✨
-                                                </span>
-                                                {(imam.distance_meters / 1000).toFixed(1)} {tc('km')}{' '}
-                                                {locale === 'ar' ? 'بعيداً عنك' : 'away'}
-                                            </div>
-                                        )}
-                                        <a
-                                            href={getWhatsAppUrl(imam.whatsapp)}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)]"
-                                        >
-                                            {tc('whatsapp')}
-                                        </a>
-                                    </div>
+                                    <UnifiedCard
+                                        key={imam.id}
+                                        card={card}
+                                        showWhatsApp={false}
+                                        showImages={false}
+                                        onViewDetails={() => router.push(`/${locale}/imams/${imam.id}`)}
+                                    />
                                 );
                             })}
                         </div>

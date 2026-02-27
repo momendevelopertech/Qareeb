@@ -26,7 +26,7 @@ export default function PublicCardsTabs() {
     const [metaImams, setMetaImams] = useState<any>({ totalPages: 1 });
     const [metaHalaqat, setMetaHalaqat] = useState<any>({ totalPages: 1 });
     const [metaMaintenance, setMetaMaintenance] = useState<any>({ totalPages: 1 });
-    const limit = 12; // reused
+    const limit = 6; // show 6 cards per page
     // fetch each category with pagination
     useEffect(() => {
         const qIm = `limit=${limit}&page=${pageImams}`;
