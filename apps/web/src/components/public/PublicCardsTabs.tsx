@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Pagination from '@/components/ui/Pagination';
 import { useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 import AppModal from '@/components/ui/AppModal';
@@ -19,19 +20,41 @@ export default function PublicCardsTabs() {
     const [halaqat, setHalaqat] = useState<any[]>([]);
     const [maintenance, setMaintenance] = useState<any[]>([]);
 
+    // pagination state per category
+    const [pageImams, setPageImams] = useState(1);
+    const [pageHalaqat, setPageHalaqat] = useState(1);
+    const [pageMaintenance, setPageMaintenance] = useState(1);
+    const [metaImams, setMetaImams] = useState<any>({ totalPages: 1 });
+    const [metaHalaqat, setMetaHalaqat] = useState<any>({ totalPages: 1 });
+    const [metaMaintenance, setMetaMaintenance] = useState<any>({ totalPages: 1 });
+    const limit = 12; // reused
+    // fetch each category with pagination
     useEffect(() => {
+        const qIm = `limit=${limit}&page=${pageImams}`;
+        const qHa = `limit=${limit}&page=${pageHalaqat}`;
+        const qMa = `limit=${limit}&page=${pageMaintenance}`;
         void Promise.all([
-            api.getImams('limit=12'),
-            api.getHalaqat('limit=12'),
-            api.getMaintenance('limit=12'),
+            api.getImams(qIm),
+            api.getHalaqat(qHa),
+            api.getMaintenance(qMa),
         ])
             .then(([im, ha, ma]) => {
                 setImams(im?.data || []);
+                setMetaImams(im?.meta || { totalPages: 1 });
                 setHalaqat(ha?.data || []);
+                setMetaHalaqat(ha?.meta || { totalPages: 1 });
                 setMaintenance(ma?.data || []);
+                setMetaMaintenance(ma?.meta || { totalPages: 1 });
             })
             .catch(() => undefined);
-    }, []);
+    }, [pageImams, pageHalaqat, pageMaintenance]);
+
+    // reset page when switching tabs
+    useEffect(() => {
+        setPageImams(1);
+        setPageHalaqat(1);
+        setPageMaintenance(1);
+    }, [tab]);
 
     const shareText = async (text: string) => {
         try {
@@ -148,6 +171,33 @@ export default function PublicCardsTabs() {
                         </button>
                     </div>
                 ))}
+            </div>
+            {/* pagination for current tab */}
+            <div className="mt-8">
+                {tab === 'imams' && (
+                    <Pagination
+                        page={pageImams}
+                        totalPages={metaImams.totalPages || 1}
+                        onPageChange={setPageImams}
+                        locale={locale}
+                    />
+                )}
+                {tab === 'halqa' && (
+                    <Pagination
+                        page={pageHalaqat}
+                        totalPages={metaHalaqat.totalPages || 1}
+                        onPageChange={setPageHalaqat}
+                        locale={locale}
+                    />
+                )}
+                {tab === 'maintenance' && (
+                    <Pagination
+                        page={pageMaintenance}
+                        totalPages={metaMaintenance.totalPages || 1}
+                        onPageChange={setPageMaintenance}
+                        locale={locale}
+                    />
+                )}
             </div>
 
             {/* No Results */}
