@@ -28,6 +28,10 @@ export default function Header() {
         { href: `/${locale}/maintenance`, label: t('maintenance') },
     ];
 
+    const switchedLocalePath = pathname.startsWith(`/${locale}`)
+        ? pathname.replace(`/${locale}`, `/${otherLocale}`)
+        : `/${otherLocale}`;
+
     useEffect(() => {
         if (!token || !admin?.role || !isAdminPath) return;
         void adminApi.getNotificationCount(token).catch(() => undefined);
@@ -157,7 +161,7 @@ export default function Header() {
                             </Link>
 
                             <Link
-                                href={`/${otherLocale}`}
+                                href={switchedLocalePath}
                                 className="px-3 py-1.5 border border-gray-200 rounded-btn text-sm font-medium text-text-muted hover:border-primary hover:text-primary transition-all"
                             >
                                 {tc('switchLang')}

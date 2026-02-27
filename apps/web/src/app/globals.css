@@ -43,38 +43,79 @@
     @apply w-full px-4 py-3 border border-gray-300 rounded-btn focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white;
   }
 
-  /* PhoneInput RTL support */
-  [dir="rtl"] .PhoneInputInput {
-    direction: rtl;
-    text-align: right;
-  }
-
-  .PhoneInputInput {
-    @apply px-4 py-3 border border-gray-300 rounded-btn focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
-  }
-
-  .PhoneInputInput:focus {
-    @apply ring-2 ring-primary ring-inset border-transparent;
-  }
-
+  /* PhoneInput styles */
   .PhoneInput {
     position: relative;
   }
 
-  /* PhoneInput country flag and arrow RTL alignment */
-  [dir="rtl"] .PhoneInputCountryIcon {
-    margin-left: 8px;
-    margin-right: 0;
+  .PhoneInputInput {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-btn bg-white transition-all duration-200 !important;
+    outline: none !important;
+  }
+
+  .PhoneInputInput:focus {
+    @apply border-primary ring-2 ring-primary ring-opacity-20 !important;
+  }
+
+  /* Remove default border styling that interferes */
+  .PhoneInputInput::placeholder {
+    @apply text-gray-400 !important;
+  }
+
+  /* PhoneInput country select styling */
+  .PhoneInputCountrySelect {
+    @apply border-none bg-transparent !important;
+    appearance: none !important;
+  }
+
+  .PhoneInputCountryIcon {
+    margin-right: 6px !important;
+  }
+
+  /* RTL support for Arabic */
+  [dir="rtl"] .PhoneInputInput {
+    direction: rtl !important;
+    text-align: right !important;
+    padding-left: 12px !important;
+    padding-right: 4px !important;
   }
 
   [dir="rtl"] .PhoneInputCountrySelect {
-    padding-left: 8px;
-    padding-right: 8px;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+  }
+
+  [dir="rtl"] .PhoneInputCountryIcon {
+    margin-left: 6px !important;
+    margin-right: 0 !important;
   }
 
   [dir="rtl"] .PhoneInputCountrySelect::after {
-    left: 8px;
-    right: auto;
+    right: 3px !important;
+    left: auto !important;
+  }
+
+  /* Password visibility icon RTL alignment */
+  [dir="rtl"] .relative > button[type="button"]:has(svg) {
+    inset-inline-start: 0 !important;
+    inset-inline-end: auto !important;
+    padding-left: 3px !important;
+    padding-right: 12px !important;
+  }
+
+  .relative > input[type="password"],
+  .relative > input.pe-11 {
+    padding-inline-end: 44px;
+  }
+
+  [dir="rtl"] .relative > input.pe-11 {
+    padding-inline-start: 44px !important;
+    padding-inline-end: 12px !important;
+  }
+
+  [dir="rtl"] .relative > input.pe-12 {
+    padding-inline-start: 48px !important;
+    padding-inline-end: 12px !important;
   }
 
   .badge {

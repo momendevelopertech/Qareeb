@@ -51,29 +51,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         const tryRefresh = async () => {
             try {
+                // Always try to refresh from server using httpOnly cookies
                 const refreshed = await adminApi.refresh();
-                if (mounted && refreshed?.access_token && admin) {
-                    setAuth(refreshed.access_token, admin, rememberMe);
+                if (mounted && refreshed?.access_token) {
+                    // Update with new token from server
+                    setAuth(refreshed.access_token, admin || refreshed.admin, rememberMe);
                 }
             } catch {
-                if (mounted && !token) {
+                // If refresh fails and rememberMe is true, don't clear auth yet
+                // The token might still be valid from localStorage
+                if (mounted && !rememberMe) {
                     clearAuth();
                 }
             }
         };
 
-        if (rememberMe) {
+        // Attempt refresh immediately if we have rememberMe enabled
+        if (rememberMe && token) {
             void tryRefresh();
+            // Then refresh periodically
             refreshInterval = setInterval(() => {
                 void tryRefresh();
-            }, 10 * 60 * 1000);
+            }, 10 * 60 * 1000); // 10 minutes
         }
 
         return () => {
             mounted = false;
             if (refreshInterval) clearInterval(refreshInterval);
         };
-    }, [rememberMe, admin?.id, token, setAuth, clearAuth]);
+    }, [rememberMe, token, admin, setAuth, clearAuth]);
 
     useEffect(() => {
         const bootstrap = async () => {
