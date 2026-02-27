@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import '../globals.css';
 import ToastHost from '@/components/ui/ToastHost';
+import LoadingOverlay from '@/components/ui/LoadingOverlay';
 
 const cairo = Cairo({
     subsets: ['arabic', 'latin'],
@@ -38,6 +39,7 @@ export default async function LocaleLayout({
         <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${tajawal.variable}`}>
             <body className={locale === 'ar' ? 'font-arabic' : 'font-latin'}>
                 <NextIntlClientProvider messages={messages}>
+                    <LoadingOverlay />
                     {children}
                     <ToastHost />
                 </NextIntlClientProvider>

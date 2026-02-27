@@ -14,6 +14,22 @@ interface GeolocationState {
     requestLocation: () => void;
 }
 
+// simple global loading indicator (used by fetch wrapper)
+interface LoadingState {
+    loading: boolean;
+    setLoading: (val: boolean) => void;
+}
+
+export const useLoadingStore = create<LoadingState>((set) => ({
+    loading: false,
+    setLoading: (val) => set({ loading: val }),
+}));
+
+// helper so we can update outside of React components
+export const setGlobalLoading = (val: boolean) => {
+    useLoadingStore.setState({ loading: val });
+};
+
 export const useGeolocationStore = create<GeolocationState>((set) => ({
     lat: null,
     lng: null,

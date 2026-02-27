@@ -7,26 +7,32 @@ interface FetchOptions extends RequestInit {
     token?: string;
 }
 
+import { setGlobalLoading } from './store';
+
 async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
     const { token, ...init } = options;
+    setGlobalLoading(true);
+    try {
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
+            ...(init.headers as Record<string, string>),
+        };
 
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...(init.headers as Record<string, string>),
-    };
+        const res = await fetch(`${API_URL}${endpoint}`, {
+            ...init,
+            headers,
+        });
 
-    const res = await fetch(`${API_URL}${endpoint}`, {
-        ...init,
-        headers,
-    });
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ message: 'An error occurred' })) as { message?: string };
+            throw new Error(error.message || `API Error: ${res.status}`);
+        }
 
-    if (!res.ok) {
-        const error = await res.json().catch(() => ({ message: 'An error occurred' })) as { message?: string };
-        throw new Error(error.message || `API Error: ${res.status}`);
+        return res.json() as Promise<T>;
+    } finally {
+        setGlobalLoading(false);
     }
-
-    return res.json() as Promise<T>;
 }
 
 // ── Public API ──
