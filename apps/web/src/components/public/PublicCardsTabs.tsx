@@ -89,7 +89,14 @@ export default function PublicCardsTabs() {
     const embedUrl = getEmbeddableVideoUrl(payload?.video);
 
     const handleViewDetails = (card: any) => {
-        openModal('view', card.entity, card);
+        // open details page in a new tab instead of modal
+        const base =
+            card.entity === 'imam'
+                ? '/imams'
+                : card.entity === 'halqa'
+                ? '/halaqat'
+                : '/maintenance';
+        window.open(`${base}/${card.id}`, '_blank');
     };
 
     const shareCard = async (card: any) => {
@@ -216,60 +223,6 @@ export default function PublicCardsTabs() {
                 ) : null}
             </AppModal>
 
-            {/* Details Modal */}
-            <AppModal
-                isOpen={isOpen && type === 'view'}
-                type="view"
-                title={locale === 'ar' ? '📋 التفاصيل' : '📋 Details'}
-                onClose={closeModal}
-            >
-                {payload && (
-                    <div className="space-y-4">
-                        <div className="border-b border-border pb-3">
-                            <p className="text-xs uppercase font-black text-primary mb-1">
-                                {locale === 'ar' ? 'النوع' : 'Type'}
-                            </p>
-                            <p className="font-bold text-dark">{payload.typeLabel}</p>
-                        </div>
-
-                        <div className="border-b border-border pb-3">
-                            <p className="text-xs uppercase font-black text-primary mb-1">
-                                {locale === 'ar' ? 'الاسم' : 'Name'}
-                            </p>
-                            <p className="font-bold text-dark">{payload.name}</p>
-                        </div>
-
-                        {payload.mosque && (
-                            <div className="border-b border-border pb-3">
-                                <p className="text-xs uppercase font-black text-primary mb-1">
-                                    {locale === 'ar' ? 'المسجد' : 'Mosque'}
-                                </p>
-                                <p className="font-bold text-dark">{payload.mosque}</p>
-                            </div>
-                        )}
-
-                        {payload.location && !payload.online && (
-                            <div className="border-b border-border pb-3">
-                                <p className="text-xs uppercase font-black text-primary mb-1">
-                                    {locale === 'ar' ? 'الموقع' : 'Location'}
-                                </p>
-                                <p className="font-bold text-dark">{payload.location}</p>
-                            </div>
-                        )}
-
-                        {payload.map && !payload.online && (
-                            <a
-                                className="btn-primary w-full text-center"
-                                href={payload.map}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {locale === 'ar' ? '🗺️ فتح الخريطة' : '🗺️ Open Map'}
-                            </a>
-                        )}
-                    </div>
-                )}
-            </AppModal>
         </section>
     );
 }
