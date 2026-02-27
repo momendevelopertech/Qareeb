@@ -1,4 +1,3 @@
-import { getLocale } from 'next-intl/server';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -12,8 +11,6 @@ export const metadata = {
 };
 
 export default async function SearchPage() {
-    const locale = await getLocale();
-
     return (
         <div className="min-h-screen flex flex-col">
             <Header />

@@ -2,8 +2,7 @@
 
 import { useLocale } from 'next-intl';
 import { useModalStore, useToastStore } from '@/lib/store';
-import { getEmbeddableVideoUrl } from '@/lib/video';
-import AppModal from '@/components/ui/AppModal';
+import { useState } from 'react';
 
 interface CardItem {
     id: string;
@@ -32,13 +31,18 @@ export default function UnifiedCard({ card, showWhatsApp = false, showImages = f
     const locale = useLocale();
     const { openModal } = useModalStore();
     const { pushToast } = useToastStore();
+    const [copying, setCopying] = useState(false);
 
-    const copyToClipboard = async (text: string) => {
+    const copyToClipboard = async (text: string | undefined) => {
+        if (!text) return;
         try {
+            setCopying(true);
             await navigator.clipboard.writeText(text);
             pushToast(locale === 'ar' ? 'تم النسخ بنجاح' : 'Copied successfully', 'success');
         } catch {
             pushToast(locale === 'ar' ? 'تعذر النسخ' : 'Failed to copy', 'error');
+        } finally {
+            setCopying(false);
         }
     };
 
@@ -101,8 +105,9 @@ export default function UnifiedCard({ card, showWhatsApp = false, showImages = f
                             {locale === 'ar' ? '🗺️ فتح الخريطة' : '🗺️ Open Map'}
                         </a>
                         <button
-                            className="btn-outline !py-2 !px-3 text-xs font-bold"
+                            className="btn-outline !py-2 !px-3 text-xs font-bold disabled:opacity-50"
                             onClick={() => copyToClipboard(card.map)}
+                            disabled={copying}
                             title={locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
                         >
                             {locale === 'ar' ? '📋' : '📋'}
