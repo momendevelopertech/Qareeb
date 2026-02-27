@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import AppModal from '@/components/ui/AppModal';
+import UnifiedCard from './UnifiedCard';
 import { useModalStore, useToastStore } from '@/lib/store';
 import { getEmbeddableVideoUrl } from '@/lib/video';
 
@@ -46,15 +47,6 @@ export default function PublicCardsTabs() {
         }
     };
 
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            pushToast(locale === 'ar' ? 'تم النسخ بنجاح' : 'Copied successfully', 'success');
-        } catch {
-            pushToast(locale === 'ar' ? 'تعذر النسخ' : 'Failed to copy', 'error');
-        }
-    };
-
     const cards = useMemo(() => {
         const toCard = (item: any, entity: 'imam' | 'halqa' | 'maintenance') => ({
             id: item.id,
@@ -70,13 +62,16 @@ export default function PublicCardsTabs() {
                     : entity === 'halqa'
                       ? locale === 'ar'
                           ? 'حلقة'
-                          : 'Halqa'
+                          : 'Circle'
                       : locale === 'ar'
                         ? 'صيانة'
                         : 'Maintenance',
             typeIcon: entity === 'imam' ? '🕌' : entity === 'halqa' ? '📖' : '🏗️',
             map: item.googleMapsUrl || item.google_maps_url || '',
             video: item.videoUrl || item.video_url || '',
+            whatsapp: item.whatsapp || '',
+            online: (item.additionalInfo || '').startsWith('[ONLINE]'), // للحلقات
+            images: item.media ? item.media.map((m: any) => m.url) : [], // للصيانة
             raw: item,
         });
 
@@ -92,12 +87,16 @@ export default function PublicCardsTabs() {
         return all.filter((x) => x.entity === 'maintenance');
     }, [tab, imams, halaqat, maintenance, locale]);
 
+    const embedUrl = getEmbeddableVideoUrl(payload?.video);
+
+    const handleViewDetails = (card: any) => {
+        openModal('view', card.entity, card);
+    };
+
     const shareCard = async (card: any) => {
         const text = `${card.name}\n${card.mosque || ''}\n${card.location}\n${card.map || ''}`.trim();
         await shareText(text);
     };
-
-    const embedUrl = getEmbeddableVideoUrl(payload?.video);
 
     return (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -126,82 +125,21 @@ export default function PublicCardsTabs() {
             {/* Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cards.map((card) => (
-                    <div
-                        key={`${card.entity}-${card.id}`}
-                        className="bg-white rounded-[20px] border border-border p-5 space-y-4 hover:shadow-lg transition-all duration-300 flex flex-col"
-                    >
-                        {/* Header: Badge and Name */}
-                        <div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black bg-primary/10 text-primary">
-                                    <span>{card.typeIcon}</span>
-                                    {card.typeLabel}
-                                </span>
-                            </div>
-                            <h3 className="text-lg font-black text-dark leading-tight">{card.name}</h3>
-                            {card.mosque && card.mosque !== card.name && (
-                                <p className="text-sm text-text-muted mt-1">{card.mosque}</p>
-                            )}
-                        </div>
-
-                        {/* Location */}
-                        {card.location && (
-                            <div className="flex items-center gap-2 text-sm text-text-muted bg-cream rounded-lg px-3 py-2.5">
-                                <span>📍</span>
-                                <span className="font-semibold flex-1">{card.location}</span>
-                            </div>
-                        )}
-
-                        {/* Action Buttons Group 1: Map and Video */}
-                        <div className="flex gap-2 flex-wrap">
-                            {card.map && (
-                                <>
-                                    <a
-                                        href={card.map}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="btn-outline !py-2 !px-3 text-xs font-bold flex-1 min-w-[120px] text-center"
-                                    >
-                                        {locale === 'ar' ? '🗺️ فتح الخريطة' : '🗺️ Open Map'}
-                                    </a>
-                                    <button
-                                        className="btn-outline !py-2 !px-3 text-xs font-bold"
-                                        onClick={() => copyToClipboard(card.map)}
-                                        title={locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
-                                    >
-                                        {locale === 'ar' ? '📋' : '📋'}
-                                    </button>
-                                </>
-                            )}
-                            {card.video && (
-                                <button
-                                    className="btn-outline !py-2 !px-3 text-xs font-bold flex-1 min-w-[120px]"
-                                    onClick={() => openModal('video', card.entity, card)}
-                                >
-                                    {locale === 'ar' ? '🎥 عرض الفيديو' : '🎥 View Video'}
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Spacer */}
-                        <div className="flex-1" />
-
-                        {/* Footer: View Details and Share */}
-                        <div className="flex gap-2 pt-2 border-t border-border">
-                            <button
-                                className="btn-primary !py-2.5 !px-4 text-xs font-bold flex-1"
-                                onClick={() => openModal('view', card.entity, card)}
-                            >
-                                {locale === 'ar' ? '➡️ عرض التفاصيل' : '➡️ View Details'}
-                            </button>
-                            <button
-                                className="btn-outline !py-2.5 !px-4 text-xs font-bold"
-                                onClick={() => shareCard(card)}
-                                title={locale === 'ar' ? 'مشاركة البطاقة' : 'Share card'}
-                            >
-                                {locale === 'ar' ? '📤' : '📤'}
-                            </button>
-                        </div>
+                    <div key={`${card.entity}-${card.id}`} className="flex flex-col gap-2">
+                        <UnifiedCard
+                            card={card}
+                            showWhatsApp={card.entity !== 'imam'} // للحلقات والصيانة فقط
+                            showImages={card.entity === 'maintenance'} // للصيانة فقط
+                            onViewDetails={handleViewDetails}
+                        />
+                        {/* زر المشاركة */}
+                        <button
+                            className="btn-outline !py-2 !px-4 text-xs font-bold text-center"
+                            onClick={() => shareCard(card)}
+                            title={locale === 'ar' ? 'مشاركة البطاقة' : 'Share card'}
+                        >
+                            {locale === 'ar' ? '📤 مشاركة' : '📤 Share'}
+                        </button>
                     </div>
                 ))}
             </div>
@@ -251,6 +189,34 @@ export default function PublicCardsTabs() {
                 ) : null}
             </AppModal>
 
+            {/* Images Modal - للصيانة */}
+            <AppModal
+                isOpen={isOpen && type === 'images'}
+                type="images"
+                title={locale === 'ar' ? '📸 الصور' : '📸 Photos'}
+                onClose={closeModal}
+            >
+                {payload?.images && payload.images.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-3">
+                        {payload.images.map((img: string, idx: number) => (
+                            <a
+                                key={idx}
+                                href={img}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="overflow-hidden rounded-lg"
+                            >
+                                <img
+                                    src={img}
+                                    alt={`Photo ${idx + 1}`}
+                                    className="w-full h-48 object-cover hover:scale-105 transition-transform"
+                                />
+                            </a>
+                        ))}
+                    </div>
+                ) : null}
+            </AppModal>
+
             {/* Details Modal */}
             <AppModal
                 isOpen={isOpen && type === 'view'}
@@ -283,7 +249,7 @@ export default function PublicCardsTabs() {
                             </div>
                         )}
 
-                        {payload.location && (
+                        {payload.location && !payload.online && (
                             <div className="border-b border-border pb-3">
                                 <p className="text-xs uppercase font-black text-primary mb-1">
                                     {locale === 'ar' ? 'الموقع' : 'Location'}
@@ -292,7 +258,7 @@ export default function PublicCardsTabs() {
                             </div>
                         )}
 
-                        {payload.map && (
+                        {payload.map && !payload.online && (
                             <a
                                 className="btn-primary w-full text-center"
                                 href={payload.map}
