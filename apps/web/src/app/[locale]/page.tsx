@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
 import ChatWidget from '@/components/chat/ChatWidget';
 import SubmitServiceSection from '@/components/home/SubmitServiceSection';
+import LatestUnifiedCard from '@/components/home/LatestUnifiedCard';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -184,55 +185,36 @@ export default async function HomePage() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {latestSections.map((section, idx) => (
-                            <div key={idx} className="bg-white rounded-3xl shadow-card border border-border p-5 flex flex-col gap-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-black text-dark">{section.title}</h3>
-                                    <Link href={section.browseHref} className="text-sm font-bold text-primary hover:text-primary-dark">
-                                        {locale === 'ar' ? 'استعرض الكل ←' : 'Browse All ←'}
-                                    </Link>
-                                </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {latestSections.flatMap((section) =>
+                            section.items.map((item) => {
+                                const entity: 'imam' | 'halqa' | 'maintenance' =
+                                    section.browseHref.includes('/imams')
+                                        ? 'imam'
+                                        : section.browseHref.includes('/halaqat')
+                                        ? 'halqa'
+                                        : 'maintenance';
 
-                                {section.items.length ? (
-                                    section.items.map((item) => (
-                                        <div key={item.id} className="rounded-2xl border border-border/60 p-4 flex flex-col gap-3 hover:-translate-y-0.5 transition-all duration-200">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-black bg-primary/10 text-primary">
-                                                    <span>{item.icon}</span>
-                                                    {item.badge}
-                                                </span>
-                                                {item.createdAt && (
-                                                    <span className="text-[11px] text-text-muted font-medium">
-                                                        {new Date(item.createdAt).toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <h4 className="text-base font-black text-dark leading-tight">{item.title}</h4>
-                                                {item.subtitle && <p className="text-sm text-text-muted">{item.subtitle}</p>}
-                                            </div>
-
-                                            {item.location && (
-                                                <div className="flex items-center gap-2 text-sm text-text-muted bg-cream rounded-2xl px-3 py-2">
-                                                    <span>📍</span>
-                                                    <span className="font-semibold">{item.location}</span>
-                                                </div>
-                                            )}
-
-                                            <Link href={item.link} className="btn-outline text-xs font-bold text-center mt-auto">
-                                                {locale === 'ar' ? 'عرض التفاصيل' : 'View details'}
-                                            </Link>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-center text-text-muted italic py-8 border-2 border-dashed border-border rounded-2xl">
-                                        {locale === 'ar' ? 'لا توجد إضافات بعد' : 'No items yet'}
-                                    </div>
-                                )}
+                                return (
+                                    <LatestUnifiedCard
+                                        key={`${entity}-${item.id}`}
+                                        id={item.id}
+                                        entity={entity}
+                                        name={item.title}
+                                        mosque={item.subtitle}
+                                        location={item.location}
+                                        typeLabel={item.badge}
+                                        typeIcon={item.icon}
+                                        link={item.link}
+                                    />
+                                );
+                            }),
+                        )}
+                        {!latestSections.some((section) => section.items.length) && (
+                            <div className="col-span-full text-center text-text-muted italic py-8 border-2 border-dashed border-border rounded-2xl">
+                                {locale === 'ar' ? 'لا توجد إضافات بعد' : 'No items yet'}
                             </div>
-                        ))}
+                        )}
                     </div>
                 </section>
 

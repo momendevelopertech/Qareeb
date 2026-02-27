@@ -12,6 +12,8 @@ import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
 import { getWhatsAppUrl } from '@/lib/utils';
+import UnifiedCard from '@/components/public/UnifiedCard';
+import { useRouter } from 'next/navigation';
 
 const maintenanceLabels: Record<string, Record<string, string>> = {
     ar: { Plumbing: 'سباكة', Electrical: 'كهرباء', Carpentry: 'نجارة', Painting: 'دهان', AC_Repair: 'تكييف', Cleaning: 'تنظيف', Other: 'أخرى' },
@@ -77,6 +79,8 @@ export default function MaintenancePage() {
         ].some((field) => (field || '').toString().toLowerCase().includes(q));
     });
 
+    const router = useRouter();
+
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />
@@ -128,56 +132,78 @@ export default function MaintenancePage() {
                             ))}
                         </div>
                     ) : filteredData?.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {filteredData.map((item: any) => (
-                                <div key={item.id} className="bg-white rounded-[24px] overflow-hidden shadow-card border border-border group hover:-translate-y-1 transition-all duration-300 animate-fade-in p-6 flex flex-col">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="font-black text-xl text-dark leading-tight group-hover:text-primary transition-colors">{item.mosque_name || item.mosqueName}</h3>
-                                            <div className="flex flex-col gap-1 text-text-muted font-bold text-sm">
-                                                <span className="flex items-center gap-1.5"><span className="text-primary text-lg">🕌</span>{item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : `${item.governorate} — ${item.city}`}</span>
-                                                {item.google_maps_url && (
-                                                    <span className="flex gap-3 text-[11px] font-semibold text-primary underline flex-wrap">
-                                                        <a href={item.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
-                                                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                                        <button type="button" onClick={() => navigator.clipboard.writeText(item.google_maps_url)} className="text-primary underline">
-                                                            {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
-                                                        </button>
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-wrap justify-end gap-1.5 max-w-[150px]">
-                                            {(item.maintenance_types || item.maintenanceTypes || []).map((type: string) => (
-                                                <span key={type} className="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 rounded-md text-[9px] font-black uppercase border border-red-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredData.map((item: any) => {
+                                const types = item.maintenance_types || item.maintenanceTypes || [];
+                                const card = {
+                                    id: item.id,
+                                    entity: 'maintenance' as const,
+                                    name: item.mosque_name || item.mosqueName,
+                                    mosque: undefined,
+                                    location: item.area
+                                        ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn)
+                                        : `${item.governorate} — ${item.city}`,
+                                    typeLabel:
+                                        types.length && maintenanceLabels[locale]?.[types[0]]
+                                            ? maintenanceLabels[locale][types[0]]
+                                            : locale === 'ar'
+                                            ? 'إعمار'
+                                            : 'Maintenance',
+                                    typeIcon: '🏗️',
+                                    map: item.google_maps_url,
+                                    video: item.video_url || item.videoUrl,
+                                    whatsapp: item.whatsapp,
+                                    online: false,
+                                    images: item.media ? item.media.map((m: any) => m.url) : [],
+                                    raw: item,
+                                };
+
+                                return (
+                                    <div key={item.id} className="flex flex-col gap-2">
+                                        <UnifiedCard
+                                            card={card}
+                                            showWhatsApp
+                                            showImages
+                                            onViewDetails={() => router.push(`/${locale}/maintenance/${item.id}`)}
+                                        />
+                                        <div className="flex flex-wrap gap-1.5 ps-1">
+                                            {types.map((type: string) => (
+                                                <span
+                                                    key={type}
+                                                    className="inline-flex items-center px-2 py-0.5 bg-red-50 text-red-700 rounded-md text-[9px] font-black uppercase border border-red-100"
+                                                >
                                                     {maintenanceLabels[locale]?.[type] || type}
                                                 </span>
                                             ))}
                                         </div>
-                                    </div>
-
-                                    <div className="flex flex-col gap-3 mb-6 p-4 bg-cream rounded-2xl border border-primary/5 flex-1">
-                                        <p className="text-sm text-text font-medium leading-relaxed line-clamp-3 italic">
+                                        <p className="text-sm text-text font-medium leading-relaxed line-clamp-3 italic ps-1">
                                             " {item.description} "
                                         </p>
-
                                         {(item.estimated_cost_min || item.estimatedCostMin) && (
-                                            <div className="mt-2 pt-3 border-t border-border flex items-center justify-between">
-                                                <span className="text-[10px] font-black uppercase text-text-muted">{locale === 'ar' ? 'التكلفة التقديرية' : 'Est. Cost'}</span>
+                                            <div className="mt-1 pt-3 border-t border-border flex items-center justify-between ps-1">
+                                                <span className="text-[10px] font-black uppercase text-text-muted">
+                                                    {locale === 'ar' ? 'التكلفة التقديرية' : 'Est. Cost'}
+                                                </span>
                                                 <span className="text-sm font-black text-primary">
-                                                    {item.estimated_cost_min || item.estimatedCostMin} - {item.estimated_cost_max || item.estimatedCostMax}
-                                                    <span className="text-[10px] ms-1">{locale === 'ar' ? 'ج.م' : 'EGP'}</span>
+                                                    {item.estimated_cost_min || item.estimatedCostMin} -{' '}
+                                                    {item.estimated_cost_max || item.estimatedCostMax}
+                                                    <span className="text-[10px] ms-1">
+                                                        {locale === 'ar' ? 'ج.م' : 'EGP'}
+                                                    </span>
                                                 </span>
                                             </div>
                                         )}
+                                        <a
+                                            href={getWhatsAppUrl(item.whatsapp)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)] bg-[#1B6B45]"
+                                        >
+                                            {tc('whatsapp')}
+                                        </a>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-3 mt-auto">
-                                        <Link href={`/${locale}/maintenance/${item.id}`} className="btn-outline !py-3 !px-2 text-xs text-center truncate">{tc('viewDetails')}</Link>
-                                        <a href={getWhatsAppUrl(item.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)] bg-[#1B6B45]">{tc('whatsapp')}</a>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-16"><h3 className="text-lg font-semibold mb-2">{tc('noResults')}</h3></div>

@@ -12,6 +12,8 @@ import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
 import { getWhatsAppUrl } from '@/lib/utils';
+import UnifiedCard from '@/components/public/UnifiedCard';
+import { useRouter } from 'next/navigation';
 
 const typeLabels: Record<string, Record<string, string>> = {
     ar: { men: 'رجال', women: 'نساء', children: 'أطفال', mixed: 'مختلط' },
@@ -88,6 +90,8 @@ export default function HalaqatPage() {
         ].some((field) => (field || '').toString().toLowerCase().includes(q));
     });
 
+    const router = useRouter();
+
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <Header />
@@ -159,47 +163,50 @@ export default function HalaqatPage() {
                         </div>
                     ) : filteredData?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredData.map((halqa: any) => (
-                                <div key={halqa.id} className="bg-white rounded-[24px] overflow-hidden shadow-card border border-border group hover:-translate-y-1 transition-all duration-300 animate-fade-in p-6 flex flex-col">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1">
-                                            <h3 className="font-black text-xl text-dark leading-tight group-hover:text-primary transition-colors">{halqa.circle_name || halqa.circleName}</h3>
-                                            <div className="flex items-center gap-1.5 mt-2 text-text-muted font-bold text-sm">
-                                                <span className="text-primary text-lg">🕌</span>
-                                                {halqa.mosque_name || halqa.mosqueName}
-                                            </div>
-                                        </div>
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight ${typeColors[halqa.halqa_type || halqa.halqaType] || typeColors.mixed}`}>
-                                            {typeLabels[locale]?.[halqa.halqa_type || halqa.halqaType] || halqa.halqa_type}
-                                        </span>
-                                    </div>
+                            {filteredData.map((halqa: any) => {
+                                const halqaType = halqa.halqa_type || halqa.halqaType;
+                                const card = {
+                                    id: halqa.id,
+                                    entity: 'halqa' as const,
+                                    name: halqa.circle_name || halqa.circleName,
+                                    mosque: halqa.mosque_name || halqa.mosqueName,
+                                    location: halqa.area
+                                        ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn)
+                                        : `${halqa.governorate} — ${halqa.city}`,
+                                    typeLabel: typeLabels[locale]?.[halqaType] || halqaType || (locale === 'ar' ? 'حلقة' : 'Circle'),
+                                    typeIcon: '📖',
+                                    map: halqa.google_maps_url,
+                                    video: halqa.video_url || halqa.videoUrl,
+                                    whatsapp: halqa.whatsapp,
+                                    online: (halqa.additional_info || halqa.additionalInfo || '').toString().startsWith('[ONLINE]'),
+                                    images: [],
+                                    raw: halqa,
+                                };
 
-                                    <div className="flex flex-col gap-2 mb-6 p-4 bg-cream rounded-2xl border border-primary/5 flex-1">
-                                            <p className="flex flex-col gap-1 text-xs font-bold text-text-muted mb-2">
-                                                <span className="flex items-center gap-2"><span className="text-primary">📍</span>{halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : `${halqa.governorate} — ${halqa.city}`}</span>
-                                                {halqa.google_maps_url && (
-                                                    <span className="flex gap-3 text-[11px] font-semibold text-primary underline">
-                                                        <a href={halqa.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
-                                                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(halqa.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                                    <button type="button" onClick={() => navigator.clipboard.writeText(halqa.google_maps_url)} className="text-primary underline">
-                                                        {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
-                                                    </button>
-                                                    </span>
-                                                )}
-                                        </p>
+                                return (
+                                    <div key={halqa.id} className="flex flex-col gap-2">
+                                        <UnifiedCard
+                                            card={card}
+                                            showWhatsApp
+                                            showImages={false}
+                                            onViewDetails={() => router.push(`/${locale}/halaqat/${halqa.id}`)}
+                                        />
                                         {(halqa.additional_info || halqa.additionalInfo) && (
-                                            <p className="text-sm text-text font-medium leading-relaxed italic line-clamp-3">
+                                            <p className="text-sm text-text font-medium leading-relaxed italic line-clamp-3 ps-1">
                                                 " {halqa.additional_info || halqa.additionalInfo} "
                                             </p>
                                         )}
+                                        <a
+                                            href={getWhatsAppUrl(halqa.whatsapp)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)]"
+                                        >
+                                            {tc('whatsapp')}
+                                        </a>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-3 mt-auto">
-                                        <Link href={`/${locale}/halaqat/${halqa.id}`} className="btn-outline !py-3 !px-2 text-xs text-center truncate">{tc('viewDetails')}</Link>
-                                        <a href={getWhatsAppUrl(halqa.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-primary !py-3 !px-2 text-xs flex items-center justify-center gap-1.5 shadow-[0_4px_12px_rgba(27,107,69,0.25)]">{tc('whatsapp')}</a>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-16">
