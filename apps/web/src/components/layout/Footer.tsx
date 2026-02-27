@@ -55,9 +55,11 @@ export default function Footer() {
                             {locale === 'ar' ? 'روابط سريعة' : 'Quick Links'}
                         </h3>
                         <div className="flex flex-col gap-2">
+                            <Link href={`/${locale}/search`} className="text-gray-400 hover:text-primary transition-colors text-sm">{locale === 'ar' ? 'بحث' : 'Search'}</Link>
                             <Link href={`/${locale}/imams`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('imams')}</Link>
                             <Link href={`/${locale}/halaqat`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('halaqat')}</Link>
                             <Link href={`/${locale}/maintenance`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('maintenance')}</Link>
+                            <Link href={`/${locale}/about`} className="text-gray-400 hover:text-primary transition-colors text-sm">{locale === 'ar' ? 'عن قريب' : 'About'}</Link>
                         </div>
                     </div>
 

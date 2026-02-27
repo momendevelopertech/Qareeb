@@ -4,8 +4,6 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
 import ChatWidget from '@/components/chat/ChatWidget';
-import HomeSearchBar from '@/components/search/HomeSearchBar';
-import PublicCardsTabs from '@/components/public/PublicCardsTabs';
 import SubmitServiceSection from '@/components/home/SubmitServiceSection';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
@@ -150,8 +148,8 @@ export default async function HomePage() {
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-4 mb-16">
-                            <Link href={`/${locale}/imams`} className="btn-primary !px-10 !py-4 text-lg">
-                                {locale === 'ar' ? '🔍 ابحث عن إمام' : '🔍 Find an Imam'}
+                            <Link href={`/${locale}/search`} className="btn-primary !px-10 !py-4 text-lg">
+                                {locale === 'ar' ? '🔍 ابحث الآن' : '🔍 Search Now'}
                             </Link>
                             <Link href={`/${locale}/imams/submit`} className="btn-outline !px-10 !py-4 text-lg">
                                 {locale === 'ar' ? '➕ أضف مكاناً' : '➕ Add a Place'}
@@ -169,13 +167,6 @@ export default async function HomePage() {
                         </div>
                     </div>
                 </section>
-
-                {/* Search Bar Segment */}
-                <div className="px-4 -mt-10 relative z-10">
-                    <HomeSearchBar />
-                </div>
-
-                <PublicCardsTabs />
 
                 {/* Latest Additions */}
                 <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
