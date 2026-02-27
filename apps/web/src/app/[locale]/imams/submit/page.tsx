@@ -299,13 +299,14 @@ export default function SubmitPage() {
                                     </>
                                 )}
 
+                                {!(entityType === 'halqa' && isOnline) && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                             {ti('governorate')} <span className="text-red-500">*</span>
                                         </label>
                                         <select
-                                            {...register('governorateId', { required: true })}
+                                            {...register('governorateId', { required: entityType !== 'halqa' || !isOnline })}
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             value={selectedGovernorateId || ''}
                                             onChange={(e) => {
@@ -313,7 +314,6 @@ export default function SubmitPage() {
                                                 const gov = governorates.find((g) => g.id === e.target.value);
                                                 setValue('governorate', gov?.nameAr || gov?.nameEn || '');
                                                 setValue('city', '');
-                                                setValue('district', '');
                                             }}
                                         >
                                             <option value="">{locale === 'ar' ? 'اختر المحافظة' : 'Select governorate'}</option>
@@ -325,7 +325,7 @@ export default function SubmitPage() {
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{locale === 'ar' ? 'المنطقة' : 'Area'} <span className="text-red-500">*</span></label>
                                         <select
-                                            {...register('areaId', { required: true })}
+                                            {...register('areaId', { required: entityType !== 'halqa' || !isOnline })}
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             disabled={!selectedGovernorateId}
                                             onChange={(e) => {
@@ -341,22 +341,9 @@ export default function SubmitPage() {
                                         </select>
                                     </div>
                                 </div>
+                                )}
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                            {locale === 'ar' ? 'المدينة' : 'City'}
-                                        </label>
-                                        <input {...register('city')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'المدينة...' : 'City...'} />
-                                    </div>
-                                    <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                            {locale === 'ar' ? 'الحي / المنطقة السكنية' : 'District / Neighborhood'}
-                                        </label>
-                                        <input {...register('district')} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'الحي...' : 'District...'} />
-                                    </div>
-                                </div>
-
+                                {!(entityType === 'halqa' && isOnline) && (
                                 <div className="group">
                                     <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                         {locale === 'ar' ? 'رابط خرائط جوجل' : 'Google Maps Link'}
@@ -366,12 +353,12 @@ export default function SubmitPage() {
                                         type="url"
                                         className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                         placeholder="https://maps.google.com/...?q=30.0444,31.2357"
-                                        disabled={entityType === 'halqa' && isOnline}
                                     />
                                     <span className="text-[10px] text-text-muted mt-2 block ms-1 font-bold">
                                         {locale === 'ar' ? 'سنستخرج الإحداثيات تلقائياً من الرابط' : 'We will extract coordinates automatically from the link'}
                                     </span>
                                 </div>
+                                )}
                             </div>
 
                             <div className="space-y-6 pt-2 border-t border-border">

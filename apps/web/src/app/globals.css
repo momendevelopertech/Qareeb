@@ -43,6 +43,40 @@
     @apply w-full px-4 py-3 border border-gray-300 rounded-btn focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white;
   }
 
+  /* PhoneInput RTL support */
+  [dir="rtl"] .PhoneInputInput {
+    direction: rtl;
+    text-align: right;
+  }
+
+  .PhoneInputInput {
+    @apply px-4 py-3 border border-gray-300 rounded-btn focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
+  }
+
+  .PhoneInputInput:focus {
+    @apply ring-2 ring-primary ring-inset border-transparent;
+  }
+
+  .PhoneInput {
+    position: relative;
+  }
+
+  /* PhoneInput country flag and arrow RTL alignment */
+  [dir="rtl"] .PhoneInputCountryIcon {
+    margin-left: 8px;
+    margin-right: 0;
+  }
+
+  [dir="rtl"] .PhoneInputCountrySelect {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  [dir="rtl"] .PhoneInputCountrySelect::after {
+    left: 8px;
+    right: auto;
+  }
+
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
   }
