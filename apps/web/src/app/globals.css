@@ -44,12 +44,14 @@
   }
 
   .phone-input-shell {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-btn transition-all duration-200 bg-white flex items-center gap-2;
+    @apply w-full min-h-[56px] border border-slate-300 rounded-xl transition-all duration-200 bg-white flex items-center;
+    padding: 6px;
+    gap: 8px;
   }
 
   .phone-input-shell:focus-within {
-    border-color: rgb(27, 107, 69);
-    box-shadow: 0 0 0 2px rgba(27, 107, 69, 0.12);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
   }
 
   /* PhoneInput - Always LTR regardless of page direction */
@@ -58,7 +60,8 @@
     width: 100%;
     direction: ltr !important;
     display: flex;
-    flex-direction: row;
+    align-items: center;
+    gap: 8px;
   }
 
   .PhoneInput--input {
@@ -67,10 +70,22 @@
   }
 
   .PhoneInputCountry {
-    display: flex;
-    flex-direction: row;
+    display: inline-flex;
     align-items: center;
-    order: 0;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 10px;
+    border-inline-end: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 10px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .PhoneInputCountryCallingCode {
+    font-weight: 700;
+    color: #334155;
+    font-size: 0.92rem;
   }
 
   /* Override library's default input styling */
@@ -83,11 +98,12 @@
     direction: ltr !important;
     text-align: left !important;
     unicode-bidi: embed !important;
-    height: 24px;
+    height: 42px;
     min-width: 0;
+    padding: 0 6px !important;
+    font-size: 0.95rem;
   }
 
-  /* Remove the black border/outline on focus */
   .PhoneInputInput:focus,
   .PhoneInputInput:focus-visible,
   .PhoneInputInput:active {
@@ -96,20 +112,37 @@
     box-shadow: none !important;
   }
 
-  /* Placeholder styling */
   .PhoneInputInput::placeholder {
-    @apply text-gray-400 !important;
+    @apply text-slate-400 !important;
     opacity: 1 !important;
   }
 
-  /* PhoneInput country select - always on left */
   .PhoneInputCountrySelect {
-    @apply border-none bg-transparent !important;
+    border: none !important;
+    background: transparent !important;
     appearance: none !important;
+    -webkit-appearance: none !important;
     outline: none !important;
     cursor: pointer;
     direction: ltr !important;
-    order: 1;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .PhoneInputCountry::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #64748b;
+    border-bottom: 2px solid #64748b;
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
   }
 
   .PhoneInputCountrySelect:focus,
@@ -118,16 +151,13 @@
     box-shadow: none !important;
   }
 
-  /* Flag icon - always on left */
   .PhoneInputCountryIcon {
-    margin-right: 6px !important;
-    margin-left: 0 !important;
-    flex-shrink: 0;
-    order: 0;
+    margin: 0 !important;
     width: 22px;
     height: 16px;
-    overflow: visible !important;
-    z-index: 1;
+    overflow: hidden !important;
+    border-radius: 3px;
+    flex-shrink: 0;
   }
 
   .PhoneInputCountryIconImg {
@@ -137,7 +167,6 @@
     display: block !important;
   }
 
-  /* Force LTR even when parent has dir="rtl" */
   [dir="rtl"] .PhoneInput {
     direction: ltr !important;
     flex-direction: row !important;
@@ -147,30 +176,28 @@
     direction: ltr !important;
     text-align: left !important;
     unicode-bidi: embed !important;
-    padding-left: 4px !important;
-    padding-right: 0 !important;
   }
 
   [dir="rtl"] .PhoneInputCountry {
-    flex-direction: row !important;
-    order: 0 !important;
+    border-inline-end: 1px solid #e2e8f0;
   }
 
-  [dir="rtl"] .PhoneInputCountrySelect {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    order: 1 !important;
-  }
+  @media (max-width: 640px) {
+    .phone-input-shell {
+      min-height: 52px;
+      padding: 5px;
+    }
 
-  [dir="rtl"] .PhoneInputCountryIcon {
-    margin-left: 0 !important;
-    margin-right: 6px !important;
-    order: 0 !important;
-  }
+    .PhoneInputCountry {
+      min-height: 38px;
+      padding: 0 8px;
+      gap: 6px;
+    }
 
-  [dir="rtl"] .PhoneInputCountrySelect::after {
-    right: auto !important;
-    left: 8px !important;
+    .PhoneInputInput {
+      height: 38px;
+      font-size: 0.9rem;
+    }
   }
 
   /* Password visibility icon RTL alignment */
