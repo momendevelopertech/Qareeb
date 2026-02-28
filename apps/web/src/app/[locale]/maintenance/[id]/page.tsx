@@ -3,6 +3,9 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getWhatsAppUrl } from '@/lib/utils';
+import { extractLatLngFromGoogleMaps, getGoogleMapsEmbedUrl } from '@/lib/maps';
+import { formatLocationParts } from '@/lib/location';
+import LocationMapSection from '@/components/public/LocationMapSection';
 
 export const revalidate = 300;
 
@@ -25,6 +28,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
     const tc = await getTranslations('common');
     const item = await getItem(params.id);
 
+
     if (!item) {
         return (
             <div className="min-h-screen flex flex-col"><Header /><main className="flex-1 flex items-center justify-center">
@@ -32,6 +36,15 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
                     <Link href={`/${locale}/maintenance`} className="btn-primary">{locale === 'ar' ? 'العودة' : 'Back'}</Link></div></main></div>
         );
     }
+
+
+    const coords = (typeof item.latitude === 'number' && typeof item.longitude === 'number' && (item.latitude !== 0 || item.longitude !== 0))
+        ? { lat: item.latitude, lng: item.longitude }
+        : extractLatLngFromGoogleMaps(item.googleMapsUrl || item.google_maps_url);
+    const mapHref = coords ? `https://www.google.com/maps?q=${encodeURIComponent(`${coords.lat},${coords.lng}`)}&z=15` : (item.googleMapsUrl || item.google_maps_url || null);
+    const mapEmbedUrl = mapHref ? getGoogleMapsEmbedUrl(mapHref) : null;
+    const directionsDestination = coords ? `${coords.lat},${coords.lng}` : (item.googleMapsUrl || item.google_maps_url || '');
+
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -66,14 +79,17 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
                                 </div>
                                 <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 space-y-2">
                                     <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-2">{locale === 'ar' ? 'الموقع' : 'Location'}</h3>
-                                    <p className="text-dark font-bold text-lg">{item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : `${item.governorate} — ${item.city}${item.district ? ` — ${item.district}` : ''}`}</p>
-                                    {item.google_maps_url && (
+                                    <p className="text-dark font-bold text-lg">{formatLocationParts([
+                                        item.governorate,
+                                        item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null,
+                                        item.city,
+                                        item.district,
+                                    ])}</p>
+                                    {mapHref && (
                                         <div className="flex gap-3 text-sm font-bold text-primary underline flex-wrap">
-                                            <a href={item.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
-                                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                            <button type="button" onClick={() => navigator.clipboard.writeText(item.google_maps_url)} className="text-primary underline">
-                                                {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
-                                            </button>
+                                            <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
+                                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(directionsDestination)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                            <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'مشاركة' : 'Share'}</a>
                                         </div>
                                     )}
                                 </div>
@@ -88,6 +104,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
                                 )}
                             </div>
                             <div className="flex flex-col gap-6">
+                                {mapEmbedUrl && <LocationMapSection mapEmbedUrl={mapEmbedUrl} titleId="maintenance-location-map" />}
                                 {Array.isArray(item.media) && item.media.length > 0 && (
                                     <div>
                                         <h3 className="text-sm font-black text-text-muted mb-3 uppercase">{locale === 'ar' ? 'الصور' : 'Images'}</h3>

@@ -5,6 +5,7 @@ import Footer from '@/components/layout/Footer';
 import { getWhatsAppUrl } from '@/lib/utils';
 import { extractLatLngFromGoogleMaps, getGoogleMapsEmbedUrl } from '@/lib/maps';
 import { formatLocationParts } from '@/lib/location';
+import LocationMapSection from '@/components/public/LocationMapSection';
 
 export const revalidate = 300;
 
@@ -116,23 +117,7 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                             </div>
 
                             <div className="flex flex-col gap-6">
-                                {mapEmbedUrl && (
-                                    <div className="p-4 bg-white rounded-2xl border border-border shadow-sm">
-                                        <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
-                                            <span>🗺️</span> {locale === 'ar' ? 'الموقع على الخريطة' : 'Location on Map'}
-                                        </h3>
-                                        <div className="w-full aspect-video rounded-xl overflow-hidden border border-border">
-                                            <iframe
-                                                src={mapEmbedUrl}
-                                                className="w-full h-full"
-                                                loading="lazy"
-                                                allowFullScreen
-                                                title="halqa-location-map"
-                                                referrerPolicy="no-referrer-when-downgrade"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                {mapEmbedUrl && <LocationMapSection mapEmbedUrl={mapEmbedUrl} titleId="halqa-location-map" />}
 
                                 <div className="p-8 bg-gradient-to-br from-primary to-primary-light rounded-3xl text-white shadow-btn">
                                     <h3 className="font-black text-lg mb-4">{locale === 'ar' ? 'التواصل و التسجيل' : 'Contact & Registration'}</h3>

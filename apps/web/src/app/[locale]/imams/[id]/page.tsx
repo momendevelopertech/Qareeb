@@ -3,7 +3,9 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getWhatsAppUrl } from '@/lib/utils';
-import { getGoogleMapsEmbedUrl } from '@/lib/maps';
+import { extractLatLngFromGoogleMaps, getGoogleMapsEmbedUrl } from '@/lib/maps';
+import { formatLocationParts } from '@/lib/location';
+import LocationMapSection from '@/components/public/LocationMapSection';
 
 export const revalidate = 300; // ISR: 5 min
 
@@ -39,7 +41,12 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
         );
     }
 
-    const mapEmbedUrl = getGoogleMapsEmbedUrl(imam.googleMapsUrl || imam.google_maps_url);
+    const coords = (typeof imam.latitude === 'number' && typeof imam.longitude === 'number' && (imam.latitude !== 0 || imam.longitude !== 0))
+        ? { lat: imam.latitude, lng: imam.longitude }
+        : extractLatLngFromGoogleMaps(imam.googleMapsUrl || imam.google_maps_url);
+    const mapHref = coords ? `https://www.google.com/maps?q=${encodeURIComponent(`${coords.lat},${coords.lng}`)}&z=15` : (imam.googleMapsUrl || imam.google_maps_url || null);
+    const mapEmbedUrl = mapHref ? getGoogleMapsEmbedUrl(mapHref) : null;
+    const directionsDestination = coords ? `${coords.lat},${coords.lng}` : (imam.googleMapsUrl || imam.google_maps_url || '');
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -73,14 +80,18 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                                         <span>📍</span> {locale === 'ar' ? 'الموقع والتواجد' : 'Location & Presence'}
                                     </h3>
                                     <p className="text-dark font-bold text-lg leading-relaxed">
-                                        {imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : `${imam.governorate} — ${imam.city}`}
-                                        {imam.district && <span className="block text-sm text-text-muted mt-1">{imam.district}</span>}
+                                        {formatLocationParts([
+                                            imam.governorate,
+                                            imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : null,
+                                            imam.city,
+                                            imam.district,
+                                        ])}
                                     </p>
-                                    {(imam.googleMapsUrl || imam.google_maps_url) && (
+                                    {mapHref && (
                                         <div className="flex gap-3 text-sm font-bold text-primary underline flex-wrap">
-                                            <a href={imam.googleMapsUrl || imam.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
-                                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(imam.googleMapsUrl || imam.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                            <a href={imam.googleMapsUrl || imam.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'مشاركة' : 'Share'}</a>
+                                            <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
+                                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(directionsDestination)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                            <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'مشاركة' : 'Share'}</a>
                                         </div>
                                     )}
                                 </div>
@@ -114,23 +125,7 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                             </div>
 
                             <div className="flex flex-col gap-6">
-                                {mapEmbedUrl && (
-                                    <div className="p-4 bg-white rounded-2xl border border-border shadow-sm">
-                                        <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
-                                            <span>🗺️</span> {locale === 'ar' ? 'الموقع على الخريطة' : 'Location on Map'}
-                                        </h3>
-                                        <div className="w-full aspect-video rounded-xl overflow-hidden border border-border">
-                                            <iframe
-                                                src={mapEmbedUrl}
-                                                className="w-full h-full"
-                                                loading="lazy"
-                                                allowFullScreen
-                                                title="imam-location-map"
-                                                referrerPolicy="no-referrer-when-downgrade"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                {mapEmbedUrl && <LocationMapSection mapEmbedUrl={mapEmbedUrl} titleId="imam-location-map" />}
 
                                 <div className="p-8 bg-gradient-to-br from-primary to-primary-light rounded-3xl text-white shadow-btn">
                                     <h3 className="font-black text-lg mb-4">{locale === 'ar' ? 'تواصل مع الإمام' : 'Contact Imam'}</h3>

@@ -26,9 +26,13 @@ export default function SubmitPage() {
     const [mediaUploads, setMediaUploads] = useState<Array<{ publicId: string; secureUrl: string }>>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const [uploadSuccess, setUploadSuccess] = useState('');
+    const [draggingImage, setDraggingImage] = useState(false);
     const { register, handleSubmit, watch, setValue } = useForm();
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
+    const maxMaintenanceImages = 3;
 
     const selectedGovernorateId = watch('governorateId');
     const isOnline = watch('isOnline');
@@ -113,7 +117,9 @@ export default function SubmitPage() {
                     additional_info: payload.additionalInfo,
                 });
             } else if (entityType === 'maintenance') {
-                if (mediaUploads.length > 4) {
+                setUploadSuccess('');
+                if (mediaUploads.length > maxMaintenanceImages) {
+                    setUploadError(locale === 'ar' ? 'الحد الأقصى لصور الصيانة هو 3 صور.' : 'Maximum maintenance images is 3.');
                     setSubmitting(false);
                     return;
                 }
@@ -145,38 +151,147 @@ export default function SubmitPage() {
         const allowed = ['image/jpeg', 'image/png', 'image/webp'];
         if (!files.length) return;
 
-        const remainingSlots = 4 - mediaUploads.length;
-        if (remainingSlots <= 0) return;
-        const selected = files.slice(0, remainingSlots);
+        if (mediaUploads.length >= maxMaintenanceImages) {
+            setUploadSuccess('');
+            setUploadError(locale === 'ar' ? 'وصلت للحد الأقصى (3 صور).' : 'You reached the maximum limit (3 images).');
+            return;
+        }
 
+        if (mediaUploads.length + files.length > maxMaintenanceImages) {
+            setUploadSuccess('');
+            setUploadError(locale === 'ar' ? 'يمكنك رفع 3 صور كحد أقصى.' : 'You can upload up to 3 images only.');
+            return;
+        }
+
+        const selected = files.slice(0, maxMaintenanceImages - mediaUploads.length);
+        setUploadError('');
+        setUploadSuccess('');
         setUploadingImage(true);
         try {
+            const uploadedBatch: Array<{ publicId: string; secureUrl: string }> = [];
+            const previewBatch: string[] = [];
+            let hadFailures = false;
+
             for (const file of selected) {
-                if (!allowed.includes(file.type) || file.size > 2 * 1024 * 1024) continue;
-
-                const sign = await api.getSignedUploadParams();
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('api_key', sign.api_key);
-                formData.append('timestamp', String(sign.timestamp));
-                formData.append('signature', sign.signature);
-                formData.append('folder', sign.folder);
-                formData.append('allowed_formats', sign.allowed_formats);
-
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloud_name}/image/upload`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                const payload = await res.json();
-                if (res.ok) {
-                    setMediaUploads((prev) => prev.length < 4 ? [...prev, { publicId: payload.public_id, secureUrl: payload.secure_url }] : prev);
-                    setImagePreviews((prev) => prev.length < 4 ? [...prev, payload.secure_url] : prev);
+                if (!allowed.includes(file.type) || file.size > 2 * 1024 * 1024) {
+                    hadFailures = true;
+                    continue;
                 }
+
+                try {
+                    const sign = await api.getSignedUploadParams();
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('api_key', sign.api_key);
+                    formData.append('timestamp', String(sign.timestamp));
+                    formData.append('signature', sign.signature);
+                    formData.append('folder', sign.folder);
+                    formData.append('allowed_formats', sign.allowed_formats);
+
+                    const res = await fetch(`https://api.cloudinary.com/v1_1/${sign.cloud_name}/image/upload`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    const uploadPayload = await res.json();
+                    if (!res.ok) {
+                        hadFailures = true;
+                        continue;
+                    }
+
+                    uploadedBatch.push({ publicId: uploadPayload.public_id, secureUrl: uploadPayload.secure_url });
+                    previewBatch.push(uploadPayload.secure_url);
+                } catch {
+                    hadFailures = true;
+                }
+            }
+
+            if (uploadedBatch.length) {
+                setMediaUploads((prev) => [...prev, ...uploadedBatch].slice(0, maxMaintenanceImages));
+                setImagePreviews((prev) => [...prev, ...previewBatch].slice(0, maxMaintenanceImages));
+                setUploadSuccess(locale === 'ar'
+                    ? `تم رفع ${uploadedBatch.length} صورة بنجاح.`
+                    : `${uploadedBatch.length} image(s) uploaded successfully.`);
+                setUploadError('');
+                return;
+            }
+
+            setUploadSuccess('');
+            if (hadFailures) {
+                setUploadError(locale === 'ar'
+                    ? 'تعذر رفع الصور المختارة. تأكد من النوع (JPG/PNG/WEBP) والحجم (2MB) ثم حاول مرة أخرى.'
+                    : 'Failed to upload selected images. Check file type (JPG/PNG/WEBP) and max size (2MB), then try again.');
             }
         } finally {
             setUploadingImage(false);
         }
     };
+
+    const removeMaintenanceImage = (index: number) => {
+        setImagePreviews((prev) => prev.filter((_, idx) => idx !== index));
+        setMediaUploads((prev) => prev.filter((_, idx) => idx !== index));
+        setUploadError('');
+        setUploadSuccess('');
+    };
+
+    const renderMaintenanceUploader = () => (
+        <div className="group">
+            <label className="block text-sm font-black text-dark mb-2 ms-1">
+                {locale === 'ar' ? 'صور الصيانة (حتى 3 صور)' : 'Maintenance images (up to 3)'}
+            </label>
+            <div
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    setDraggingImage(true);
+                }}
+                onDragLeave={(e) => {
+                    e.preventDefault();
+                    setDraggingImage(false);
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    setDraggingImage(false);
+                    const files = Array.from(e.dataTransfer.files || []);
+                    if (files.length) void uploadMaintenanceImages(files);
+                }}
+                className={`relative rounded-2xl border-2 border-dashed p-5 transition ${draggingImage ? 'border-primary bg-primary/5' : 'border-border bg-cream/60'}`}
+            >
+                <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length) void uploadMaintenanceImages(files);
+                        e.currentTarget.value = '';
+                    }}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+                <div className="pointer-events-none text-center">
+                    <p className="text-sm font-black text-dark">{locale === 'ar' ? 'اسحب الصورة هنا أو اضغط للاختيار' : 'Drag & drop image here or click to browse'}</p>
+                    <p className="text-xs text-text-muted mt-1">{locale === 'ar' ? 'JPG/PNG/WEBP بحد أقصى 2MB للصورة (حتى 3 صور)' : 'JPG/PNG/WEBP up to 2MB each (up to 3 images)'}</p>
+                </div>
+            </div>
+            {uploadingImage && <p className="text-xs text-primary mt-1">{locale === 'ar' ? 'جاري الرفع...' : 'Uploading...'}</p>}
+            {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
+            {uploadSuccess && <p className="text-xs text-emerald-600 mt-1">{uploadSuccess}</p>}
+            {!!imagePreviews.length && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {imagePreviews.map((url, i) => (
+                        <div key={url} className="relative">
+                            <img src={url} alt={`preview-${i}`} className="w-full h-28 object-cover rounded-lg border" />
+                            <button
+                                type="button"
+                                onClick={() => removeMaintenanceImage(i)}
+                                className="absolute top-2 end-2 bg-black/60 text-white rounded-full w-7 h-7 text-sm"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 
     if (submitted) {
         return (
@@ -229,10 +344,10 @@ export default function SubmitPage() {
                                     </div>
                                 </div>
                                 {entityType === 'halqa' && (
-                                    <label className="inline-flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition">
+                                    <label className="inline-flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition" dir="ltr">
                                         <input type="checkbox" {...register('isOnline')} className="peer sr-only" />
-                                        <span className="relative w-11 h-6 bg-gray-300 rounded-full transition peer-checked:bg-primary">
-                                            <span className="absolute top-0.5 start-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                                        <span className="relative w-11 h-6 bg-gray-300 rounded-full transition-colors duration-300 peer-checked:bg-primary">
+                                            <span className="absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform duration-300 ease-out peer-checked:translate-x-5" />
                                         </span>
                                         <span className="text-sm font-black text-primary">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
                                     </label>
@@ -383,47 +498,7 @@ export default function SubmitPage() {
                                     </div>
                                 )}
 
-                                {entityType === 'maintenance' && (
-                                    <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1">
-                                            {locale === 'ar' ? 'صور الصيانة (حتى 4)' : 'Maintenance images (up to 4)'}
-                                        </label>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/jpeg,image/png,image/webp"
-                                            onChange={(e) => {
-                                                const files = Array.from(e.target.files || []);
-                                                if (files.length) void uploadMaintenanceImages(files);
-                                                e.currentTarget.value = '';
-                                            }}
-                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl"
-                                        />
-                                        <p className="text-xs text-text-muted mt-2">
-                                            {locale === 'ar' ? 'JPG/PNG/WEBP بحد أقصى 2MB للصورة' : 'JPG/PNG/WEBP up to 2MB each'}
-                                        </p>
-                                        {uploadingImage && <p className="text-xs text-primary mt-1">{locale === 'ar' ? 'جاري الرفع...' : 'Uploading...'}</p>}
-                                        {!!imagePreviews.length && (
-                                            <div className="mt-3 grid grid-cols-2 gap-2">
-                                                {imagePreviews.map((url, i) => (
-                                                    <div key={url} className="relative">
-                                                        <img src={url} alt={`preview-${i}`} className="w-full h-24 object-cover rounded-lg border" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setImagePreviews((prev) => prev.filter((_, idx) => idx !== i));
-                                                                setMediaUploads((prev) => prev.filter((_, idx) => idx !== i));
-                                                            }}
-                                                            className="absolute top-1 end-1 bg-black/60 text-white rounded-full w-5 h-5 text-xs"
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                {entityType === 'maintenance' && renderMaintenanceUploader()}
 
                                 {entityType === 'halqa' && (
                                     <div className="group">
@@ -477,47 +552,7 @@ export default function SubmitPage() {
                                     </div>
                                 )}
 
-                                {entityType === 'maintenance' && (
-                                    <div className="group">
-                                        <label className="block text-sm font-black text-dark mb-2 ms-1">
-                                            {locale === 'ar' ? 'صور الصيانة (حتى 4)' : 'Maintenance images (up to 4)'}
-                                        </label>
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/jpeg,image/png,image/webp"
-                                            onChange={(e) => {
-                                                const files = Array.from(e.target.files || []);
-                                                if (files.length) void uploadMaintenanceImages(files);
-                                                e.currentTarget.value = '';
-                                            }}
-                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl"
-                                        />
-                                        <p className="text-xs text-text-muted mt-2">
-                                            {locale === 'ar' ? 'JPG/PNG/WEBP بحد أقصى 2MB للصورة' : 'JPG/PNG/WEBP up to 2MB each'}
-                                        </p>
-                                        {uploadingImage && <p className="text-xs text-primary mt-1">{locale === 'ar' ? 'جاري الرفع...' : 'Uploading...'}</p>}
-                                        {!!imagePreviews.length && (
-                                            <div className="mt-3 grid grid-cols-2 gap-2">
-                                                {imagePreviews.map((url, i) => (
-                                                    <div key={url} className="relative">
-                                                        <img src={url} alt={`preview-${i}`} className="w-full h-24 object-cover rounded-lg border" />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setImagePreviews((prev) => prev.filter((_, idx) => idx !== i));
-                                                                setMediaUploads((prev) => prev.filter((_, idx) => idx !== i));
-                                                            }}
-                                                            className="absolute top-1 end-1 bg-black/60 text-white rounded-full w-5 h-5 text-xs"
-                                                        >
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                {entityType === 'maintenance' && renderMaintenanceUploader()}
 
                                 {entityType === 'halqa' && (
                                     <div className="group">

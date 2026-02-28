@@ -74,7 +74,7 @@ export class HalaqatService {
         if (query.governorateId) where.area = { governorateId: query.governorateId };
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
-        if (query.isOnline !== undefined) where.isOnline = Boolean(query.isOnline);
+        if (query.isOnline !== undefined) where.isOnline = query.isOnline;
 
         if (query.query) {
             where.OR = [
@@ -145,6 +145,7 @@ export class HalaqatService {
                 longitude: coords?.lng ?? 0,
                 whatsapp: dto.whatsapp,
                 additionalInfo: `${isOnline ? '[ONLINE] ' : ''}${dto.additional_info || ''}`.trim() || null,
+                isOnline,
                 status: 'pending',
             },
         });
@@ -224,6 +225,7 @@ export class HalaqatService {
                 additionalInfo: data.additional_info !== undefined
                     ? `${nextOnline ? '[ONLINE] ' : ''}${data.additional_info || ''}`.trim() || null
                     : before.additionalInfo,
+                isOnline: nextOnline,
             },
         });
 

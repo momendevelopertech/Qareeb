@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="input-field"
+                            className="input-field box-border"
                             placeholder="admin@qareeb.app"
                             dir="ltr"
                             required
@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
                                 type={showPassword ? 'text' : 'password'}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="input-field pe-12"
+                                className="input-field box-border !pe-12"
                                 dir="ltr"
                                 required
                             />
