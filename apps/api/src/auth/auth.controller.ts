@@ -1,5 +1,5 @@
-import { Controller, Post, Body, Res, Req, HttpCode, Patch, UseGuards } from '@nestjs/common';
-import { Response, Request } from 'express';
+import { Body, Controller, HttpCode, Patch, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
@@ -16,13 +16,13 @@ export class AuthController {
         const result = await this.authService.login(body.email, body.password, body.remember_me ?? true);
         const rememberMe = body.remember_me ?? true;
 
-        // Set refresh token as HttpOnly cookie
         res.cookie('refresh_token', result.refresh_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000, // 30d or 1d
-            path: '/',
+            sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none') || 'lax',
+            domain: process.env.COOKIE_DOMAIN || undefined,
+            maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
+            path: '/v1/admin/auth',
         });
 
         return {
@@ -36,7 +36,7 @@ export class AuthController {
     async refresh(@Req() req: Request) {
         const refreshToken = req.cookies?.refresh_token;
         if (!refreshToken) {
-            return { error: 'No refresh token provided' };
+            throw new UnauthorizedException('No refresh token provided');
         }
         return this.authService.refreshToken(refreshToken);
     }

@@ -25,10 +25,10 @@ import { GeoModule } from './geo/geo.module';
             // Load env from workspace root (../../.env) and local (.env) so dev commands from workspace work.
             envFilePath: ['../../.env', '.env'],
         }),
-        // Rate limiting: 100 requests per 15 minutes
+        // Rate limiting profiles (global default + tighter auth limiter where applied with @Throttle).
         ThrottlerModule.forRoot([{
-            ttl: 900000, // 15 minutes in ms
-            limit: 100,
+            ttl: 60000,
+            limit: Number(process.env.THROTTLE_LIMIT_PER_MINUTE || 60),
         }]),
         PrismaModule,
         AuthModule,

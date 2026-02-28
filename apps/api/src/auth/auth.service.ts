@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -21,7 +22,6 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        // Update last login
         await this.prisma.admin.update({
             where: { id: admin.id },
             data: { lastLoginAt: new Date() },
@@ -39,8 +39,18 @@ export class AuthService {
             role: admin.role,
         };
 
-        const accessToken = this.jwtService.sign(payload);
-        const refreshToken = this.jwtService.sign(payload, { expiresIn: rememberMe ? '30d' : '1d' });
+        const accessToken = this.jwtService.sign({ ...payload, typ: 'access' }, { jwtid: randomUUID() });
+        const refreshToken = this.jwtService.sign(
+            { ...payload, typ: 'refresh' },
+            {
+                secret: process.env.JWT_REFRESH_PRIVATE_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
+                expiresIn: rememberMe ? process.env.JWT_REFRESH_REMEMBER_TTL || '30d' : process.env.JWT_REFRESH_TTL || '1d',
+                algorithm: process.env.JWT_REFRESH_PRIVATE_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256',
+                issuer: process.env.JWT_ISSUER || 'qareeb-api',
+                audience: process.env.JWT_AUDIENCE || 'qareeb-web',
+                jwtid: randomUUID(),
+            },
+        );
 
         return {
             access_token: accessToken,
@@ -55,7 +65,17 @@ export class AuthService {
 
     async refreshToken(token: string) {
         try {
-            const payload = this.jwtService.verify(token);
+            const payload = this.jwtService.verify(token, {
+                secret: process.env.JWT_REFRESH_PUBLIC_KEY || process.env.JWT_PUBLIC_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
+                issuer: process.env.JWT_ISSUER || 'qareeb-api',
+                audience: process.env.JWT_AUDIENCE || 'qareeb-web',
+                algorithms: [process.env.JWT_REFRESH_PUBLIC_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256'],
+            });
+
+            if (payload.typ !== 'refresh') {
+                throw new UnauthorizedException('Invalid token type');
+            }
+
             const admin = await this.prisma.admin.findUnique({
                 where: { id: payload.sub },
             });
@@ -68,10 +88,11 @@ export class AuthService {
                 sub: admin.id,
                 email: admin.email,
                 role: admin.role,
+                typ: 'access',
             };
 
             return {
-                access_token: this.jwtService.sign(newPayload),
+                access_token: this.jwtService.sign(newPayload, { jwtid: randomUUID() }),
             };
         } catch {
             throw new UnauthorizedException('Invalid or expired refresh token');

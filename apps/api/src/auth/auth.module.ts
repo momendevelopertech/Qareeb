@@ -11,10 +11,12 @@ import { RolesGuard } from './roles.guard';
     imports: [
         PassportModule.register({ defaultStrategy: 'jwt' }),
         JwtModule.register({
-            secret: process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
+            secret: process.env.JWT_ACCESS_PRIVATE_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
             signOptions: {
-                expiresIn: '15m',
-                algorithm: process.env.JWT_PRIVATE_KEY ? 'RS256' : 'HS256',
+                expiresIn: process.env.JWT_ACCESS_TTL || '15m',
+                algorithm: process.env.JWT_ACCESS_PRIVATE_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256',
+                issuer: process.env.JWT_ISSUER || 'qareeb-api',
+                audience: process.env.JWT_AUDIENCE || 'qareeb-web',
             },
         }),
     ],
