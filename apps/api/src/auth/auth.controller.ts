@@ -22,7 +22,7 @@ export class AuthController {
             sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none') || 'lax',
             domain: process.env.COOKIE_DOMAIN || undefined,
             maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
-            path: '/v1/admin/auth',
+            path: '/',
         });
 
         return {
