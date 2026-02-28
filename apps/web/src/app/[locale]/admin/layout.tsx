@@ -58,8 +58,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 // Always try to refresh from server using httpOnly cookies
                 const refreshed = await adminApi.refresh();
                 if (mounted && refreshed?.access_token) {
-                    // Update with new token from server
-                    setAuth(refreshed.access_token, admin || refreshed.admin, rememberMe);
+                    // Keep current admin payload if we already have one in state.
+                    const { admin: currentAdmin } = useAuthStore.getState();
+                    setAuth(refreshed.access_token, currentAdmin || refreshed.admin, rememberMe);
                 }
             } catch {
                 refreshFailed = true;
@@ -76,7 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         };
 
         // Attempt refresh immediately if we have rememberMe enabled
-        if (rememberMe && token) {
+        const { token: currentToken } = useAuthStore.getState();
+        if (!isLoginPage && rememberMe && currentToken) {
             void tryRefresh();
             // Then refresh periodically
             refreshInterval = setInterval(() => {
@@ -88,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             mounted = false;
             if (refreshInterval) clearInterval(refreshInterval);
         };
-    }, [rememberMe, token, admin, setAuth, clearAuth]);
+    }, [rememberMe, isLoginPage, setAuth, clearAuth]);
 
     useEffect(() => {
         const mapNotification = (n: any) => ({
