@@ -61,7 +61,7 @@ export default function PublicCardsTabs() {
             entity,
             name: item.imamName || item.circleName || item.mosqueName || item.imam_name || item.circle_name || item.mosque_name,
             mosque: item.mosqueName || item.mosque_name,
-            location: [item.governorate, item.city, item.district].filter(Boolean).join(' - '),
+            location: [item.governorate, item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null, item.city, item.district].filter(Boolean).join(' - '),
             typeLabel:
                 entity === 'imam'
                     ? locale === 'ar'
@@ -95,7 +95,8 @@ export default function PublicCardsTabs() {
         return all.filter((x) => x.entity === 'maintenance');
     }, [tab, imams, halaqat, maintenance, locale]);
 
-    const embedUrl = getEmbeddableVideoUrl(payload?.video);
+    const videoUrl = payload?.video || payload?.video_url;
+    const embedUrl = getEmbeddableVideoUrl(videoUrl);
 
     const handleViewDetails = (card: any) => {
         // open details page in a new tab instead of modal, respecting locale prefix
@@ -189,7 +190,7 @@ export default function PublicCardsTabs() {
                 title={locale === 'ar' ? '🎥 عرض الفيديو' : '🎥 Video'}
                 onClose={closeModal}
             >
-                {payload?.video ? (
+                {videoUrl ? (
                     embedUrl ? (
                         <iframe
                             src={embedUrl}
@@ -206,7 +207,7 @@ export default function PublicCardsTabs() {
                             </p>
                             <a
                                 className="btn-primary inline-flex"
-                                href={payload.video}
+                                href={videoUrl}
                                 target="_blank"
                                 rel="noreferrer"
                             >
