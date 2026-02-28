@@ -22,6 +22,8 @@ import {
 import { adminApi } from '@/lib/api';
 import { useAuthStore, useNotificationStore, useThemeStore } from '@/lib/store';
 
+const SOCKET_DISABLED_SESSION_KEY = 'qareeb-admin-socket-disabled';
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const t = useTranslations('admin');
     const locale = useLocale();
@@ -130,19 +132,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }, 20000);
 
         let socket: Socket | null = null;
-        if (admin?.role) {
+        const socketDisabled = typeof window !== 'undefined' && window.sessionStorage.getItem(SOCKET_DISABLED_SESSION_KEY) === '1';
+
+        if (admin?.role && !socketDisabled) {
             const base = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 'http://localhost:3001';
             socket = io(`${base}/notifications`, {
                 transports: ['polling', 'websocket'],
-                reconnection: true,
-                reconnectionAttempts: 10,
-                reconnectionDelay: 800,
+                reconnection: false,
+                timeout: 6000,
                 withCredentials: true,
                 query: { role: admin.role },
                 auth: { token },
             });
 
-            socket.on('connect_error', () => undefined);
+            socket.on('connect', () => {
+                if (typeof window !== 'undefined') {
+                    window.sessionStorage.removeItem(SOCKET_DISABLED_SESSION_KEY);
+                }
+            });
+
+            socket.on('connect_error', (error: any) => {
+                const message = String(error?.message || '').toLowerCase();
+                const description = String(error?.description || '').toLowerCase();
+                const shouldDisableSocket = message.includes('xhr poll error')
+                    || message.includes('404')
+                    || description.includes('404');
+
+                if (shouldDisableSocket && typeof window !== 'undefined') {
+                    window.sessionStorage.setItem(SOCKET_DISABLED_SESSION_KEY, '1');
+                    socket?.disconnect();
+                }
+            });
 
             socket.on('notification', () => {
                 void syncUnreadNotifications(true);
