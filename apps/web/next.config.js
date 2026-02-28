@@ -17,7 +17,7 @@ const cspDirectives = [
     `connect-src 'self' ${apiOrigin} https://res.cloudinary.com wss: https:`,
     "media-src 'self' blob: https://res.cloudinary.com",
     "worker-src 'self' blob:",
-    "frame-src 'self'",
+    "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://www.instagram.com https://drive.google.com https://www.google.com",
     "form-action 'self'",
     isProd ? 'upgrade-insecure-requests' : '',
 ].filter(Boolean);
@@ -45,7 +45,7 @@ const securityHeaders = [
     },
     {
         key: 'Permissions-Policy',
-        value: 'accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+        value: 'accelerometer=(), autoplay=(), camera=(), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
     },
     {
         key: 'Cross-Origin-Opener-Policy',

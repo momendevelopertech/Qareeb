@@ -8,6 +8,7 @@ import AppModal from '@/components/ui/AppModal';
 import UnifiedCard from './UnifiedCard';
 import { useModalStore } from '@/lib/store';
 import { getEmbeddableVideoUrl } from '@/lib/video';
+import { formatLocationParts } from '@/lib/location';
 
 type TabType = 'all' | 'imams' | 'halqa' | 'maintenance';
 
@@ -61,7 +62,7 @@ export default function PublicCardsTabs() {
             entity,
             name: item.imamName || item.circleName || item.mosqueName || item.imam_name || item.circle_name || item.mosque_name,
             mosque: item.mosqueName || item.mosque_name,
-            location: [item.governorate, item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null, item.city, item.district].filter(Boolean).join(' - '),
+            location: formatLocationParts([item.governorate, item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null, item.city, item.district], ' - '),
             typeLabel:
                 entity === 'imam'
                     ? locale === 'ar'

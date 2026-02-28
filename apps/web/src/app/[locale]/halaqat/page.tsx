@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,7 +10,6 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
@@ -20,12 +18,7 @@ const typeLabels: Record<string, Record<string, string>> = {
     en: { men: 'Men', women: 'Women', children: 'Children', mixed: 'Mixed' },
 };
 
-const typeColors: Record<string, string> = {
-    men: 'bg-blue-100 text-blue-800',
-    women: 'bg-pink-100 text-pink-800',
-    children: 'bg-green-100 text-green-800',
-    mixed: 'bg-purple-100 text-purple-800',
-};
+
 
 export default function HalaqatPage() {
     const t = useTranslations('halaqat');

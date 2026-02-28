@@ -142,7 +142,7 @@ export default function UnifiedCard({ card, showWhatsApp = false, showImages = f
                 )}
 
                 {/* فيديو */}
-                {card.video && (
+                {card.video && card.entity !== 'halqa' && (
                     <button
                         className="btn-outline !py-2 !px-3 text-xs font-bold flex-1 min-w-[120px]"
                         onClick={() => openModal('video', card.entity, card)}

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,7 +10,7 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
+import { formatLocationParts } from '@/lib/location';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
@@ -168,17 +167,15 @@ export default function ImamsPage() {
                                     entity: 'imam' as const,
                                     name: imam.imam_name || imam.imamName,
                                     mosque: imam.mosque_name || imam.mosqueName,
-                                    location: [
+                                    location: formatLocationParts([
                                         imam.governorate,
                                         imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : null,
                                         imam.city,
                                         imam.district,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(' — '),
+                                    ]),
                                     typeLabel: locale === 'ar' ? 'إمام' : 'Imam',
                                     typeIcon: '🕌',
-                                    map: imam.google_maps_url,
+                                   map: imam.google_maps_url || imam.googleMapsUrl,
                                     video: imam.video_url || imam.videoUrl,
                                     whatsapp: imam.whatsapp,
                                     online: false,

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,7 +10,6 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
