@@ -168,15 +168,14 @@ export default function ImamsPage() {
                                     entity: 'imam' as const,
                                     name: imam.imam_name || imam.imamName,
                                     mosque: imam.mosque_name || imam.mosqueName,
-                                    location: imam.area
-                                        ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn)
-                                        : [
-                                              imam.governorate,
-                                              imam.city,
-                                              imam.district,
-                                          ]
-                                              .filter(Boolean)
-                                              .join(' — '),
+                                    location: [
+                                        imam.governorate,
+                                        imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : null,
+                                        imam.city,
+                                        imam.district,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' — '),
                                     typeLabel: locale === 'ar' ? 'إمام' : 'Imam',
                                     typeIcon: '🕌',
                                     map: imam.google_maps_url,

@@ -84,7 +84,7 @@ export default async function HomePage() {
         id: item.id,
         title: item.imam_name || item.imamName,
         subtitle: item.mosque_name || item.mosqueName,
-        location: [item.governorate, item.city, item.district].filter(Boolean).join(' — '),
+        location: [item.governorate, item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null, item.city, item.district].filter(Boolean).join(' — '),
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/imams/${item.id}`,
         badge: locale === 'ar' ? 'إمام' : 'Imam',

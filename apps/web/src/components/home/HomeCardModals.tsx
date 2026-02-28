@@ -9,7 +9,8 @@ export default function HomeCardModals() {
     const locale = useLocale();
     const { isOpen, type, payload, closeModal } = useModalStore();
 
-    const embedUrl = getEmbeddableVideoUrl(payload?.video);
+    const videoUrl = payload?.video || payload?.video_url;
+    const embedUrl = getEmbeddableVideoUrl(videoUrl);
 
     return (
         <>
@@ -19,7 +20,7 @@ export default function HomeCardModals() {
                 title={locale === 'ar' ? '🎥 عرض الفيديو' : '🎥 Video'}
                 onClose={closeModal}
             >
-                {payload?.video ? (
+                {videoUrl ? (
                     embedUrl ? (
                         <iframe
                             src={embedUrl}
@@ -36,7 +37,7 @@ export default function HomeCardModals() {
                             </p>
                             <a
                                 className="btn-primary inline-flex"
-                                href={payload.video}
+                                href={videoUrl}
                                 target="_blank"
                                 rel="noreferrer"
                             >
