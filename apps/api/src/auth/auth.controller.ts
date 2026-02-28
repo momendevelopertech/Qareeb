@@ -10,19 +10,26 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     async login(
+        @Req() req: Request,
         @Body() body: { email: string; password: string; remember_me?: boolean },
         @Res({ passthrough: true }) res: Response,
     ) {
         const result = await this.authService.login(body.email, body.password, body.remember_me ?? true);
         const rememberMe = body.remember_me ?? true;
+        const configuredCookieDomain = process.env.COOKIE_DOMAIN || undefined;
+        const requestHost = (req.hostname || '').toLowerCase();
+        const normalizedCookieDomain = configuredCookieDomain?.replace(/^\./, '').toLowerCase();
+        const cookieDomain = normalizedCookieDomain && (requestHost === normalizedCookieDomain || requestHost.endsWith(`.${normalizedCookieDomain}`))
+            ? configuredCookieDomain
+            : undefined;
 
         res.cookie('refresh_token', result.refresh_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none') || 'lax',
-            domain: process.env.COOKIE_DOMAIN || undefined,
+            domain: cookieDomain,
             maxAge: rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
-            path: '/v1/admin/auth',
+            path: '/',
         });
 
         return {
