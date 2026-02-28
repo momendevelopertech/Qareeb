@@ -99,12 +99,12 @@ export default function SubmitPage() {
             } else if (entityType === 'halqa') {
                 await api.createHalqa({
                     circle_name: payload.name,
-                    mosque_name: payload.mosqueName,
-                    halqa_type: payload.halqaType || 'mixed',
-                    governorate: payload.governorate,
-                    city: payload.city,
-                    district: payload.district,
-                    area_id: payload.areaId,
+                    mosque_name: payload.isOnline ? undefined : payload.mosqueName,
+                    halqa_type: payload.halqaType || 'children',
+                    governorate: payload.isOnline ? undefined : payload.governorate,
+                    city: payload.isOnline ? undefined : payload.city,
+                    district: payload.isOnline ? undefined : payload.district,
+                    area_id: payload.isOnline ? undefined : payload.areaId,
                     google_maps_url: payload.isOnline ? undefined : payload.googleMapsUrl,
                     is_online: !!payload.isOnline,
                     lat: payload.isOnline ? undefined : payload.lat,
@@ -113,7 +113,7 @@ export default function SubmitPage() {
                     additional_info: payload.additionalInfo,
                 });
             } else if (entityType === 'maintenance') {
-                if (mediaUploads.length < 3 || mediaUploads.length > 4) {
+                if (mediaUploads.length > 4) {
                     setSubmitting(false);
                     return;
                 }
@@ -228,7 +228,17 @@ export default function SubmitPage() {
                                         <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{entityType}</p>
                                     </div>
                                 </div>
+                                {entityType === 'halqa' && (
+                                    <label className="inline-flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition">
+                                        <input type="checkbox" {...register('isOnline')} className="peer sr-only" />
+                                        <span className="relative w-11 h-6 bg-gray-300 rounded-full transition peer-checked:bg-primary">
+                                            <span className="absolute top-0.5 start-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+                                        </span>
+                                        <span className="text-sm font-black text-primary">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
+                                    </label>
+                                )}
                             </div>
+
 
                             <div className="space-y-6">
                                 {entityType !== 'maintenance' && (
@@ -240,12 +250,14 @@ export default function SubmitPage() {
                                     </div>
                                 )}
 
-                                <div className="group">
-                                    <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                        {entityType === 'imam' ? ti('mosqueName') : entityType === 'halqa' ? th('mosqueName') : tm('mosqueName')} <span className="text-red-500">*</span>
-                                    </label>
-                                    <input {...register('mosqueName', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'} />
-                                </div>
+                                {!(entityType === 'halqa' && isOnline) && (
+                                    <div className="group">
+                                        <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
+                                            {entityType === 'imam' ? ti('mosqueName') : entityType === 'halqa' ? th('mosqueName') : tm('mosqueName')} <span className="text-red-500">*</span>
+                                        </label>
+                                        <input {...register('mosqueName', { required: entityType !== 'halqa' || !isOnline })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'} />
+                                    </div>
+                                )}
 
                                 {entityType === 'halqa' && (
                                     <div className="group">
@@ -254,17 +266,10 @@ export default function SubmitPage() {
                                             <option value="men">{th('men')}</option>
                                             <option value="women">{th('women')}</option>
                                             <option value="children">{th('children')}</option>
-                                            <option value="mixed">{th('mixed')}</option>
-                                        </select>
+                                                                                    </select>
                                     </div>
                                 )}
 
-                                {entityType === 'halqa' && (
-                                    <label className="flex items-center gap-3 p-3 rounded-xl bg-cream border border-border">
-                                        <input type="checkbox" {...register('isOnline')} className="w-5 h-5" />
-                                        <span className="text-sm font-bold">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
-                                    </label>
-                                )}
 
                                 {entityType === 'maintenance' && (
                                     <>

@@ -74,6 +74,20 @@ export class HalaqatService {
         if (query.governorateId) where.area = { governorateId: query.governorateId };
         if (query.city) where.city = query.city;
         if (query.area_id) where.areaId = query.area_id;
+        if (query.isOnline !== undefined) where.isOnline = Boolean(query.isOnline);
+
+        if (query.query) {
+            where.OR = [
+                { circleName: { contains: query.query, mode: 'insensitive' } },
+                { mosqueName: { contains: query.query, mode: 'insensitive' } },
+                { governorate: { contains: query.query, mode: 'insensitive' } },
+                { city: { contains: query.query, mode: 'insensitive' } },
+                { district: { contains: query.query, mode: 'insensitive' } },
+                { additionalInfo: { contains: query.query, mode: 'insensitive' } },
+                { area: { nameAr: { contains: query.query, mode: 'insensitive' } } },
+                { area: { nameEn: { contains: query.query, mode: 'insensitive' } } },
+            ];
+        }
 
         const cacheable = where.status === 'approved';
         const cacheKey = `approved:halaqat:${JSON.stringify({ query, page, limit })}`;
@@ -104,7 +118,7 @@ export class HalaqatService {
     }
 
     async findOne(id: string) {
-        return this.prisma.halqa.findUnique({ where: { id }, include: { media: true } });
+        return this.prisma.halqa.findUnique({ where: { id }, include: { media: true, area: true } });
     }
 
     async create(dto: CreateHalqaDto, createdBy?: string) {
@@ -120,12 +134,12 @@ export class HalaqatService {
         const halqa = await this.prisma.halqa.create({
             data: {
                 circleName: dto.circle_name,
-                mosqueName: dto.mosque_name,
+                mosqueName: isOnline ? '' : (dto.mosque_name || ''),
                 halqaType: dto.halqa_type as any,
-                governorate: dto.governorate,
-                city: dto.city || dto.governorate,
-                district: dto.district,
-                areaId: dto.area_id || null,
+                governorate: isOnline ? '' : (dto.governorate || ''),
+                city: isOnline ? '' : (dto.city || dto.governorate || ''),
+                district: isOnline ? null : (dto.district || null),
+                areaId: isOnline ? null : (dto.area_id || null),
                 googleMapsUrl: isOnline ? null : dto.google_maps_url,
                 latitude: coords?.lat ?? 0,
                 longitude: coords?.lng ?? 0,
@@ -197,12 +211,12 @@ export class HalaqatService {
             where: { id },
             data: {
                 circleName: data.circle_name ?? before.circleName,
-                mosqueName: data.mosque_name ?? before.mosqueName,
+                mosqueName: nextOnline ? '' : (data.mosque_name ?? before.mosqueName),
                 halqaType: (data.halqa_type as any) ?? before.halqaType,
-                governorate: data.governorate ?? before.governorate,
-                city: (data.city ?? data.governorate) ?? before.city,
-                district: data.district ?? before.district,
-                areaId: data.area_id ?? before.areaId,
+                governorate: nextOnline ? '' : (data.governorate ?? before.governorate),
+                city: nextOnline ? '' : ((data.city ?? data.governorate) ?? before.city),
+                district: nextOnline ? null : (data.district ?? before.district),
+                areaId: nextOnline ? null : (data.area_id ?? before.areaId),
                 googleMapsUrl: nextOnline ? null : (data.google_maps_url ?? before.googleMapsUrl),
                 latitude: nextOnline ? 0 : (coords ? coords.lat : before.latitude),
                 longitude: nextOnline ? 0 : (coords ? coords.lng : before.longitude),

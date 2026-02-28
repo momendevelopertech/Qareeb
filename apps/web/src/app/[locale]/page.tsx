@@ -7,6 +7,7 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import SubmitServiceSection from '@/components/home/SubmitServiceSection';
 import LatestUnifiedCard from '@/components/home/LatestUnifiedCard';
 import HomeCardModals from '@/components/home/HomeCardModals';
+import { formatLocationParts } from '@/lib/location';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -84,7 +85,7 @@ export default async function HomePage() {
         id: item.id,
         title: item.imam_name || item.imamName,
         subtitle: item.mosque_name || item.mosqueName,
-        location: [item.governorate, item.city, item.district].filter(Boolean).join(' — '),
+        location: formatLocationParts([item.governorate, item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null, item.city, item.district]),
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/imams/${item.id}`,
         badge: locale === 'ar' ? 'إمام' : 'Imam',
@@ -99,7 +100,7 @@ export default async function HomePage() {
         id: item.id,
         title: item.circle_name || item.circleName,
         subtitle: item.mosque_name || item.mosqueName,
-        location: [item.governorate, item.city].filter(Boolean).join(' — '),
+        location: formatLocationParts([item.governorate, item.city]),
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/halaqat/${item.id}`,
         badge: locale === 'ar' ? 'حلقة' : 'Circle',
@@ -115,7 +116,7 @@ export default async function HomePage() {
         id: item.id,
         title: item.mosque_name || item.mosqueName,
         subtitle: (item.maintenance_types || item.maintenanceTypes || []).join(' · '),
-        location: [item.governorate, item.city].filter(Boolean).join(' — '),
+        location: formatLocationParts([item.governorate, item.city]),
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/maintenance/${item.id}`,
         badge: locale === 'ar' ? 'إعمار' : 'Maintenance',

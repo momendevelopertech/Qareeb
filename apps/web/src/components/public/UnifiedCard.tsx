@@ -112,7 +112,7 @@ export default function UnifiedCard({ card, showWhatsApp = false, showImages = f
             {card.location && !isOnline && (
                 <div className="flex items-center gap-2 text-sm text-text-muted bg-cream rounded-lg px-3 py-2.5">
                     <span>📍</span>
-                    <span className="font-semibold flex-1">{card.location}</span>
+                    <span className="font-semibold flex-1 break-words">{card.location}</span>
                 </div>
             )}
 
@@ -120,28 +120,29 @@ export default function UnifiedCard({ card, showWhatsApp = false, showImages = f
             <div className="flex gap-2 flex-wrap">
                 {/* خريطة - فقط لو ليست online */}
                 {shouldShowMap && (
-                    <>
+                    <div className="flex items-stretch rounded-xl border border-border overflow-hidden min-w-[200px]">
                         <a
                             href={card.map}
                             target="_blank"
                             rel="noreferrer"
-                            className="btn-outline !py-2 !px-3 text-xs font-bold flex-1 min-w-[120px] text-center"
+                            className="!py-2 !px-3 text-xs font-bold flex-1 min-w-[120px] text-center bg-white hover:bg-cream transition-colors"
                         >
                             {locale === 'ar' ? '🗺️ فتح الخريطة' : '🗺️ Open Map'}
                         </a>
                         <button
-                            className="btn-outline !py-2 !px-3 text-xs font-bold disabled:opacity-50"
+                            className="!py-2 !px-3 text-xs font-bold disabled:opacity-50 border-s border-border bg-white hover:bg-cream transition-colors"
                             onClick={() => copyToClipboard(card.map)}
                             disabled={copying}
-                            title={locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
+                            title={locale === 'ar' ? 'نسخ رابط Google Maps' : 'Copy Google Maps link'}
+                            aria-label={locale === 'ar' ? 'نسخ رابط Google Maps' : 'Copy Google Maps link'}
                         >
-                            {locale === 'ar' ? '📋' : '📋'}
+                            📋
                         </button>
-                    </>
+                    </div>
                 )}
 
                 {/* فيديو */}
-                {card.video && (
+                {card.video && card.entity !== 'halqa' && (
                     <button
                         className="btn-outline !py-2 !px-3 text-xs font-bold flex-1 min-w-[120px]"
                         onClick={() => openModal('video', card.entity, card)}

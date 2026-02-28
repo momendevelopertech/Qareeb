@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { getWhatsAppUrl } from '@/lib/utils';
+import { extractLatLngFromGoogleMaps, getGoogleMapsEmbedUrl } from '@/lib/maps';
+import { formatLocationParts } from '@/lib/location';
 
 export const revalidate = 300;
 
@@ -12,12 +14,14 @@ async function getHalqa(id: string): Promise<any> {
         const res = await fetch(`${API_URL}/halaqat/${id}`, { next: { revalidate: 300 } });
         if (!res.ok) return null;
         return res.json();
-    } catch { return null; }
+    } catch {
+        return null;
+    }
 }
 
 const typeLabels: Record<string, Record<string, string>> = {
-    ar: { men: 'رجال', women: 'نساء', children: 'أطفال', mixed: 'مختلط' },
-    en: { men: 'Men', women: 'Women', children: 'Children', mixed: 'Mixed' },
+    ar: { men: 'رجال', women: 'نساء', children: 'أطفال' },
+    en: { men: 'Men', women: 'Women', children: 'Children' },
 };
 
 export default async function HalqaDetailPage({ params }: { params: { id: string } }) {
@@ -26,11 +30,33 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
 
     if (!halqa) {
         return (
-            <div className="min-h-screen flex flex-col"><Header /><main className="flex-1 flex items-center justify-center">
-                <div className="text-center"><h1 className="text-2xl font-bold mb-4">{locale === 'ar' ? 'الحلقة غير موجودة' : 'Circle Not Found'}</h1>
-                    <Link href={`/${locale}/halaqat`} className="btn-primary">{locale === 'ar' ? 'العودة' : 'Back'}</Link></div></main></div>
+            <div className="min-h-screen flex flex-col">
+                <Header />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">{locale === 'ar' ? 'الحلقة غير موجودة' : 'Circle Not Found'}</h1>
+                        <Link href={`/${locale}/halaqat`} className="btn-primary">{locale === 'ar' ? 'العودة' : 'Back'}</Link>
+                    </div>
+                </main>
+            </div>
         );
     }
+
+    const isOnline = Boolean(halqa.isOnline ?? halqa.is_online)
+        || (halqa.additionalInfo || halqa.additional_info || '').toString().startsWith('[ONLINE]');
+    const coords = (typeof halqa.latitude === 'number' && typeof halqa.longitude === 'number' && (halqa.latitude !== 0 || halqa.longitude !== 0))
+        ? { lat: halqa.latitude, lng: halqa.longitude }
+        : extractLatLngFromGoogleMaps(halqa.googleMapsUrl || halqa.google_maps_url);
+    const mapHref = coords ? `https://www.google.com/maps?q=${encodeURIComponent(`${coords.lat},${coords.lng}`)}&z=15` : null;
+    const mapEmbedUrl = !isOnline && coords ? getGoogleMapsEmbedUrl(mapHref) : null;
+    const locationText = !isOnline
+        ? formatLocationParts([
+            halqa.governorate,
+            halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : null,
+            halqa.city,
+            halqa.district,
+        ])
+        : '';
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -46,10 +72,12 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                             {locale === 'ar' ? 'بيانات حلقة التحفيظ' : 'Quran Circle Details'}
                         </span>
                         <h1 className="text-4xl md:text-5xl font-black">{halqa.circleName}</h1>
-                        <div className="flex items-center gap-2 mt-4 text-white/90 font-bold">
-                            <span className="text-2xl">🕌</span>
-                            {halqa.mosqueName}
-                        </div>
+                        {!isOnline && (
+                            <div className="flex items-center gap-2 mt-4 text-white/90 font-bold">
+                                <span className="text-2xl">🕌</span>
+                                {halqa.mosqueName}
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pb-16">
@@ -60,33 +88,52 @@ export default async function HalqaDetailPage({ params }: { params: { id: string
                                     <span className="inline-flex items-center px-4 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-black uppercase tracking-widest">
                                         {typeLabels[locale]?.[halqa.halqaType]}
                                     </span>
-                                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${(halqa.additionalInfo || '').startsWith('[ONLINE]') ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                        {(halqa.additionalInfo || '').startsWith('[ONLINE]')
-                                            ? (locale === 'ar' ? 'أونلاين' : 'Online')
-                                            : (locale === 'ar' ? 'حضوري' : 'Offline')}
+                                    <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${isOnline ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                        {isOnline ? (locale === 'ar' ? 'أونلاين' : 'Online') : (locale === 'ar' ? 'حضوري' : 'Offline')}
                                     </span>
                                 </div>
-                                <div className="p-6 bg-cream rounded-2xl border border-primary/5 space-y-2">
-                                    <h3 className="font-black text-primary text-sm uppercase tracking-wider">{locale === 'ar' ? 'الموقع' : 'Location'}</h3>
-                                    <p className="text-dark font-bold text-lg">{halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : `${halqa.governorate} — ${halqa.city}${halqa.district ? ` — ${halqa.district}` : ''}`}</p>
-                                    {halqa.google_maps_url && (
-                                        <div className="flex gap-3 text-sm font-bold text-primary underline flex-wrap">
-                                            <a href={halqa.google_maps_url} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
-                                            <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(halqa.google_maps_url)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
-                                            <button type="button" onClick={() => navigator.clipboard.writeText(halqa.google_maps_url)} className="text-primary underline">
-                                                {locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                                {halqa.additionalInfo && (
+
+                                {!isOnline && locationText && (
+                                    <div className="p-6 bg-cream rounded-2xl border border-primary/5 space-y-2">
+                                        <h3 className="font-black text-primary text-sm uppercase tracking-wider">{locale === 'ar' ? 'الموقع' : 'Location'}</h3>
+                                        <p className="text-dark font-bold text-lg">{locationText}</p>
+                                        {mapHref && (
+                                            <div className="flex gap-3 text-sm font-bold text-primary underline flex-wrap">
+                                                <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'افتح في الخرائط' : 'Open in Maps'}</a>
+                                                <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${coords?.lat},${coords?.lng}`)}`} target="_blank" rel="noreferrer">{locale === 'ar' ? 'اتجاهات' : 'Directions'}</a>
+                                                <a href={mapHref} target="_blank" rel="noreferrer">{locale === 'ar' ? 'مشاركة' : 'Share'}</a>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {(halqa.additionalInfo || halqa.additional_info) && (
                                     <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
                                         <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-2">{locale === 'ar' ? 'معلومات إضافية' : 'Additional Info'}</h3>
-                                        <p className="text-dark font-medium leading-relaxed italic">" {halqa.additionalInfo} "</p>
+                                        <p className="text-dark font-medium leading-relaxed italic">" {halqa.additionalInfo || halqa.additional_info} "</p>
                                     </div>
                                 )}
                             </div>
+
                             <div className="flex flex-col gap-6">
+                                {mapEmbedUrl && (
+                                    <div className="p-4 bg-white rounded-2xl border border-border shadow-sm">
+                                        <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+                                            <span>🗺️</span> {locale === 'ar' ? 'الموقع على الخريطة' : 'Location on Map'}
+                                        </h3>
+                                        <div className="w-full aspect-video rounded-xl overflow-hidden border border-border">
+                                            <iframe
+                                                src={mapEmbedUrl}
+                                                className="w-full h-full"
+                                                loading="lazy"
+                                                allowFullScreen
+                                                title="halqa-location-map"
+                                                referrerPolicy="no-referrer-when-downgrade"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="p-8 bg-gradient-to-br from-primary to-primary-light rounded-3xl text-white shadow-btn">
                                     <h3 className="font-black text-lg mb-4">{locale === 'ar' ? 'التواصل و التسجيل' : 'Contact & Registration'}</h3>
                                     <p className="text-white/80 text-sm mb-6 leading-relaxed">

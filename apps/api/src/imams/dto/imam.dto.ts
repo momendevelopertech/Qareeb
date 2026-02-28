@@ -108,5 +108,9 @@ export class ImamQueryDto {
 
     @IsOptional()
     @IsString()
+    query?: string;
+
+    @IsOptional()
+    @IsString()
     status?: string;
 }

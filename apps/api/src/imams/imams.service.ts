@@ -80,6 +80,18 @@ export class ImamsService {
         if (query.district) where.district = query.district;
         if (query.area_id) where.areaId = query.area_id;
 
+        if (query.query) {
+            where.OR = [
+                { imamName: { contains: query.query, mode: 'insensitive' } },
+                { mosqueName: { contains: query.query, mode: 'insensitive' } },
+                { governorate: { contains: query.query, mode: 'insensitive' } },
+                { city: { contains: query.query, mode: 'insensitive' } },
+                { district: { contains: query.query, mode: 'insensitive' } },
+                { area: { nameAr: { contains: query.query, mode: 'insensitive' } } },
+                { area: { nameEn: { contains: query.query, mode: 'insensitive' } } },
+            ];
+        }
+
         const cacheable = where.status === 'approved';
         const cacheKey = `approved:imams:${JSON.stringify({ query, page, limit })}`;
         if (cacheable) {

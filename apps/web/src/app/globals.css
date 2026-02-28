@@ -43,6 +43,15 @@
     @apply w-full px-4 py-3 border border-gray-300 rounded-btn focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white;
   }
 
+  .phone-input-shell {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-btn transition-all duration-200 bg-white flex items-center gap-2;
+  }
+
+  .phone-input-shell:focus-within {
+    border-color: rgb(27, 107, 69);
+    box-shadow: 0 0 0 2px rgba(27, 107, 69, 0.12);
+  }
+
   /* PhoneInput - Always LTR regardless of page direction */
   .PhoneInput {
     position: relative;
@@ -66,14 +75,16 @@
 
   /* Override library's default input styling */
   .PhoneInputInput {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-btn bg-white transition-all duration-200 !important;
+    @apply w-full bg-transparent transition-all duration-200 !important;
     outline: none !important;
-    border: 1px solid rgb(209, 213, 219) !important;
+    border: 0 !important;
     box-shadow: none !important;
     -webkit-appearance: none !important;
     direction: ltr !important;
     text-align: left !important;
     unicode-bidi: embed !important;
+    height: 24px;
+    min-width: 0;
   }
 
   /* Remove the black border/outline on focus */
@@ -81,8 +92,8 @@
   .PhoneInputInput:focus-visible,
   .PhoneInputInput:active {
     outline: none !important;
-    border-color: rgb(27, 107, 69) !important;
-    box-shadow: 0 0 0 2px rgba(27, 107, 69, 0.1) !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
 
   /* Placeholder styling */
@@ -101,8 +112,10 @@
     order: 1;
   }
 
-  .PhoneInputCountrySelect:focus {
+  .PhoneInputCountrySelect:focus,
+  .PhoneInputCountrySelect:focus-visible {
     outline: none !important;
+    box-shadow: none !important;
   }
 
   /* Flag icon - always on left */
@@ -111,6 +124,17 @@
     margin-left: 0 !important;
     flex-shrink: 0;
     order: 0;
+    width: 22px;
+    height: 16px;
+    overflow: visible !important;
+    z-index: 1;
+  }
+
+  .PhoneInputCountryIconImg {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    display: block !important;
   }
 
   /* Force LTR even when parent has dir="rtl" */

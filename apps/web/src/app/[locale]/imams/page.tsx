@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,7 +10,7 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
+import { formatLocationParts } from '@/lib/location';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
@@ -47,21 +46,22 @@ export default function ImamsPage() {
 
     useEffect(() => {
         void fetchData();
-    }, [lat, lng, governorateId, areaId, governorates, page]);
+    }, [lat, lng, governorateId, areaId, governorates, page, searchTerm]);
 
     useEffect(() => {
         setPage(1);
-    }, [governorateId, areaId]);
+    }, [governorateId, areaId, searchTerm]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
-            if (lat && lng) {
+            if (!searchTerm && lat && lng) {
                 params.set('lat', lat.toString());
                 params.set('lng', lng.toString());
                 params.set('radius', '10000');
             }
+            if (searchTerm.trim()) params.set('query', searchTerm.trim());
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -76,20 +76,6 @@ export default function ImamsPage() {
         }
         setLoading(false);
     };
-
-    const filteredData = data?.data?.filter((imam: any) => {
-        if (!searchTerm) return true;
-        const q = searchTerm.toLowerCase();
-        return [
-            imam.imam_name || imam.imamName,
-            imam.mosque_name || imam.mosqueName,
-            imam.governorate,
-            imam.city,
-            imam.district,
-            imam.area?.nameEn,
-            imam.area?.nameAr,
-        ].some((field) => (field || '').toString().toLowerCase().includes(q));
-    });
 
     const router = useRouter();
 
@@ -160,26 +146,23 @@ export default function ImamsPage() {
                                 </div>
                             ))}
                         </div>
-                    ) : filteredData?.length > 0 ? (
+                    ) : data?.data?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredData.map((imam: any) => {
+                            {data.data.map((imam: any) => {
                                 const card = {
                                     id: imam.id,
                                     entity: 'imam' as const,
                                     name: imam.imam_name || imam.imamName,
                                     mosque: imam.mosque_name || imam.mosqueName,
-                                    location: imam.area
-                                        ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn)
-                                        : [
-                                              imam.governorate,
-                                              imam.city,
-                                              imam.district,
-                                          ]
-                                              .filter(Boolean)
-                                              .join(' — '),
+                                    location: formatLocationParts([
+                                        imam.governorate,
+                                        imam.area ? (locale === 'ar' ? imam.area.nameAr : imam.area.nameEn) : null,
+                                        imam.city,
+                                        imam.district,
+                                    ]),
                                     typeLabel: locale === 'ar' ? 'إمام' : 'Imam',
                                     typeIcon: '🕌',
-                                    map: imam.google_maps_url,
+                                    map: imam.google_maps_url || imam.googleMapsUrl,
                                     video: imam.video_url || imam.videoUrl,
                                     whatsapp: imam.whatsapp,
                                     online: false,

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,21 +10,16 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
+import { formatLocationParts } from '@/lib/location';
 
 const typeLabels: Record<string, Record<string, string>> = {
-    ar: { men: 'رجال', women: 'نساء', children: 'أطفال', mixed: 'مختلط' },
-    en: { men: 'Men', women: 'Women', children: 'Children', mixed: 'Mixed' },
+    ar: { men: 'رجال', women: 'نساء', children: 'أطفال' },
+    en: { men: 'Men', women: 'Women', children: 'Children' },
 };
 
-const typeColors: Record<string, string> = {
-    men: 'bg-blue-100 text-blue-800',
-    women: 'bg-pink-100 text-pink-800',
-    children: 'bg-green-100 text-green-800',
-    mixed: 'bg-purple-100 text-purple-800',
-};
+
 
 export default function HalaqatPage() {
     const t = useTranslations('halaqat');
@@ -35,7 +29,8 @@ export default function HalaqatPage() {
     const { lat, lng, requestLocation } = useGeolocationStore();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [selectedType, setSelectedType] = useState(searchParams.get('type') || '');
+    const initialType = searchParams.get('type') || '';
+    const [selectedType, setSelectedType] = useState(['men', 'women', 'children'].includes(initialType) ? initialType : '');
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
     const [governorateId, setGovernorateId] = useState<string>(searchParams.get('governorateId') || '');
@@ -56,16 +51,17 @@ export default function HalaqatPage() {
         }
     }, [governorateId]);
 
-    useEffect(() => { void fetchData(); }, [lat, lng, selectedType, governorateId, areaId, governorates, onlineOnly, page]);
-    useEffect(() => { setPage(1); }, [selectedType, governorateId, areaId, onlineOnly]);
+    useEffect(() => { void fetchData(); }, [lat, lng, selectedType, governorateId, areaId, governorates, onlineOnly, page, searchTerm]);
+    useEffect(() => { setPage(1); }, [selectedType, governorateId, areaId, onlineOnly, searchTerm]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
-            if (lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '10000'); }
+            if (!searchTerm && lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '10000'); }
             if (selectedType) params.set('type', selectedType);
             if (onlineOnly) params.set('isOnline', 'true');
+            if (searchTerm.trim()) params.set('query', searchTerm.trim());
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -78,19 +74,6 @@ export default function HalaqatPage() {
         } catch (err) { console.error('Error:', err); }
         setLoading(false);
     };
-
-    const filteredData = data?.data?.filter((halqa: any) => {
-        if (!searchTerm) return true;
-        const q = searchTerm.toLowerCase();
-        return [
-            halqa.circle_name || halqa.circleName,
-            halqa.mosque_name || halqa.mosqueName,
-            halqa.governorate,
-            halqa.city,
-            halqa.area?.nameEn,
-            halqa.area?.nameAr,
-        ].some((field) => (field || '').toString().toLowerCase().includes(q));
-    });
 
     const router = useRouter();
 
@@ -110,21 +93,16 @@ export default function HalaqatPage() {
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
                     <div className="bg-white rounded-[24px] p-4 flex flex-wrap gap-2 shadow-card border border-border">
-                        <button
-                            onClick={() => setSelectedType('')}
-                            className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${!selectedType ? 'bg-primary text-white shadow-lg' : 'bg-cream text-text-muted hover:bg-primary/5 hover:text-primary'}`}
+                        <select
+                            value={selectedType}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="px-4 py-2.5 rounded-xl text-sm font-black bg-cream border-2 border-transparent focus:border-primary min-w-[180px]"
                         >
-                            {locale === 'ar' ? 'الكل' : 'All'}
-                        </button>
-                        {['men', 'women', 'children', 'mixed'].map((type) => (
-                            <button
-                                key={type}
-                                onClick={() => setSelectedType(type)}
-                                className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all ${selectedType === type ? 'bg-primary text-white shadow-lg' : 'bg-cream text-text-muted hover:bg-primary/5 hover:text-primary'}`}
-                            >
-                                {typeLabels[locale]?.[type] || type}
-                            </button>
-                        ))}
+                            <option value="">{locale === 'ar' ? 'كل الأنواع' : 'All types'}</option>
+                            <option value="men">{typeLabels[locale]?.men || 'men'}</option>
+                            <option value="women">{typeLabels[locale]?.women || 'women'}</option>
+                            <option value="children">{typeLabels[locale]?.children || 'children'}</option>
+                        </select>
 
                         <select
                             value={governorateId}
@@ -169,30 +147,27 @@ export default function HalaqatPage() {
                                 <div key={i} className="card p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-3/4 mb-4" /><div className="h-3 bg-gray-200 rounded w-1/2" /></div>
                             ))}
                         </div>
-                    ) : filteredData?.length > 0 ? (
+                    ) : data?.data?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredData.map((halqa: any) => {
+                            {data.data.map((halqa: any) => {
                                 const halqaType = halqa.halqa_type || halqa.halqaType;
                                 const card = {
                                     id: halqa.id,
                                     entity: 'halqa' as const,
                                     name: halqa.circle_name || halqa.circleName,
                                     mosque: halqa.mosque_name || halqa.mosqueName,
-                                    location: halqa.area
-                                        ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn)
-                                        : [
-                                              halqa.governorate,
-                                              halqa.city,
-                                              halqa.district,
-                                          ]
-                                              .filter(Boolean)
-                                              .join(' — '),
+                                    location: formatLocationParts([
+                                        halqa.governorate,
+                                        halqa.area ? (locale === 'ar' ? halqa.area.nameAr : halqa.area.nameEn) : null,
+                                        halqa.city,
+                                        halqa.district,
+                                    ]),
                                     typeLabel: typeLabels[locale]?.[halqaType] || halqaType || (locale === 'ar' ? 'حلقة' : 'Circle'),
                                     typeIcon: '📖',
-                                    map: halqa.google_maps_url,
+                                    map: halqa.google_maps_url || halqa.googleMapsUrl,
                                     video: halqa.video_url || halqa.videoUrl,
                                     whatsapp: halqa.whatsapp,
-                                    online: (halqa.additional_info || halqa.additionalInfo || '').toString().startsWith('[ONLINE]'),
+                                    online: Boolean(halqa.is_online ?? halqa.isOnline) || (halqa.additional_info || halqa.additionalInfo || '').toString().startsWith('[ONLINE]'),
                                     images: [],
                                     raw: halqa,
                                 };

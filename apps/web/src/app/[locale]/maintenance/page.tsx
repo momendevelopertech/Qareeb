@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -11,9 +10,9 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
-import { getWhatsAppUrl } from '@/lib/utils';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
+import { formatLocationParts } from '@/lib/location';
 
 const maintenanceLabels: Record<string, Record<string, string>> = {
     ar: { Plumbing: 'سباكة', Electrical: 'كهرباء', Carpentry: 'نجارة', Painting: 'دهان', AC_Repair: 'تكييف', Cleaning: 'تنظيف', Other: 'أخرى' },
@@ -45,14 +44,15 @@ export default function MaintenancePage() {
             setAreaId('');
         }
     }, [governorateId]);
-    useEffect(() => { void fetchData(); }, [lat, lng, governorateId, areaId, governorates, page]);
-    useEffect(() => { setPage(1); }, [governorateId, areaId]);
+    useEffect(() => { void fetchData(); }, [lat, lng, governorateId, areaId, governorates, page, searchTerm]);
+    useEffect(() => { setPage(1); }, [governorateId, areaId, searchTerm]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
-            if (lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '15000'); }
+            if (!searchTerm && lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '15000'); }
+            if (searchTerm.trim()) params.set('query', searchTerm.trim());
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -65,19 +65,6 @@ export default function MaintenancePage() {
         } catch (err) { console.error('Error:', err); }
         setLoading(false);
     };
-
-    const filteredData = data?.data?.filter((item: any) => {
-        if (!searchTerm) return true;
-        const q = searchTerm.toLowerCase();
-        return [
-            item.mosque_name || item.mosqueName,
-            item.description,
-            item.governorate,
-            item.city,
-            item.area?.nameEn,
-            item.area?.nameAr,
-        ].some((field) => (field || '').toString().toLowerCase().includes(q));
-    });
 
     const router = useRouter();
 
@@ -131,24 +118,21 @@ export default function MaintenancePage() {
                                 <div key={i} className="card p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-3/4 mb-4" /><div className="h-3 bg-gray-200 rounded w-full mb-2" /><div className="h-3 bg-gray-200 rounded w-2/3" /></div>
                             ))}
                         </div>
-                    ) : filteredData?.length > 0 ? (
+                    ) : data?.data?.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredData.map((item: any) => {
+                            {data.data.map((item: any) => {
                                 const types = item.maintenance_types || item.maintenanceTypes || [];
                                 const card = {
                                     id: item.id,
                                     entity: 'maintenance' as const,
                                     name: item.mosque_name || item.mosqueName,
                                     mosque: undefined,
-                                    location: item.area
-                                        ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn)
-                                        : [
-                                              item.governorate,
-                                              item.city,
-                                              item.district,
-                                          ]
-                                              .filter(Boolean)
-                                              .join(' — '),
+                                    location: formatLocationParts([
+                                        item.governorate,
+                                        item.area ? (locale === 'ar' ? item.area.nameAr : item.area.nameEn) : null,
+                                        item.city,
+                                        item.district,
+                                    ]),
                                     typeLabel:
                                         types.length && maintenanceLabels[locale]?.[types[0]]
                                             ? maintenanceLabels[locale][types[0]]
@@ -156,7 +140,7 @@ export default function MaintenancePage() {
                                             ? 'إعمار'
                                             : 'Maintenance',
                                     typeIcon: '🏗️',
-                                    map: item.google_maps_url,
+                                    map: item.google_maps_url || item.googleMapsUrl,
                                     video: item.video_url || item.videoUrl,
                                     whatsapp: item.whatsapp,
                                     online: false,

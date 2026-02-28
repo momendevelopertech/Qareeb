@@ -1,9 +1,11 @@
 export function getEmbeddableVideoUrl(rawUrl?: string | null): string | null {
     if (!rawUrl) return null;
 
+    const normalizedUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+
     let url: URL;
     try {
-        url = new URL(rawUrl);
+        url = new URL(normalizedUrl);
     } catch {
         return null;
     }
@@ -29,6 +31,14 @@ export function getEmbeddableVideoUrl(rawUrl?: string | null): string | null {
     if (host.includes('instagram.com')) {
         const cleanPath = url.pathname.replace(/\/+$/, '');
         return `${url.origin}${cleanPath}/embed`;
+    }
+
+    if (host.includes('drive.google.com')) {
+        const directFileMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
+        const idFromPath = directFileMatch?.[1] || url.searchParams.get('id');
+        if (idFromPath) {
+            return `https://drive.google.com/file/d/${idFromPath}/preview`;
+        }
     }
 
     return null;

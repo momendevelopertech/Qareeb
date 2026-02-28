@@ -5,7 +5,6 @@ export enum HalqaType {
     MEN = 'men',
     WOMEN = 'women',
     CHILDREN = 'children',
-    MIXED = 'mixed',
 }
 
 export class CreateHalqaDto {
@@ -13,17 +12,19 @@ export class CreateHalqaDto {
     @IsNotEmpty()
     circle_name!: string;
 
+    @ValidateIf((o) => !o.is_online)
     @IsString()
     @IsNotEmpty()
-    mosque_name!: string;
+    mosque_name?: string;
 
     @IsEnum(HalqaType)
     @IsNotEmpty()
     halqa_type!: HalqaType;
 
+    @ValidateIf((o) => !o.is_online)
     @IsString()
     @IsNotEmpty()
-    governorate!: string;
+    governorate?: string;
 
     @IsString()
     @IsOptional()
@@ -113,12 +114,22 @@ export class HalqaQueryDto {
     governorateId?: string;
 
     @IsOptional()
+    @Type(() => Boolean)
+    @IsBoolean()
+    isOnline?: boolean;
+
+    @IsOptional()
     @IsNumber()
     page?: number;
 
     @IsOptional()
     @IsNumber()
     limit?: number;
+
+
+    @IsOptional()
+    @IsString()
+    query?: string;
 
     @IsOptional()
     @IsString()
