@@ -48,8 +48,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         let mounted = true;
         let refreshInterval: ReturnType<typeof setInterval> | null = null;
+        let refreshFailed = false;
 
         const tryRefresh = async () => {
+            if (refreshFailed) return;
             try {
                 // Always try to refresh from server using httpOnly cookies
                 const refreshed = await adminApi.refresh();
@@ -58,6 +60,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     setAuth(refreshed.access_token, admin || refreshed.admin, rememberMe);
                 }
             } catch {
+                refreshFailed = true;
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
                 // If refresh fails and rememberMe is true, don't clear auth yet
                 // The token might still be valid from localStorage
                 if (mounted && !rememberMe) {
@@ -126,7 +133,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         if (admin?.role) {
             const base = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 'http://localhost:3001';
             socket = io(`${base}/notifications`, {
-                transports: ['websocket', 'polling'],
+                transports: ['polling', 'websocket'],
                 reconnection: true,
                 reconnectionAttempts: 10,
                 reconnectionDelay: 800,
