@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
+import flags from 'react-phone-number-input/flags';
 import { CountryCode, isValidPhoneNumber, parsePhoneNumber } from 'libphonenumber-js';
 import { api } from '@/lib/api';
 import { useLocale } from 'next-intl';
@@ -33,7 +34,7 @@ export default function PhoneInputField({
     value,
     onChange,
     defaultCountry = 'EG',
-    detectCountryFromIP = true,
+    detectCountryFromIP = false,
     label,
     required = false,
     id,
@@ -99,13 +100,14 @@ export default function PhoneInputField({
                     {label} {required ? '*' : ''}
                 </label>
             )}
-            <div className="input-field">
+            <div className="phone-input-shell">
                 <PhoneInput
                     id={id}
                     international
                     defaultCountry={country}
                     country={country}
                     countryCallingCodeEditable={false}
+                    flags={flags}
                     value={value}
                     onChange={(next) => {
                         setTouched(true);

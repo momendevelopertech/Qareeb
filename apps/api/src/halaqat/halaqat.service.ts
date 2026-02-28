@@ -118,7 +118,7 @@ export class HalaqatService {
     }
 
     async findOne(id: string) {
-        return this.prisma.halqa.findUnique({ where: { id }, include: { media: true } });
+        return this.prisma.halqa.findUnique({ where: { id }, include: { media: true, area: true } });
     }
 
     async create(dto: CreateHalqaDto, createdBy?: string) {
