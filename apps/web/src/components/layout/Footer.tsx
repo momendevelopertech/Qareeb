@@ -114,17 +114,16 @@ export default function Footer() {
                     </div>
 
                     <div>
-                        <h3 className="text-white font-semibold mb-4">
-                            {isArabic ? 'تواصل' : 'Contact'}
-                        </h3>
                         <div className="flex flex-col items-start gap-3">
                             <a
                                 href="https://wa.me/201551429227"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn-primary text-sm !px-4 !py-2 inline-flex"
+                                className="inline-flex items-center gap-2 rounded-xl border border-[#25D366]/60 bg-[#25D366]/15 px-4 py-2.5 text-sm font-black text-[#25D366] shadow-[0_8px_22px_rgba(37,211,102,0.2)] hover:bg-[#25D366]/25 hover:-translate-y-0.5 transition-all"
+                                aria-label={isArabic ? 'تواصل عبر واتساب' : 'Contact us on WhatsApp'}
                             >
-                                WhatsApp
+                                <FaWhatsapp className="text-base" />
+                                <span>{isArabic ? 'تواصل عبر واتساب' : 'Contact on WhatsApp'}</span>
                             </a>
                             <button
                                 onClick={openModal}
