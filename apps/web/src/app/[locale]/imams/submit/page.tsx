@@ -133,41 +133,41 @@ export default function SubmitPage() {
             const nextErrors: Record<string, string> = {};
 
             if (entityType !== 'maintenance' && !String(payload.name || '').trim()) {
-                nextErrors.name = locale === 'ar' ? 'من فضلك اكتب الاسم.' : 'Please enter the name.';
+                nextErrors.name = t('validation.nameRequired');
             }
 
             if (!(entityType === 'halqa' && payload.isOnline)) {
                 if (!String(payload.mosqueName || '').trim()) {
-                    nextErrors.mosqueName = locale === 'ar' ? 'من فضلك اكتب اسم المسجد.' : 'Please enter the mosque name.';
+                    nextErrors.mosqueName = t('validation.mosqueRequired');
                 }
                 if (!payload.governorateId) {
-                    nextErrors.governorateId = locale === 'ar' ? 'من فضلك اختر المحافظة.' : 'Please select a governorate.';
+                    nextErrors.governorateId = t('validation.governorateRequired');
                 }
                 if (!payload.areaId) {
-                    nextErrors.areaId = locale === 'ar' ? 'من فضلك اختر المنطقة.' : 'Please select an area.';
+                    nextErrors.areaId = t('validation.areaRequired');
                 }
                 if (!String(payload.googleMapsUrl || '').trim()) {
-                    nextErrors.googleMapsUrl = locale === 'ar' ? 'من فضلك أضف رابط خرائط جوجل.' : 'Please provide a Google Maps link.';
+                    nextErrors.googleMapsUrl = t('validation.mapsRequired');
                 }
             }
 
             if (entityType === 'maintenance') {
                 if (!selectedMaintenanceTypes.length) {
-                    nextErrors.maintenanceTypes = locale === 'ar' ? 'من فضلك اختر نوع صيانة واحد على الأقل.' : 'Please select at least one maintenance type.';
+                    nextErrors.maintenanceTypes = t('validation.maintenanceTypeRequired');
                 } else if (selectedMaintenanceTypes.some((x: string) => !ALLOWED_MAINTENANCE_TYPES.includes(x as any))) {
-                    nextErrors.maintenanceTypes = locale === 'ar' ? 'نوع الصيانة المختار غير صحيح.' : 'One or more selected maintenance types are invalid.';
+                    nextErrors.maintenanceTypes = t('validation.maintenanceTypeInvalid');
                 }
                 if (!String(payload.description || '').trim()) {
-                    nextErrors.description = locale === 'ar' ? 'من فضلك اكتب وصف الصيانة.' : 'Please enter a maintenance description.';
+                    nextErrors.description = t('validation.descriptionRequired');
                 }
             }
 
             if (!normalizedWhatsapp && isWhatsappRequired) {
-                nextErrors.whatsapp = locale === 'ar' ? 'رقم الواتساب مطلوب في هذه الصفحة.' : 'WhatsApp number is required on this page.';
+                nextErrors.whatsapp = t('validation.whatsappRequired');
             }
 
             if (normalizedWhatsapp && !isValidEgyptWhatsapp(normalizedWhatsapp)) {
-                nextErrors.whatsapp = locale === 'ar' ? 'رقم واتساب غير صحيح. اكتب 10 أرقام بعد +20.' : 'Invalid WhatsApp number. Enter 10 digits after +20.';
+                nextErrors.whatsapp = t('validation.whatsappInvalid');
             }
 
             if (Object.keys(nextErrors).length > 0) {
@@ -239,20 +239,14 @@ export default function SubmitPage() {
         } catch (err: any) {
             console.error('Submit error:', err);
             const message = String(err?.message || '').toLowerCase();
-            let friendly = locale === 'ar' ? 'تعذر إرسال الطلب. تأكد من البيانات وحاول مرة أخرى.' : 'Could not submit your request. Please check your data and try again.';
+            let friendly = t('validation.submitGeneric');
 
             if (message.includes('maintenance_types')) {
-                friendly = locale === 'ar'
-                    ? 'من فضلك اختر نوع صيانة واحد على الأقل من القائمة.'
-                    : 'Please select at least one maintenance type from the list.';
+                friendly = t('validation.submitMaintenanceTypes');
             } else if (message.includes('google_maps_url')) {
-                friendly = locale === 'ar'
-                    ? 'رابط خرائط جوجل غير صالح. من فضلك استخدم رابط صحيح.'
-                    : 'Google Maps link is invalid. Please provide a valid link.';
+                friendly = t('validation.submitMapsInvalid');
             } else if (message.includes('whatsapp')) {
-                friendly = locale === 'ar'
-                    ? 'رقم الواتساب غير صحيح. اكتب الرقم بعد +20.'
-                    : 'WhatsApp number is invalid. Enter a valid number after +20.';
+                friendly = t('validation.submitWhatsappInvalid');
             }
 
             setSubmitError(friendly);
@@ -497,12 +491,18 @@ export default function SubmitPage() {
                                 {!(entityType === 'halqa' && isOnline) && (
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
-                                            {entityType === 'imam' ? ti('mosqueName') : entityType === 'halqa' ? th('mosqueName') : tm('mosqueName')} <span className="text-red-500">*</span>
+                                            {entityType === 'imam'
+                                                ? ti('mosqueName')
+                                                : entityType === 'halqa'
+                                                    ? th('mosqueOrDarName')
+                                                    : tm('mosqueName')} <span className="text-red-500">*</span>
                                         </label>
                                         <input
                                             {...register('mosqueName', { required: entityType !== 'halqa' || !isOnline, onChange: () => clearFieldError('mosqueName') })}
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
-                                            placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'}
+                                            placeholder={entityType === 'halqa'
+                                                ? th('mosqueOrDarPlaceholder')
+                                                : (locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...')}
                                         />
                                         {getErrorMessage('mosqueName') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('mosqueName')}</p>}
                                     </div>
@@ -629,9 +629,7 @@ export default function SubmitPage() {
                             <div className="space-y-6 pt-2 border-t border-border">
                                 {entityType === 'imam' && (
                                     <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-bold text-primary leading-relaxed">
-                                        {locale === 'ar'
-                                            ? 'يرجى كتابة رقم الواتساب للتواصل في حالة وجود أي بيانات خاطئة أو محتاجة تحديث.'
-                                            : 'Please add a WhatsApp number so we can contact you if any data is incorrect or needs updating.'}
+                                        {t('imamWhatsappNote')}
                                     </div>
                                 )}
                                 <EgyptWhatsAppInput
@@ -701,9 +699,7 @@ export default function SubmitPage() {
                             <div className="space-y-6">
                                 {entityType === 'imam' && (
                                     <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-bold text-primary leading-relaxed">
-                                        {locale === 'ar'
-                                            ? 'يرجى كتابة رقم الواتساب للتواصل في حالة وجود أي بيانات خاطئة أو محتاجة تحديث.'
-                                            : 'Please add a WhatsApp number so we can contact you if any data is incorrect or needs updating.'}
+                                        {t('imamWhatsappNote')}
                                     </div>
                                 )}
                                 <EgyptWhatsAppInput
