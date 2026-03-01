@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 
@@ -11,12 +11,20 @@ type Area = { id: string; nameAr: string; nameEn: string };
 export default function HomeSearchBar() {
     const locale = useLocale();
     const router = useRouter();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [type, setType] = useState<'imams' | 'halaqat' | 'maintenance'>('imams');
+    const searchParams = useSearchParams();
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '');
+    const [type, setType] = useState<'all' | 'imams' | 'halqa' | 'maintenance'>((searchParams.get('tab') as 'all' | 'imams' | 'halqa' | 'maintenance') || 'all');
     const [governorates, setGovernorates] = useState<Gov[]>([]);
     const [areas, setAreas] = useState<Area[]>([]);
-    const [governorateId, setGovernorateId] = useState('');
-    const [areaId, setAreaId] = useState('');
+    const [governorateId, setGovernorateId] = useState(searchParams.get('governorateId') || '');
+    const [areaId, setAreaId] = useState(searchParams.get('areaId') || '');
+
+    useEffect(() => {
+        setSearchTerm(searchParams.get('query') || '');
+        setType((searchParams.get('tab') as 'all' | 'imams' | 'halqa' | 'maintenance') || 'all');
+        setGovernorateId(searchParams.get('governorateId') || '');
+        setAreaId(searchParams.get('areaId') || '');
+    }, [searchParams]);
 
     useEffect(() => {
         api.getGovernorates().then(setGovernorates).catch(console.error);
@@ -34,10 +42,14 @@ export default function HomeSearchBar() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const params = new URLSearchParams();
-        if (searchTerm) params.set('query', searchTerm);
+        const normalizedSearch = searchTerm.trim();
+        if (normalizedSearch) params.set('query', normalizedSearch);
         if (governorateId) params.set('governorateId', governorateId);
         if (areaId) params.set('areaId', areaId);
-        router.push(`/${locale}/${type}?${params.toString()}`);
+        if (type !== 'all') {
+            params.set('tab', type);
+        }
+        router.push(`/${locale}/search?${params.toString()}`);
     };
 
     return (
@@ -58,8 +70,9 @@ export default function HomeSearchBar() {
                 onChange={(e) => setType(e.target.value as any)}
                 className="bg-cream rounded-xl px-4 py-3 min-w-[150px] outline-none border-2 border-transparent focus:border-primary text-sm font-bold cursor-pointer transition-all"
             >
+                <option value="all">{locale === 'ar' ? 'الكل' : 'All'}</option>
                 <option value="imams">{locale === 'ar' ? 'أئمة' : 'Imams'}</option>
-                <option value="halaqat">{locale === 'ar' ? 'حلقات' : 'Circles'}</option>
+                <option value="halqa">{locale === 'ar' ? 'حلقات' : 'Circles'}</option>
                 <option value="maintenance">{locale === 'ar' ? 'إعمار' : 'Maintenance'}</option>
             </select>
 
