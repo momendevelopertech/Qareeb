@@ -79,7 +79,7 @@ export default function ChatWidget() {
     const getBrowserCoords = async (): Promise<{ lat: number; lng: number }> => {
         if (!navigator.geolocation) throw new Error('Geolocation not supported');
 
-        const getPosition = (options?: PositionOptions) => new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+        const getPosition = (options: PositionOptions) => new Promise<{ lat: number; lng: number }>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                 (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
                 reject,
@@ -88,10 +88,28 @@ export default function ChatWidget() {
         });
 
         try {
-            return await getPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 });
+            return await getPosition({
+                enableHighAccuracy: false,
+                timeout: 15000,
+                maximumAge: 60_000,
+            });
         } catch {
-            return getPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+            return getPosition({
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 60_000,
+            });
         }
+    };
+
+    const getLocationByIP = async (): Promise<{ lat: number; lng: number }> => {
+        const res = await fetch('https://ipapi.co/json/');
+        if (!res.ok) throw new Error('IP geolocation failed');
+        const data = await res.json() as { latitude?: number; longitude?: number };
+        if (!Number.isFinite(data.latitude) || !Number.isFinite(data.longitude)) {
+            throw new Error('Invalid IP geolocation response');
+        }
+        return { lat: data.latitude as number, lng: data.longitude as number };
     };
 
     const send = async (text?: string) => {
@@ -119,8 +137,8 @@ export default function ChatWidget() {
     };
 
     const searchByNearest = async (type: SearchType, userLat: number, userLng: number) => {
-        const radiusKm = 5;
-        const res = await api.nearestSearch(userLat, userLng, type, { radiusKm, limit: 10 });
+        const radiusKm = 10;
+        const res = await api.nearestSearch(userLat, userLng, type, { radiusKm, limit: 5 });
         const result = Array.isArray(res?.data) ? res.data : [];
         setCards(result.map((c: any) => ({
             id: c.id,
@@ -198,8 +216,25 @@ export default function ChatWidget() {
         if (!pendingType) return;
         setLoadingSearch(true);
         try {
-            const coords = await getBrowserCoords();
+            let coords: { lat: number; lng: number };
+            let usedIpFallback = false;
+
+            try {
+                coords = await getBrowserCoords();
+            } catch {
+                coords = await getLocationByIP();
+                usedIpFallback = true;
+            }
+
             await searchByNearest(pendingType, coords.lat, coords.lng);
+            if (usedIpFallback) {
+                addMessage(
+                    'bot',
+                    locale === 'ar'
+                        ? 'تعذر الوصول لـ GPS، فتم استخدام موقع تقريبي حسب الشبكة لإظهار النتائج الأقرب.'
+                        : 'GPS location was unavailable, so a network/IP-based approximate location was used to find nearby results.',
+                );
+            }
             setShowLocationChooser(false);
             setPendingType(null);
         } catch {

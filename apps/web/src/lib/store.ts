@@ -83,6 +83,11 @@ export const useGeolocationStore = create<GeolocationState>((set) => ({
             (err) => {
                 set({ error: err.message, loading: false });
             },
+            {
+                enableHighAccuracy: false,
+                timeout: 15000,
+                maximumAge: 60000,
+            },
         );
     },
 }));
@@ -282,4 +287,3 @@ export const useThemeStore = create<ThemeState>()(
         },
     ),
 );
-

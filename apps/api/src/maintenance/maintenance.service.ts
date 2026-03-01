@@ -144,7 +144,7 @@ export class MaintenanceService {
             try {
                 await this.prisma.$executeRaw`
                     UPDATE maintenance_requests
-                    SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
+                    SET location = ST_SetSRID(ST_MakePoint(${coords.lng}, ${coords.lat}), 4326)::geography
                     WHERE id = ${request.id}::uuid
                 `;
             } catch (error) {
@@ -205,7 +205,9 @@ export class MaintenanceService {
     async update(id: string, adminId: string, data: Partial<CreateMaintenanceDto>) {
         const before = await this.prisma.maintenanceRequest.findUnique({ where: { id } });
         if (!before) throw new Error('Maintenance not found');
-        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+        const coords = data.google_maps_url
+            ? (extractLatLngFromGoogleMaps(data.google_maps_url) || await resolveLatLngFromGoogleMaps(data.google_maps_url))
+            : null;
 
         const updated = await this.prisma.maintenanceRequest.update({
             where: { id },
@@ -225,6 +227,19 @@ export class MaintenanceService {
                 whatsapp: data.whatsapp ?? before.whatsapp,
             },
         });
+
+        if (process.env.POSTGIS_ENABLED === 'true') {
+            try {
+                await this.prisma.$executeRaw`
+                    UPDATE maintenance_requests
+                    SET location = ST_SetSRID(ST_MakePoint(${updated.longitude}, ${updated.latitude}), 4326)::geography
+                    WHERE id = ${updated.id}::uuid
+                `;
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.warn('PostGIS update failed for maintenance update, continuing without location column:', error);
+            }
+        }
 
         if (data.media_uploads?.length) {
             await this.prisma.mediaAsset.createMany({

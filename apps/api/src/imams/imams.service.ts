@@ -166,7 +166,7 @@ export class ImamsService {
             try {
                 await this.prisma.$executeRaw`
                     UPDATE imams
-                    SET location = ST_SetSRID(ST_MakePoint(${dto.lng}, ${dto.lat}), 4326)::geography
+                    SET location = ST_SetSRID(ST_MakePoint(${coords.lng}, ${coords.lat}), 4326)::geography
                     WHERE id = ${imam.id}::uuid
                 `;
             } catch (error) {
@@ -223,7 +223,9 @@ export class ImamsService {
     async update(id: string, adminId: string, data: Partial<CreateImamDto>) {
         const before = await this.prisma.imam.findUnique({ where: { id } });
         if (!before) throw new Error('Imam not found');
-        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+        const coords = data.google_maps_url
+            ? (extractLatLngFromGoogleMaps(data.google_maps_url) || await resolveLatLngFromGoogleMaps(data.google_maps_url))
+            : null;
 
         const updated = await this.prisma.imam.update({
             where: { id },
@@ -242,6 +244,19 @@ export class ImamsService {
                 recitationUrl: data.recitation_url ?? before.recitationUrl,
             },
         });
+
+        if (process.env.POSTGIS_ENABLED === 'true') {
+            try {
+                await this.prisma.$executeRaw`
+                    UPDATE imams
+                    SET location = ST_SetSRID(ST_MakePoint(${updated.longitude}, ${updated.latitude}), 4326)::geography
+                    WHERE id = ${updated.id}::uuid
+                `;
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.warn('PostGIS update failed for imam update, continuing without location column:', error);
+            }
+        }
 
         await this.audit.logUpdate(adminId, 'imam', id, before, updated);
         await this.notifications.emitAction('imam', 'updated', id, 'Imam updated', `Imam ${updated.imamName} updated`);

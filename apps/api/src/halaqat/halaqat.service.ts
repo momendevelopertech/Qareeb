@@ -204,7 +204,9 @@ export class HalaqatService {
         const before = await this.prisma.halqa.findUnique({ where: { id } });
         if (!before) throw new Error('Halqa not found');
         const nextOnline = data.is_online !== undefined ? Boolean(data.is_online) : (before.additionalInfo || '').startsWith('[ONLINE]');
-        const coords = data.google_maps_url ? extractLatLngFromGoogleMaps(data.google_maps_url) : null;
+        const coords = data.google_maps_url
+            ? (extractLatLngFromGoogleMaps(data.google_maps_url) || await resolveLatLngFromGoogleMaps(data.google_maps_url))
+            : null;
 
         const updated = await this.prisma.halqa.update({
             where: { id },
@@ -226,6 +228,27 @@ export class HalaqatService {
                 isOnline: nextOnline,
             },
         });
+
+        if (process.env.POSTGIS_ENABLED === 'true') {
+            try {
+                if (updated.isOnline || (updated.latitude === 0 && updated.longitude === 0)) {
+                    await this.prisma.$executeRaw`
+                        UPDATE halaqat
+                        SET location = NULL
+                        WHERE id = ${updated.id}::uuid
+                    `;
+                } else {
+                    await this.prisma.$executeRaw`
+                        UPDATE halaqat
+                        SET location = ST_SetSRID(ST_MakePoint(${updated.longitude}, ${updated.latitude}), 4326)::geography
+                        WHERE id = ${updated.id}::uuid
+                    `;
+                }
+            } catch (error) {
+                // eslint-disable-next-line no-console
+                console.warn('PostGIS update failed for halqa update, continuing without location column:', error);
+            }
+        }
 
         await this.audit.logUpdate(adminId, 'halqa', id, before, updated);
         await this.notifications.emitAction('halqa', 'updated', id, 'Halqa updated', `Halqa ${updated.circleName} updated`);
