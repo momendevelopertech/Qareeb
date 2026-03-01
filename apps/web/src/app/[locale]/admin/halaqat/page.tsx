@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useAuthStore, useModalStore, useToastStore } from '@/lib/store';
-import { adminApi } from '@/lib/api';
+import { adminApi, api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import AppModal from '@/components/ui/AppModal';
 import { FaCheck, FaEye, FaPenToSquare, FaXmark } from 'react-icons/fa6';
@@ -27,6 +27,8 @@ export default function AdminHalaqatPage() {
     const [onlineFilter, setOnlineFilter] = useState('all'); // 'all', 'online', 'offline'
     const [loading, setLoading] = useState(true);
     const [editForm, setEditForm] = useState<any>({});
+    const [governorates, setGovernorates] = useState<any[]>([]);
+    const [editAreas, setEditAreas] = useState<any[]>([]);
     const [page, setPage] = useState(1);
     const pageSize = 12;
 
@@ -34,6 +36,10 @@ export default function AdminHalaqatPage() {
         if (!token) { router.push(`/${locale}/admin`); return; }
         void fetchData();
     }, [token, statusFilter]);
+
+    useEffect(() => {
+        api.getGovernorates().then(setGovernorates).catch(() => setGovernorates([]));
+    }, []);
 
     useEffect(() => {
         setPage(1);
@@ -70,13 +76,68 @@ export default function AdminHalaqatPage() {
 
     const saveEdit = async () => {
         try {
-            await adminApi.updateHalqa(token!, payload.id, editForm);
+            const { governorate_id: _governorate_id, ...updatePayload } = editForm;
+            await adminApi.updateHalqa(token!, payload.id, updatePayload);
             pushToast(locale === 'ar' ? 'تم التحديث' : 'Updated', 'success');
             closeModal();
             void fetchData();
         } catch {
             pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
         }
+    };
+
+    const getAreaLabel = (item: any) => item?.area
+        ? (locale === 'ar' ? (item.area.nameAr || item.area.nameEn) : (item.area.nameEn || item.area.nameAr))
+        : '';
+
+    const resolveGovernorateId = (item: any) => {
+        if (item?.area?.governorateId) return item.area.governorateId as string;
+        const normalizedGov = (item?.governorate || '').toString().trim().toLowerCase();
+        if (!normalizedGov) return '';
+        const matched = governorates.find((g) =>
+            [g.nameAr, g.nameEn].some((n: string) => (n || '').toString().trim().toLowerCase() === normalizedGov),
+        );
+        return matched?.id || '';
+    };
+
+    const loadAreasByGovernorate = async (governorateId: string) => {
+        if (!governorateId) {
+            setEditAreas([]);
+            return [];
+        }
+        try {
+            const areas = await api.getAreas(governorateId);
+            setEditAreas(areas || []);
+            return areas || [];
+        } catch {
+            setEditAreas([]);
+            return [];
+        }
+    };
+
+    const openEditHalqa = async (item: any) => {
+        const governorateId = resolveGovernorateId(item);
+        const areas = await loadAreasByGovernorate(governorateId);
+        const areaId = item.areaId || item.area?.id || '';
+        const selectedGovernorate = governorates.find((g) => g.id === governorateId);
+        const selectedArea = areas.find((a: any) => a.id === areaId) || item.area;
+
+        setEditForm({
+            circle_name: item.circleName,
+            mosque_name: item.mosqueName,
+            governorate: selectedGovernorate
+                ? (locale === 'ar' ? selectedGovernorate.nameAr : selectedGovernorate.nameEn)
+                : (item.governorate || ''),
+            governorate_id: governorateId,
+            area_id: areaId,
+            city: selectedArea ? (locale === 'ar' ? (selectedArea.nameAr || selectedArea.nameEn) : (selectedArea.nameEn || selectedArea.nameAr)) : '',
+            district: '',
+            whatsapp: item.whatsapp,
+            additional_info: item.additionalInfo || '',
+            is_online: item.isOnline || false,
+            online_link: item.onlineLink || '',
+        });
+        openModal('edit', 'halqa', item);
     };
 
     const filteredItems = items.filter((item) => {
@@ -160,7 +221,7 @@ export default function AdminHalaqatPage() {
                                     <td className="px-4 py-4"><span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' : item.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
                                     <td className="px-4 py-4"><div className="flex gap-2">
                                         <IconButton label="view" onClick={() => openModal('view', 'halqa', item)}><FaEye className="text-slate-700" /></IconButton>
-                                        <IconButton label="edit" onClick={() => { setEditForm({ circle_name: item.circleName, mosque_name: item.mosqueName, whatsapp: item.whatsapp, additional_info: item.additionalInfo || '', is_online: item.isOnline || false, online_link: item.onlineLink || '' }); openModal('edit', 'halqa', item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
+                                        <IconButton label="edit" onClick={() => { void openEditHalqa(item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
                                         {item.status === 'pending' && <IconButton label="approve" onClick={() => approve(item.id)}><FaCheck className="text-green-700" /></IconButton>}
                                         {item.status === 'pending' && <IconButton label="reject" onClick={() => reject(item.id)}><FaXmark className="text-red-700" /></IconButton>}
                                     </div></td>
@@ -178,8 +239,7 @@ export default function AdminHalaqatPage() {
                     <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
                     <p><strong>{locale === 'ar' ? 'النوع:' : 'Type:'}</strong> {payload.halqaType}</p>
                     <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
-                    {payload.city && <p><strong>{locale === 'ar' ? 'المدينة:' : 'City:'}</strong> {payload.city}</p>}
-                    {payload.district && <p><strong>{locale === 'ar' ? 'الحي:' : 'District:'}</strong> {payload.district}</p>}
+                    <p><strong>{locale === 'ar' ? 'المنطقة:' : 'Area:'}</strong> {getAreaLabel(payload) || '-'}</p>
                     <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
                     <p><strong>{locale === 'ar' ? 'نوع الحلقة' : 'Circle Type'}:</strong> {payload.isOnline ? '📺 ' + (locale === 'ar' ? 'أونلاين' : 'Online') : '🏢 ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}</p>
                     {payload.isOnline && payload.onlineLink && <p><strong>{locale === 'ar' ? 'رابط الحضور' : 'Join Link'}:</strong> <a href={payload.onlineLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">{payload.onlineLink}</a></p>}
@@ -191,16 +251,67 @@ export default function AdminHalaqatPage() {
                 <div className="space-y-3">
                     <input className="input-field" value={editForm.circle_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, circle_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم الحلقة' : 'Name'} />
                     <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque'} />
-                    <input className="input-field" value={editForm.governorate || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, governorate: e.target.value }))} placeholder={locale === 'ar' ? 'المحافظة' : 'Governorate'} />
-                    <input className="input-field" value={editForm.city || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, city: e.target.value }))} placeholder={locale === 'ar' ? 'المدينة' : 'City'} />
-                    <input className="input-field" value={editForm.district || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, district: e.target.value }))} placeholder={locale === 'ar' ? 'الحي' : 'District'} />
+                    {!editForm.is_online && (
+                        <>
+                            <select
+                                className="input-field"
+                                value={editForm.governorate_id || ''}
+                                onChange={async (e) => {
+                                    const governorateId = e.target.value;
+                                    const selectedGovernorate = governorates.find((g) => g.id === governorateId);
+                                    await loadAreasByGovernorate(governorateId);
+                                    setEditForm((s: any) => ({
+                                        ...s,
+                                        governorate_id: governorateId,
+                                        governorate: selectedGovernorate ? (locale === 'ar' ? selectedGovernorate.nameAr : selectedGovernorate.nameEn) : '',
+                                        area_id: '',
+                                        city: '',
+                                        district: '',
+                                    }));
+                                }}
+                            >
+                                <option value="">{locale === 'ar' ? 'Governorate' : 'Select governorate'}</option>
+                                {governorates.map((g) => (
+                                    <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="input-field"
+                                value={editForm.area_id || ''}
+                                onChange={(e) => {
+                                    const areaId = e.target.value;
+                                    const area = editAreas.find((a) => a.id === areaId);
+                                    setEditForm((s: any) => ({
+                                        ...s,
+                                        area_id: areaId,
+                                        city: area ? (locale === 'ar' ? (area.nameAr || area.nameEn) : (area.nameEn || area.nameAr)) : '',
+                                        district: '',
+                                    }));
+                                }}
+                                disabled={!editForm.governorate_id}
+                            >
+                                <option value="">{locale === 'ar' ? 'Area' : 'Select area'}</option>
+                                {editAreas.map((a) => (
+                                    <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
+                                ))}
+                            </select>
+                        </>
+                    )}
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
                     <textarea className="input-field" value={editForm.additional_info || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, additional_info: e.target.value }))} placeholder={locale === 'ar' ? 'معلومات إضافية' : 'Additional info'} />
                     <div className="flex items-center gap-2">
                         <input
                             type="checkbox"
                             checked={editForm.is_online || false}
-                            onChange={(e) => setEditForm((s: any) => ({ ...s, is_online: e.target.checked }))}
+                            onChange={(e) => {
+                                const checked = e.target.checked;
+                                setEditForm((s: any) => ({
+                                    ...s,
+                                    is_online: checked,
+                                    ...(checked ? { governorate_id: '', governorate: '', area_id: '', city: '', district: '' } : {}),
+                                }));
+                                if (checked) setEditAreas([]);
+                            }}
                             className="w-4 h-4"
                             id="is_online"
                         />
@@ -222,4 +333,5 @@ export default function AdminHalaqatPage() {
         </div>
     );
 }
+
 

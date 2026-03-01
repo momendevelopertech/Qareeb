@@ -7,9 +7,26 @@ import { usePathname } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { api } from '@/lib/api';
-import PhoneInputField from '@/components/form/PhoneInputField';
+import EgyptWhatsAppInput from '@/components/form/EgyptWhatsAppInput';
 
 type FormStep = 'type' | 'info' | 'contact' | 'review';
+
+const normalizeEgyptWhatsapp = (value: unknown): string => {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (!digits) return '';
+
+    if (digits.startsWith('20')) {
+        return digits.slice(0, 12);
+    }
+
+    if (digits.startsWith('0')) {
+        return `20${digits.slice(1, 11)}`;
+    }
+
+    return `20${digits.slice(0, 10)}`;
+};
+
+const isValidEgyptWhatsapp = (value: string): boolean => /^201\d{9}$/.test(value);
 
 export default function SubmitPage() {
     const t = useTranslations('submit');
@@ -20,7 +37,7 @@ export default function SubmitPage() {
     const pathname = usePathname();
 
     const [step, setStep] = useState<FormStep>('info');
-    const [entityType, setEntityType] = useState<'imam' | 'halqa' | 'maintenance' | null>('imam');
+    const [entityType, setEntityType] = useState<'imam' | 'halqa' | 'maintenance' | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [mediaUploads, setMediaUploads] = useState<Array<{ publicId: string; secureUrl: string }>>([]);
@@ -29,6 +46,7 @@ export default function SubmitPage() {
     const [uploadError, setUploadError] = useState('');
     const [uploadSuccess, setUploadSuccess] = useState('');
     const [draggingImage, setDraggingImage] = useState(false);
+    const [whatsappError, setWhatsappError] = useState('');
     const { register, handleSubmit, watch, setValue } = useForm();
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
@@ -36,6 +54,7 @@ export default function SubmitPage() {
 
     const selectedGovernorateId = watch('governorateId');
     const isOnline = watch('isOnline');
+    const whatsappValue = watch('whatsapp');
     const entityTitle = entityType === 'imam'
         ? (locale === 'ar' ? 'إضافة إمام' : 'Add Imam')
         : entityType === 'halqa'
@@ -73,6 +92,7 @@ export default function SubmitPage() {
 
     const onSubmit = async (data: any) => {
         setSubmitting(true);
+        setWhatsappError('');
         try {
             const toNum = (value: unknown) => {
                 if (value === '' || value === null || value === undefined) return undefined;
@@ -84,6 +104,22 @@ export default function SubmitPage() {
                 lat: toNum(data.lat),
                 lng: toNum(data.lng),
             };
+            const normalizedWhatsapp = normalizeEgyptWhatsapp(payload.whatsapp);
+            const isWhatsappRequired = entityType !== 'imam';
+
+            if (!normalizedWhatsapp && isWhatsappRequired) {
+                setWhatsappError(locale === 'ar' ? 'رقم الواتساب مطلوب في هذه الصفحة.' : 'WhatsApp number is required on this page.');
+                setSubmitting(false);
+                return;
+            }
+
+            if (normalizedWhatsapp && !isValidEgyptWhatsapp(normalizedWhatsapp)) {
+                setWhatsappError(locale === 'ar' ? 'رقم واتساب غير صحيح. اكتب 10 أرقام بعد +20.' : 'Invalid WhatsApp number. Enter 10 digits after +20.');
+                setSubmitting(false);
+                return;
+            }
+
+            payload.whatsapp = normalizedWhatsapp || '';
 
             if (entityType === 'imam') {
                 await api.createImam({
@@ -343,8 +379,8 @@ export default function SubmitPage() {
                     {/* Step: Info Form */}
                     {step === 'info' && entityType && (
                         <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-[40px] p-10 space-y-8 shadow-card border border-border animate-slide-up">
-                            <div className="flex items-center justify-between pb-6 border-b border-border">
-                                <div className="flex items-center gap-4">
+                            <div className="flex flex-col gap-4 pb-6 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center gap-3 sm:gap-4">
                                     <span className="px-4 py-2 bg-primary text-white rounded-2xl text-sm font-black shadow-btn whitespace-nowrap">
                                         {entityTitle}
                                     </span>
@@ -354,12 +390,13 @@ export default function SubmitPage() {
                                     </div>
                                 </div>
                                 {entityType === 'halqa' && (
-                                    <label className="inline-flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition" dir="ltr">
+                                    <label
+                                        className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-2 sm:gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-3 sm:px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition"
+                                        dir="ltr"
+                                    >
                                         <input type="checkbox" {...register('isOnline')} className="peer sr-only" />
-                                        <span className="relative w-11 h-6 bg-gray-300 rounded-full transition-colors duration-300 peer-checked:bg-primary">
-                                            <span className="absolute top-0.5 left-0.5 h-5 w-5 bg-white rounded-full shadow transition-transform duration-300 ease-out peer-checked:translate-x-5" />
-                                        </span>
-                                        <span className="text-sm font-black text-primary">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
+                                        <span className="relative h-6 w-11 shrink-0 rounded-full bg-gray-300 transition-colors duration-300 peer-checked:bg-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-300 after:ease-out peer-checked:after:translate-x-5" />
+                                        <span className="text-xs sm:text-sm font-black text-primary">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
                                     </label>
                                 )}
                             </div>
@@ -492,11 +529,22 @@ export default function SubmitPage() {
                             </div>
 
                             <div className="space-y-6 pt-2 border-t border-border">
-                                <PhoneInputField
+                                {entityType === 'imam' && (
+                                    <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-bold text-primary leading-relaxed">
+                                        {locale === 'ar'
+                                            ? 'يرجى كتابة رقم الواتساب للتواصل في حالة وجود أي بيانات خاطئة أو محتاجة تحديث.'
+                                            : 'Please add a WhatsApp number so we can contact you if any data is incorrect or needs updating.'}
+                                    </div>
+                                )}
+                                <EgyptWhatsAppInput
                                     label={ti('whatsapp')}
-                                    required
-                                    value={watch('whatsapp')}
-                                    onChange={(next) => setValue('whatsapp', next || '')}
+                                    required={entityType !== 'imam'}
+                                    value={whatsappValue}
+                                    error={whatsappError}
+                                    onChange={(next) => {
+                                        setWhatsappError('');
+                                        setValue('whatsapp', next || '');
+                                    }}
                                 />
 
                                 {entityType === 'imam' && (
@@ -546,11 +594,22 @@ export default function SubmitPage() {
                             </div>
 
                             <div className="space-y-6">
-                                <PhoneInputField
+                                {entityType === 'imam' && (
+                                    <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-bold text-primary leading-relaxed">
+                                        {locale === 'ar'
+                                            ? 'يرجى كتابة رقم الواتساب للتواصل في حالة وجود أي بيانات خاطئة أو محتاجة تحديث.'
+                                            : 'Please add a WhatsApp number so we can contact you if any data is incorrect or needs updating.'}
+                                    </div>
+                                )}
+                                <EgyptWhatsAppInput
                                     label={ti('whatsapp')}
-                                    required
-                                    value={watch('whatsapp')}
-                                    onChange={(next) => setValue('whatsapp', next || '')}
+                                    required={entityType !== 'imam'}
+                                    value={whatsappValue}
+                                    error={whatsappError}
+                                    onChange={(next) => {
+                                        setWhatsappError('');
+                                        setValue('whatsapp', next || '');
+                                    }}
                                 />
 
                                 {entityType === 'imam' && (

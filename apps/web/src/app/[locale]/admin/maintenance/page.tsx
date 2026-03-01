@@ -26,6 +26,8 @@ export default function AdminMaintenancePage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [editForm, setEditForm] = useState<any>({});
+    const [governorates, setGovernorates] = useState<any[]>([]);
+    const [editAreas, setEditAreas] = useState<any[]>([]);
     const [newImageUrls, setNewImageUrls] = useState<string[]>([]);
     const [page, setPage] = useState(1);
     const pageSize = 12;
@@ -34,6 +36,10 @@ export default function AdminMaintenancePage() {
         if (!token) { router.push(`/${locale}/admin`); return; }
         void fetchData();
     }, [token, statusFilter]);
+
+    useEffect(() => {
+        api.getGovernorates().then(setGovernorates).catch(() => setGovernorates([]));
+    }, []);
 
     useEffect(() => {
         setPage(1);
@@ -77,13 +83,67 @@ export default function AdminMaintenancePage() {
 
     const saveEdit = async () => {
         try {
-            await adminApi.updateMaintenance(token!, payload.id, editForm);
+            const { governorate_id: _governorate_id, ...updatePayload } = editForm;
+            await adminApi.updateMaintenance(token!, payload.id, updatePayload);
             pushToast(locale === 'ar' ? 'تم التحديث' : 'Updated', 'success');
             closeModal();
             void fetchData();
         } catch {
             pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
         }
+    };
+
+    const getAreaLabel = (item: any) => item?.area
+        ? (locale === 'ar' ? (item.area.nameAr || item.area.nameEn) : (item.area.nameEn || item.area.nameAr))
+        : '';
+
+    const resolveGovernorateId = (item: any) => {
+        if (item?.area?.governorateId) return item.area.governorateId as string;
+        const normalizedGov = (item?.governorate || '').toString().trim().toLowerCase();
+        if (!normalizedGov) return '';
+        const matched = governorates.find((g) =>
+            [g.nameAr, g.nameEn].some((n: string) => (n || '').toString().trim().toLowerCase() === normalizedGov),
+        );
+        return matched?.id || '';
+    };
+
+    const loadAreasByGovernorate = async (governorateId: string) => {
+        if (!governorateId) {
+            setEditAreas([]);
+            return [];
+        }
+        try {
+            const areas = await api.getAreas(governorateId);
+            setEditAreas(areas || []);
+            return areas || [];
+        } catch {
+            setEditAreas([]);
+            return [];
+        }
+    };
+
+    const openEditMaintenance = async (item: any) => {
+        const governorateId = resolveGovernorateId(item);
+        const areas = await loadAreasByGovernorate(governorateId);
+        const areaId = item.areaId || item.area?.id || '';
+        const selectedGovernorate = governorates.find((g) => g.id === governorateId);
+        const selectedArea = areas.find((a: any) => a.id === areaId) || item.area;
+
+        setEditForm({
+            mosque_name: item.mosqueName,
+            governorate: selectedGovernorate
+                ? (locale === 'ar' ? selectedGovernorate.nameAr : selectedGovernorate.nameEn)
+                : (item.governorate || ''),
+            governorate_id: governorateId,
+            area_id: areaId,
+            city: selectedArea ? (locale === 'ar' ? (selectedArea.nameAr || selectedArea.nameEn) : (selectedArea.nameEn || selectedArea.nameAr)) : '',
+            district: '',
+            whatsapp: item.whatsapp,
+            description: item.description,
+            google_maps_url: item.googleMapsUrl || '',
+        });
+        setNewImageUrls([]);
+        openModal('edit', 'maintenance', item);
     };
 
     const uploadImageToCloudinary = async (file: File) => {
@@ -205,7 +265,7 @@ export default function AdminMaintenancePage() {
                                     <td className="px-4 py-4"><span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' : item.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
                                     <td className="px-4 py-4"><div className="flex gap-2">
                                         <IconButton label="view" onClick={() => openModal('view', 'maintenance', item)}><FaEye className="text-slate-700" /></IconButton>
-                                        <IconButton label="edit" onClick={() => { setEditForm({ mosque_name: item.mosqueName, whatsapp: item.whatsapp, description: item.description, google_maps_url: item.googleMapsUrl || '' }); setNewImageUrls([]); openModal('edit', 'maintenance', item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
+                                        <IconButton label="edit" onClick={() => { void openEditMaintenance(item); }}><FaPenToSquare className="text-blue-700" /></IconButton>
                                         {item.status === 'pending' && <IconButton label="approve" onClick={() => approve(item.id)}><FaCheck className="text-green-700" /></IconButton>}
                                         {item.status === 'pending' && <IconButton label="reject" onClick={() => reject(item.id)}><FaXmark className="text-red-700" /></IconButton>}
                                     </div></td>
@@ -221,8 +281,7 @@ export default function AdminMaintenancePage() {
                 {payload && <div className="space-y-3 text-sm">
                     <p><strong>{locale === 'ar' ? 'المسجد:' : 'Mosque:'}</strong> {payload.mosqueName}</p>
                     <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
-                    {payload.city && <p><strong>{locale === 'ar' ? 'المدينة:' : 'City:'}</strong> {payload.city}</p>}
-                    {payload.district && <p><strong>{locale === 'ar' ? 'الحي:' : 'District:'}</strong> {payload.district}</p>}
+                    <p><strong>{locale === 'ar' ? 'المنطقة:' : 'Area:'}</strong> {getAreaLabel(payload) || '-'}</p>
                     <p><strong>{locale === 'ar' ? 'الوصف:' : 'Description:'}</strong> {payload.description}</p>
                     <p><strong>{locale === 'ar' ? 'الأنواع:' : 'Types:'}</strong> {(payload.maintenanceTypes || []).join(', ')}</p>
                     {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
@@ -233,9 +292,48 @@ export default function AdminMaintenancePage() {
             <AppModal isOpen={isOpen && type === 'edit'} type="edit" title={locale === 'ar' ? 'تعديل الصيانة' : 'Edit Maintenance'} onClose={closeModal}>
                 <div className="space-y-3">
                     <input className="input-field" value={editForm.mosque_name || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, mosque_name: e.target.value }))} placeholder={locale === 'ar' ? 'اسم المسجد' : 'Mosque'} />
-                    <input className="input-field" value={editForm.governorate || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, governorate: e.target.value }))} placeholder={locale === 'ar' ? 'المحافظة' : 'Governorate'} />
-                    <input className="input-field" value={editForm.city || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, city: e.target.value }))} placeholder={locale === 'ar' ? 'المدينة' : 'City'} />
-                    <input className="input-field" value={editForm.district || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, district: e.target.value }))} placeholder={locale === 'ar' ? 'الحي' : 'District'} />
+                    <select
+                        className="input-field"
+                        value={editForm.governorate_id || ''}
+                        onChange={async (e) => {
+                            const governorateId = e.target.value;
+                            const selectedGovernorate = governorates.find((g) => g.id === governorateId);
+                            await loadAreasByGovernorate(governorateId);
+                            setEditForm((s: any) => ({
+                                ...s,
+                                governorate_id: governorateId,
+                                governorate: selectedGovernorate ? (locale === 'ar' ? selectedGovernorate.nameAr : selectedGovernorate.nameEn) : '',
+                                area_id: '',
+                                city: '',
+                                district: '',
+                            }));
+                        }}
+                    >
+                        <option value="">{locale === 'ar' ? 'Governorate' : 'Select governorate'}</option>
+                        {governorates.map((g) => (
+                            <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
+                        ))}
+                    </select>
+                    <select
+                        className="input-field"
+                        value={editForm.area_id || ''}
+                        onChange={(e) => {
+                            const areaId = e.target.value;
+                            const area = editAreas.find((a) => a.id === areaId);
+                            setEditForm((s: any) => ({
+                                ...s,
+                                area_id: areaId,
+                                city: area ? (locale === 'ar' ? (area.nameAr || area.nameEn) : (area.nameEn || area.nameAr)) : '',
+                                district: '',
+                            }));
+                        }}
+                        disabled={!editForm.governorate_id}
+                    >
+                        <option value="">{locale === 'ar' ? 'Area' : 'Select area'}</option>
+                        {editAreas.map((a) => (
+                            <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
+                        ))}
+                    </select>
                     <PhoneInputField value={editForm.whatsapp || ''} onChange={(next) => setEditForm((s: any) => ({ ...s, whatsapp: next || '' }))} />
                     <textarea className="input-field" value={editForm.description || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, description: e.target.value }))} placeholder={locale === 'ar' ? 'الوصف' : 'Description'} />
                     <input className="input-field" value={editForm.google_maps_url || ''} onChange={(e) => setEditForm((s: any) => ({ ...s, google_maps_url: e.target.value }))} placeholder="Google map URL" />
@@ -271,4 +369,5 @@ export default function AdminMaintenancePage() {
         </div>
     );
 }
+
 

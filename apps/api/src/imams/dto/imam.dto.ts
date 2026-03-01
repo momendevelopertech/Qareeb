@@ -49,7 +49,6 @@ export class CreateImamDto {
     lng?: number; // legacy fallback
 
     @IsString()
-    @IsNotEmpty()
     whatsapp!: string;
 
     @IsOptional()
