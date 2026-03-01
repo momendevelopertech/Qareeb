@@ -61,7 +61,7 @@ export const api = {
     createMaintenance: (data: any) => fetchAPI<any>('/maintenance', { method: 'POST', body: JSON.stringify(data) }),
 
     // Improvements
-    createImprovement: (data: { suggestion_text: string; name?: string; email?: string }) =>
+    createImprovement: (data: { suggestion_text: string; name?: string; whatsapp?: string; email?: string }) =>
         fetchAPI<any>('/improvements', { method: 'POST', body: JSON.stringify(data) }),
 
     // Media

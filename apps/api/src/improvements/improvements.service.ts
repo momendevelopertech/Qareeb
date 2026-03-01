@@ -9,11 +9,14 @@ export class ImprovementsService {
     constructor(private readonly prisma: PrismaService) { }
 
     create(data: CreateImprovementDto) {
+        const normalizedWhatsapp = data.whatsapp?.trim() || null;
+        const normalizedEmail = data.email?.trim().toLowerCase() || null;
+
         return this.prisma.improvement.create({
             data: {
                 suggestionText: data.suggestion_text,
                 name: data.name?.trim() || null,
-                email: data.email?.trim().toLowerCase() || null,
+                email: normalizedWhatsapp || normalizedEmail,
             },
         });
     }

@@ -48,6 +48,11 @@ export default function PhoneInputField({
         let stopped = false;
 
         const detect = async () => {
+            if (!detectCountryFromIP) {
+                if (!stopped) setCountry(defaultCountry);
+                return;
+            }
+
             if (typeof navigator !== 'undefined' && navigator.geolocation) {
                 try {
                     const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -63,16 +68,14 @@ export default function PhoneInputField({
                 }
             }
 
-            if (detectCountryFromIP) {
-                try {
-                    const geo = await api.getGeoCountry();
-                    if (!stopped && geo?.country) {
-                        setCountry(geo.country as CountryCode);
-                        return;
-                    }
-                } catch {
-                    // fallback below
+            try {
+                const geo = await api.getGeoCountry();
+                if (!stopped && geo?.country) {
+                    setCountry(geo.country as CountryCode);
+                    return;
                 }
+            } catch {
+                // fallback below
             }
 
             if (!stopped) setCountry(defaultCountry);

@@ -134,6 +134,8 @@
     min-width: 0;
     padding: 0 6px !important;
     font-size: 0.95rem;
+    color: #0f172a !important;
+    caret-color: #1b6b45 !important;
   }
 
   .PhoneInputInput:focus,

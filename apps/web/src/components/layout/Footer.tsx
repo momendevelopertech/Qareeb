@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { FaFacebook, FaInstagram, FaWhatsapp, FaXTwitter, FaYoutube } from 'react-icons/fa6';
-import { FaMosque } from 'react-icons/fa';
+import { FaLightbulb, FaMosque } from 'react-icons/fa';
 import AppModal from '@/components/ui/AppModal';
+import PhoneInputField from '@/components/form/PhoneInputField';
 import { api } from '@/lib/api';
 
 const socialLinks = [
@@ -22,14 +23,19 @@ export default function Footer() {
     const isArabic = locale === 'ar';
 
     const [isOpen, setIsOpen] = useState(false);
+    const [isThanksOpen, setIsThanksOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [form, setForm] = useState({ suggestion_text: '', name: '', email: '' });
+    const [form, setForm] = useState({ suggestion_text: '', name: '', whatsapp: '' });
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (!isThanksOpen) return;
+        const timer = setTimeout(() => setIsThanksOpen(false), 5000);
+        return () => clearTimeout(timer);
+    }, [isThanksOpen]);
 
     const openModal = () => {
         setError('');
-        setSuccessMessage('');
         setIsOpen(true);
     };
 
@@ -48,15 +54,12 @@ export default function Footer() {
             await api.createImprovement({
                 suggestion_text: form.suggestion_text.trim(),
                 name: form.name.trim() || undefined,
-                email: form.email.trim() || undefined,
+                whatsapp: form.whatsapp || undefined,
             });
 
-            setForm({ suggestion_text: '', name: '', email: '' });
-            setSuccessMessage(
-                isArabic
-                    ? 'تم إرسال اقتراحك بنجاح، شكرًا لمساهمتك.'
-                    : 'Your suggestion was sent successfully. Thank you for your contribution.',
-            );
+            setForm({ suggestion_text: '', name: '', whatsapp: '' });
+            setIsOpen(false);
+            setIsThanksOpen(true);
         } catch {
             setError(isArabic ? 'تعذر إرسال الاقتراح، حاول مرة أخرى' : 'Failed to send suggestion, please try again');
         } finally {
@@ -107,9 +110,6 @@ export default function Footer() {
                             <Link href={`/${locale}/halaqat`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('halaqat')}</Link>
                             <Link href={`/${locale}/maintenance`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('maintenance')}</Link>
                             <Link href={`/${locale}/about`} className="text-gray-400 hover:text-primary transition-colors text-sm">{isArabic ? 'عن قريب' : 'About'}</Link>
-                            <button onClick={openModal} className="text-start text-gray-400 hover:text-primary transition-colors text-sm">
-                                {isArabic ? 'اقترح تحسين' : 'Suggest improvement'}
-                            </button>
                         </div>
                     </div>
 
@@ -117,14 +117,23 @@ export default function Footer() {
                         <h3 className="text-white font-semibold mb-4">
                             {isArabic ? 'تواصل' : 'Contact'}
                         </h3>
-                        <a
-                            href="https://wa.me/201551429227"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-primary text-sm !px-4 !py-2 inline-flex"
-                        >
-                            WhatsApp
-                        </a>
+                        <div className="flex flex-col items-start gap-3">
+                            <a
+                                href="https://wa.me/201551429227"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-primary text-sm !px-4 !py-2 inline-flex"
+                            >
+                                WhatsApp
+                            </a>
+                            <button
+                                onClick={openModal}
+                                className="inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-bold text-accent hover:bg-accent/20 transition-colors"
+                            >
+                                <FaLightbulb className="text-base" />
+                                <span>{isArabic ? 'اقترح تحسين' : 'Suggest improvement'}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,7 +155,7 @@ export default function Footer() {
                         </label>
                         <textarea
                             rows={5}
-                            className="input-field"
+                            className="input-field text-dark placeholder:text-slate-400 caret-primary"
                             value={form.suggestion_text}
                             onChange={(e) => setForm((s) => ({ ...s, suggestion_text: e.target.value }))}
                             placeholder={isArabic ? 'شاركنا فكرة التحسين...' : 'Share your improvement idea...'}
@@ -159,34 +168,42 @@ export default function Footer() {
                             {isArabic ? 'الاسم (اختياري)' : 'Name (optional)'}
                         </label>
                         <input
-                            className="input-field"
+                            className="input-field text-dark placeholder:text-slate-400 caret-primary"
                             value={form.name}
                             onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
                             maxLength={120}
                         />
                     </div>
 
-                    <div>
-                        <label className="block mb-1 text-sm font-semibold text-dark">
-                            {isArabic ? 'البريد الإلكتروني (اختياري)' : 'Email (optional)'}
-                        </label>
-                        <input
-                            type="email"
-                            className="input-field"
-                            value={form.email}
-                            onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
-                            maxLength={255}
-                            dir="ltr"
-                        />
-                    </div>
+                    <PhoneInputField
+                        value={form.whatsapp || undefined}
+                        onChange={(value) => setForm((s) => ({ ...s, whatsapp: value || '' }))}
+                        defaultCountry="EG"
+                        detectCountryFromIP={false}
+                        label={isArabic ? 'رقم الواتساب (اختياري)' : 'WhatsApp number (optional)'}
+                        required={false}
+                        id="improvement-whatsapp"
+                    />
 
                     {error && <p className="text-sm text-red-600">{error}</p>}
-                    {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
 
                     <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-60">
                         {isSubmitting ? (isArabic ? 'جارٍ الإرسال...' : 'Submitting...') : (isArabic ? 'إرسال' : 'Submit')}
                     </button>
                 </form>
+            </AppModal>
+
+            <AppModal
+                isOpen={isThanksOpen}
+                type="view"
+                title={isArabic ? 'شكرًا لك' : 'Thank You'}
+                onClose={() => setIsThanksOpen(false)}
+            >
+                <p className={`text-base text-dark ${isArabic ? 'font-arabic' : 'font-latin'}`}>
+                    {isArabic
+                        ? 'تم استلام اقتراحك بنجاح. شكرًا لمساهمتك في تطوير قريب.'
+                        : 'Your suggestion has been received successfully. Thank you for helping improve Qareeb.'}
+                </p>
             </AppModal>
         </footer>
     );

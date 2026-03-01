@@ -1,4 +1,4 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
 export class CreateImprovementDto {
     @IsString()
@@ -10,6 +10,12 @@ export class CreateImprovementDto {
     @IsString()
     @MaxLength(120)
     name?: string;
+
+    @IsOptional()
+    @IsString()
+    @MaxLength(20)
+    @Matches(/^\+?[0-9]{8,15}$/, { message: 'whatsapp must be a valid phone number' })
+    whatsapp?: string;
 
     @IsOptional()
     @IsEmail()

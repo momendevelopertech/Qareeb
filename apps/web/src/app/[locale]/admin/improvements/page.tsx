@@ -109,7 +109,7 @@ export default function AdminImprovementsPage() {
                             <p className="font-semibold text-dark whitespace-pre-wrap">{item.suggestionText}</p>
                             <div className="text-sm text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-2">
                                 <p>{locale === 'ar' ? 'الاسم:' : 'Name:'} {item.name || '-'}</p>
-                                <p>{locale === 'ar' ? 'البريد:' : 'Email:'} {item.email || '-'}</p>
+                                <p>{locale === 'ar' ? 'واتساب:' : 'WhatsApp:'} {item.email || '-'}</p>
                                 <p>{locale === 'ar' ? 'تاريخ الإرسال:' : 'Submitted:'} {new Date(item.createdAt).toLocaleString(locale)}</p>
                             </div>
 
