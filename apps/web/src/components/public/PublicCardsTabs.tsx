@@ -21,15 +21,21 @@ export default function PublicCardsTabs() {
     const [pageImams, setPageImams] = useState(1);
     const [pageHalaqat, setPageHalaqat] = useState(1);
     const [pageMaintenance, setPageMaintenance] = useState(1);
+    const [pageAll, setPageAll] = useState(1);
     const [metaImams, setMetaImams] = useState<any>({ totalPages: 1 });
     const [metaHalaqat, setMetaHalaqat] = useState<any>({ totalPages: 1 });
     const [metaMaintenance, setMetaMaintenance] = useState<any>({ totalPages: 1 });
-    const limit = 6; // show 6 cards per page
+    const limit = 6; // show 6 cards per category per page
+
     // fetch each category with pagination
     useEffect(() => {
-        const qIm = `limit=${limit}&page=${pageImams}`;
-        const qHa = `limit=${limit}&page=${pageHalaqat}`;
-        const qMa = `limit=${limit}&page=${pageMaintenance}`;
+        const activePageImams = tab === 'all' ? pageAll : pageImams;
+        const activePageHalaqat = tab === 'all' ? pageAll : pageHalaqat;
+        const activePageMaintenance = tab === 'all' ? pageAll : pageMaintenance;
+
+        const qIm = `limit=${limit}&page=${activePageImams}`;
+        const qHa = `limit=${limit}&page=${activePageHalaqat}`;
+        const qMa = `limit=${limit}&page=${activePageMaintenance}`;
         void Promise.all([
             api.getImams(qIm),
             api.getHalaqat(qHa),
@@ -44,14 +50,7 @@ export default function PublicCardsTabs() {
                 setMetaMaintenance(ma?.meta || { totalPages: 1 });
             })
             .catch(() => undefined);
-    }, [pageImams, pageHalaqat, pageMaintenance]);
-
-    // reset page when switching tabs
-    useEffect(() => {
-        setPageImams(1);
-        setPageHalaqat(1);
-        setPageMaintenance(1);
-    }, [tab]);
+    }, [pageAll, pageImams, pageHalaqat, pageMaintenance, tab]);
 
     const cards = useMemo(() => {
         const toCard = (item: any, entity: 'imam' | 'halqa' | 'maintenance') => ({
@@ -143,6 +142,14 @@ export default function PublicCardsTabs() {
             </div>
             {/* pagination for current tab */}
             <div className="mt-8">
+                {tab === 'all' && (
+                    <Pagination
+                        page={pageAll}
+                        totalPages={Math.max(metaImams.totalPages || 1, metaHalaqat.totalPages || 1, metaMaintenance.totalPages || 1)}
+                        onPageChange={setPageAll}
+                        locale={locale}
+                    />
+                )}
                 {tab === 'imams' && (
                     <Pagination
                         page={pageImams}

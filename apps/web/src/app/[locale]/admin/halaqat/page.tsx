@@ -31,9 +31,10 @@ export default function AdminHalaqatPage() {
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [editAreas, setEditAreas] = useState<any[]>([]);
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [totalPages, setTotalPages] = useState(1);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const importInputRef = useRef<HTMLInputElement | null>(null);
-    const pageSize = 12;
 
     const getStatusLabel = (status: string) => {
         if (locale === 'ar') {
@@ -45,7 +46,7 @@ export default function AdminHalaqatPage() {
     useEffect(() => {
         if (!token) { router.push(`/${locale}/admin`); return; }
         void fetchData();
-    }, [token, statusFilter]);
+    }, [token, statusFilter, searchTerm, onlineFilter, page, pageSize]);
 
     useEffect(() => {
         api.getGovernorates().then(setGovernorates).catch(() => setGovernorates([]));
@@ -57,24 +58,30 @@ export default function AdminHalaqatPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [searchTerm]);
-
-    useEffect(() => {
-        setPage(1);
-    }, [onlineFilter]);
+    }, [searchTerm, onlineFilter, pageSize]);
 
     useEffect(() => {
         setSelectedIds([]);
-    }, [statusFilter, searchTerm, onlineFilter, page]);
+    }, [statusFilter, searchTerm, onlineFilter, page, pageSize]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            // جلب كل البيانات لهذا الفلتر؛ الباجنيشن يتم على الواجهة
-            const result = await adminApi.getAdminHalaqat(token!, `status=${statusFilter}`);
+            const params = new URLSearchParams({
+                status: statusFilter,
+                page: page.toString(),
+                limit: pageSize.toString(),
+            });
+            if (searchTerm.trim()) params.set('query', searchTerm.trim());
+            if (onlineFilter === 'online') params.set('isOnline', 'true');
+            if (onlineFilter === 'offline') params.set('isOnline', 'false');
+            const result = await adminApi.getAdminHalaqat(token!, params.toString());
             setItems(result?.data || []);
+            setTotalPages(result?.meta?.totalPages || 1);
         } catch {
             pushToast(locale === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data', 'error');
+            setItems([]);
+            setTotalPages(1);
         }
         setLoading(false);
     };
@@ -231,25 +238,7 @@ export default function AdminHalaqatPage() {
         openModal('edit', 'halqa', item);
     };
 
-    const filteredItems = items.filter((item) => {
-        const matchesSearch = !searchTerm || [
-            item.circleName,
-            item.mosqueName,
-            item.status,
-            item.whatsapp,
-            item.halqaType,
-        ].some((field: any) => (field || '').toString().toLowerCase().includes(searchTerm.toLowerCase()));
-
-        const matchesOnlineFilter = 
-            onlineFilter === 'all' ||
-            (onlineFilter === 'online' && item.isOnline) ||
-            (onlineFilter === 'offline' && !item.isOnline);
-
-        return matchesSearch && matchesOnlineFilter;
-    });
-
-    const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
-    const paginatedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize);
+    const paginatedItems = items;
     const allCurrentSelected = paginatedItems.length > 0 && paginatedItems.every((item) => selectedIds.includes(item.id));
 
     return (
@@ -299,6 +288,15 @@ export default function AdminHalaqatPage() {
                         placeholder={locale === 'ar' ? 'بحث بالاسم أو المسجد أو النوع' : 'Search by name, mosque or type'}
                         className="input-field max-w-xs text-sm"
                     />
+                    <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="input-field !py-2 text-sm w-44"
+                    >
+                        {[20, 50, 100, 500].map((size) => (
+                            <option key={size} value={size}>{locale === 'ar' ? `عدد السجلات: ${size}` : `${size} records / page`}</option>
+                        ))}
+                    </select>
                     <div className="flex flex-wrap gap-2 flex-wrap">
                         {['pending', 'approved', 'rejected'].map((s) => (
                             <button
@@ -337,7 +335,7 @@ export default function AdminHalaqatPage() {
                         <thead className="bg-gray-50 border-b"><tr><th className="text-start px-4 py-3 text-sm"><input type="checkbox" checked={allCurrentSelected} onChange={(e) => setSelectedIds(e.target.checked ? paginatedItems.map((item) => item.id) : [])} /></th><th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الاسم' : 'Name'}</th><th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'المسجد' : 'Mosque'}</th><th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'النوع' : 'Type'}</th><th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الحالة' : 'Status'}</th><th className="text-start px-4 py-3 text-sm">{locale === 'ar' ? 'الإجراءات' : 'Actions'}</th></tr></thead>
                         <tbody className="divide-y">
                             {loading && <tr><td colSpan={6} className="px-4 py-10 text-center">{locale === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}</td></tr>}
-                            {!loading && !filteredItems.length && <tr><td colSpan={6} className="px-4 py-10 text-center">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>}
+                            {!loading && !paginatedItems.length && <tr><td colSpan={6} className="px-4 py-10 text-center">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>}
                             {!loading && paginatedItems.map((item) => (
                                 <tr key={item.id}>
                                     <td className="px-4 py-4"><input type="checkbox" checked={selectedIds.includes(item.id)} onChange={(e) => setSelectedIds((prev) => e.target.checked ? [...new Set([...prev, item.id])] : prev.filter((id) => id !== item.id))} /></td>

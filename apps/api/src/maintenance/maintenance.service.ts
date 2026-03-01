@@ -22,7 +22,7 @@ export class MaintenanceService {
 
     async findAll(query: MaintenanceQueryDto) {
         const page = query.page || 1;
-        const limit = Math.min(query.limit || 20, 50);
+        const limit = Math.min(query.limit || 20, 500);
         const skip = (page - 1) * limit;
 
         const postgisEnabled = process.env.POSTGIS_ENABLED === 'true';
