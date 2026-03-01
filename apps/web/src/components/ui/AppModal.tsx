@@ -23,13 +23,18 @@ const FOCUSABLE_SELECTOR = [
 
 export default function AppModal({ isOpen, title, onClose, children }: AppModalProps) {
     const panelRef = useRef<HTMLDivElement>(null);
+    const onCloseRef = useRef(onClose);
     const titleId = useMemo(() => `modal-title-${Math.random().toString(36).slice(2)}`, []);
+
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (!isOpen) return;
 
         const onEsc = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') onClose();
+            if (event.key === 'Escape') onCloseRef.current();
         };
 
         const trap = (event: KeyboardEvent) => {
@@ -61,7 +66,7 @@ export default function AppModal({ isOpen, title, onClose, children }: AppModalP
             document.removeEventListener('keydown', trap);
             document.body.style.overflow = '';
         };
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

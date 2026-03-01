@@ -6,7 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { FaFacebook, FaInstagram, FaWhatsapp, FaXTwitter, FaYoutube } from 'react-icons/fa6';
 import { FaLightbulb, FaMosque } from 'react-icons/fa';
 import AppModal from '@/components/ui/AppModal';
-import PhoneInputField from '@/components/form/PhoneInputField';
+import EgyptWhatsAppInput from '@/components/form/EgyptWhatsAppInput';
 import { api } from '@/lib/api';
 
 const socialLinks = [
@@ -175,11 +175,9 @@ export default function Footer() {
                         />
                     </div>
 
-                    <PhoneInputField
-                        value={form.whatsapp || undefined}
+                    <EgyptWhatsAppInput
+                        value={form.whatsapp}
                         onChange={(value) => setForm((s) => ({ ...s, whatsapp: value || '' }))}
-                        defaultCountry="EG"
-                        detectCountryFromIP={false}
                         label={isArabic ? 'رقم الواتساب (اختياري)' : 'WhatsApp number (optional)'}
                         required={false}
                         id="improvement-whatsapp"
