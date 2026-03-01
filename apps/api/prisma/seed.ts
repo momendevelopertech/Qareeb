@@ -836,10 +836,10 @@ async function main() {
     }
     console.log(`✅ ${maintenanceCount} maintenance requests seeded`);
 
-    // Seed Improvements (24 items) for pagination/date filter tests
-    const improvements = Array.from({ length: 24 }, (_, i) => {
+    // Seed Improvements (36 items) for pagination/date filter tests
+    const improvements = Array.from({ length: 36 }, (_, i) => {
         const createdAt = new Date();
-        createdAt.setDate(createdAt.getDate() - i * 3);
+        createdAt.setDate(createdAt.getDate() - i * 2);
 
         const statusesCycle = [
             ImprovementStatus.pending,

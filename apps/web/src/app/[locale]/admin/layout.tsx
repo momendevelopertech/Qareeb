@@ -220,7 +220,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className={`min-h-screen flex ${shellClass}`}>
-            <aside className={`w-72 border-e flex-col hidden md:flex ${sidebarClass}`}>
+            <aside className={`w-72 border-e flex-col hidden md:flex md:sticky md:top-0 h-screen ${sidebarClass}`}>
                 <div className="p-5 border-b border-current/10">
                     <Link href={`/${locale}`} className="flex items-center gap-3">
                         <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white">
@@ -233,7 +233,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </Link>
                 </div>
 
-                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+                <nav className="flex-1 min-h-0 p-3 space-y-1 overflow-y-auto">
                     {navItems.map((item) => {
                         const active = pathname === item.href;
                         const Icon = item.icon;

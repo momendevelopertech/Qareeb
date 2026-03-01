@@ -63,17 +63,19 @@ export default function AdminImprovementsPage() {
 
     useEffect(() => {
         setPage(1);
-    }, [status, fromDate, toDate, items.length]);
+    }, [status, fromDate, toDate]);
 
     const updateItem = async (id: string, data: { status?: string; internal_note?: string }) => {
         if (!token) return;
         try {
             await adminApi.updateImprovement(token, id, data);
-            setItems((prev) => prev.map((item) => (item.id === id ? {
-                ...item,
-                ...(data.status ? { status: data.status } : {}),
-                ...(data.internal_note !== undefined ? { internalNote: data.internal_note } : {}),
-            } : item)));
+            setItems((prev) => prev.map((item) => (item.id === id
+                ? {
+                    ...item,
+                    ...(data.status ? { status: data.status } : {}),
+                    ...(data.internal_note !== undefined ? { internalNote: data.internal_note } : {}),
+                }
+                : item)));
             pushToast(locale === 'ar' ? 'تم التحديث بنجاح' : 'Updated successfully', 'success');
         } catch {
             pushToast(locale === 'ar' ? 'فشل التحديث' : 'Update failed', 'error');
@@ -92,7 +94,8 @@ export default function AdminImprovementsPage() {
     };
 
     const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-    const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+    const safePage = Math.min(page, totalPages);
+    const paginatedItems = items.slice((safePage - 1) * pageSize, safePage * pageSize);
 
     return (
         <div className="space-y-6">
@@ -124,10 +127,13 @@ export default function AdminImprovementsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="input-field" />
                     <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="input-field" />
-                    <button onClick={() => {
-                        setFromDate('');
-                        setToDate('');
-                    }} className="px-4 py-2 rounded-btn border border-border font-semibold">
+                    <button
+                        onClick={() => {
+                            setFromDate('');
+                            setToDate('');
+                        }}
+                        className="px-4 py-2 rounded-btn border border-border font-semibold"
+                    >
                         {locale === 'ar' ? 'إعادة ضبط التاريخ' : 'Reset dates'}
                     </button>
                     <button onClick={() => void fetchData()} className="px-4 py-2 rounded-btn border border-border font-semibold">
@@ -137,56 +143,66 @@ export default function AdminImprovementsPage() {
             </div>
 
             {loading ? <p>{locale === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}</p> : (
-                <div className="space-y-3">
-                    {paginatedItems.map((item) => (
-                        <div key={item.id} className="bg-white border border-border rounded-2xl p-4 space-y-3">
-                            <p className="font-semibold text-dark whitespace-pre-wrap">{item.suggestionText}</p>
-                            <div className="text-sm text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-2">
-                                <p>{locale === 'ar' ? 'الاسم:' : 'Name:'} {item.name || '-'}</p>
-                                <p>{locale === 'ar' ? 'واتساب:' : 'WhatsApp:'} {item.email || '-'}</p>
-                                <p>{locale === 'ar' ? 'تاريخ الإرسال:' : 'Submitted:'} {new Date(item.createdAt).toLocaleString(locale)}</p>
-                            </div>
+                <>
+                    <div className="bg-white rounded-2xl shadow-card border border-border p-4 md:p-5">
+                        {!items.length ? (
+                            <p className="text-sm text-gray-600">{locale === 'ar' ? 'لا توجد تحسينات حالياً.' : 'No improvements yet.'}</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                {paginatedItems.map((item) => (
+                                    <div key={item.id} className="p-4 rounded-xl border border-border bg-white hover:shadow-sm transition-shadow flex flex-col gap-3 h-full">
+                                        <div className="space-y-2">
+                                            <p className="font-semibold text-dark line-clamp-3">{item.suggestionText}</p>
+                                            <div className="text-sm text-gray-600 space-y-1">
+                                                <p>{locale === 'ar' ? 'الاسم:' : 'Name:'} {item.name || '-'}</p>
+                                                <p>{locale === 'ar' ? 'واتساب/إيميل:' : 'WhatsApp/Email:'} {item.email || '-'}</p>
+                                                <p>{locale === 'ar' ? 'تاريخ الإرسال:' : 'Submitted:'} {new Date(item.createdAt).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}</p>
+                                            </div>
+                                        </div>
 
-                            <div className="flex flex-wrap gap-2">
-                                {(['pending', 'planned', 'completed', 'rejected'] as const).map((targetStatus) => (
-                                    <button
-                                        key={targetStatus}
-                                        onClick={() => void updateItem(item.id, { status: targetStatus })}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${item.status === targetStatus ? 'bg-primary text-white border-primary' : 'bg-white border-border'}`}
-                                    >
-                                        {locale === 'ar' ? statusLabels[targetStatus].ar : statusLabels[targetStatus].en}
-                                    </button>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(['pending', 'planned', 'completed', 'rejected'] as const).map((targetStatus) => (
+                                                <button
+                                                    key={targetStatus}
+                                                    onClick={() => void updateItem(item.id, { status: targetStatus })}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${item.status === targetStatus ? 'bg-primary text-white border-primary' : 'bg-white border-border'}`}
+                                                >
+                                                    {locale === 'ar' ? statusLabels[targetStatus].ar : statusLabels[targetStatus].en}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="space-y-2 mt-auto">
+                                            <label className="text-sm font-semibold text-dark">{locale === 'ar' ? 'ملاحظة داخلية' : 'Internal note'}</label>
+                                            <textarea
+                                                className="input-field"
+                                                rows={3}
+                                                value={item.internalNote || ''}
+                                                onChange={(e) => setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, internalNote: e.target.value } : x)))}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => void updateItem(item.id, { internal_note: item.internalNote || '' })}
+                                                    className="px-3 py-2 rounded-lg border border-border text-sm font-semibold inline-flex items-center gap-2"
+                                                >
+                                                    <FaSave /> {locale === 'ar' ? 'حفظ الملاحظة' : 'Save note'}
+                                                </button>
+                                                <button
+                                                    onClick={() => void removeItem(item.id)}
+                                                    className="px-3 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold inline-flex items-center gap-2"
+                                                >
+                                                    <FaTrash /> {locale === 'ar' ? 'حذف' : 'Delete'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
+                        )}
+                    </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-dark">{locale === 'ar' ? 'ملاحظة داخلية' : 'Internal note'}</label>
-                                <textarea
-                                    className="input-field"
-                                    rows={3}
-                                    value={item.internalNote || ''}
-                                    onChange={(e) => setItems((prev) => prev.map((x) => x.id === item.id ? { ...x, internalNote: e.target.value } : x))}
-                                />
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => void updateItem(item.id, { internal_note: item.internalNote || '' })}
-                                        className="px-3 py-2 rounded-lg border border-border text-sm font-semibold inline-flex items-center gap-2"
-                                    >
-                                        <FaSave /> {locale === 'ar' ? 'حفظ الملاحظة' : 'Save note'}
-                                    </button>
-                                    <button
-                                        onClick={() => void removeItem(item.id)}
-                                        className="px-3 py-2 rounded-lg border border-red-300 text-red-600 text-sm font-semibold inline-flex items-center gap-2"
-                                    >
-                                        <FaTrash /> {locale === 'ar' ? 'حذف' : 'Delete'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-
-                    {!items.length && <p className="text-sm text-gray-600">{locale === 'ar' ? 'لا توجد تحسينات حالياً.' : 'No improvements yet.'}</p>}
-                </div>
+                    <Pagination page={safePage} totalPages={totalPages} onPageChange={setPage} locale={locale} />
+                </>
             )}
 
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} locale={locale} />
