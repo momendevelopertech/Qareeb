@@ -198,8 +198,8 @@ export default function ChatWidget() {
             addMessage(
                 'bot',
                 locale === 'ar'
-                    ? 'تعذر تحديد موقعك الحالي تلقائياً. تأكد من تفعيل إذن الموقع/‏GPS ثم أعد المحاولة، أو اختر المحافظة والمنطقة.'
-                    : 'Could not determine your current location automatically. Please enable location permission/GPS and try again, or select governorate and area.',
+                    ? 'تعذر تحديد موقعك الحالي تلقائياً. فعّل إذن الموقع/‏GPS من إعدادات هاتفك أو اللابتوب ثم ارجع للتطبيق وجرب مرة تانية، أو اختر المحافظة والمنطقة.'
+                    : 'Could not determine your current location automatically. Enable location permission/GPS from your phone or laptop settings, return to the app, and try again, or select governorate and area.',
             );
         }
         setLoadingSearch(false);
