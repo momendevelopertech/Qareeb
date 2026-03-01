@@ -75,11 +75,11 @@ export default function MaintenanceImageGallery({ locale, images }: MaintenanceI
                 onClose={() => setIsOpen(false)}
             >
                 <div className="space-y-4">
-                    <div className="relative rounded-2xl overflow-hidden border border-border bg-black/5">
+                    <div className="relative h-[clamp(280px,62vh,620px)] rounded-2xl overflow-hidden border border-border bg-black/5">
                         <img
                             src={currentImage?.url}
                             alt={`${isAr ? 'صورة' : 'Image'} ${currentIndex + 1}`}
-                            className="w-full max-h-[70vh] object-contain bg-black/5"
+                            className="w-full h-full object-contain bg-black/5"
                         />
 
                         {total > 1 && (

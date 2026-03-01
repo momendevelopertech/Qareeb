@@ -49,6 +49,11 @@
     box-shadow: 0 0 0 4px rgba(27, 107, 69, 0.18);
   }
 
+  input[type='tel'] {
+    color: #25d366;
+    caret-color: #25d366;
+  }
+
   .font-arabic { font-family: var(--font-cairo), var(--font-tajawal), sans-serif; }
   .font-latin { font-family: var(--font-cairo), "Segoe UI", Tahoma, sans-serif; }
 }
@@ -134,8 +139,8 @@
     min-width: 0;
     padding: 0 6px !important;
     font-size: 0.95rem;
-    color: #0f172a !important;
-    caret-color: #1b6b45 !important;
+    color: #25d366 !important;
+    caret-color: #25d366 !important;
   }
 
   .PhoneInputInput:focus,
