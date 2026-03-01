@@ -16,16 +16,47 @@ type MaintenanceImageGalleryProps = {
 export default function MaintenanceImageGallery({ locale, images }: MaintenanceImageGalleryProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const total = images.length;
+    const [failedImageKeys, setFailedImageKeys] = useState<Record<string, true>>({});
+
     const isAr = locale === 'ar';
 
-    const currentImage = useMemo(() => images[currentIndex], [images, currentIndex]);
+    const normalizedImages = useMemo(
+        () => images
+            .map((item, index) => ({ ...item, url: (item.url || '').trim(), _index: index }))
+            .filter((item) => item.url.length > 0),
+        [images],
+    );
+
+    const availableImages = useMemo(
+        () => normalizedImages.filter((item) => !failedImageKeys[item.id || `${item.url}-${item._index}`]),
+        [normalizedImages, failedImageKeys],
+    );
+
+    const total = availableImages.length;
+
+    useEffect(() => {
+        if (!total) {
+            setCurrentIndex(0);
+            return;
+        }
+
+        if (currentIndex >= total) {
+            setCurrentIndex(total - 1);
+        }
+    }, [currentIndex, total]);
+
+    const currentImage = useMemo(() => availableImages[currentIndex], [availableImages, currentIndex]);
 
     const goNext = () => setCurrentIndex((prev) => (prev + 1) % total);
     const goPrev = () => setCurrentIndex((prev) => (prev - 1 + total) % total);
 
+    const markImageAsFailed = (key: string) => {
+        setFailedImageKeys((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+    };
+
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || total < 2) return;
+
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'ArrowRight') {
                 if (isAr) goPrev();
@@ -39,7 +70,7 @@ export default function MaintenanceImageGallery({ locale, images }: MaintenanceI
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, isAr, total]);
 
-    if (!total) return null;
+    if (!normalizedImages.length) return null;
 
     return (
         <div>
@@ -47,25 +78,29 @@ export default function MaintenanceImageGallery({ locale, images }: MaintenanceI
                 {isAr ? 'الصور' : 'Images'}
             </h3>
             <div className="grid grid-cols-2 gap-3">
-                {images.map((item, index) => (
-                    <button
-                        key={item.id || `${item.url}-${index}`}
-                        type="button"
-                        className="group overflow-hidden rounded-2xl border border-border relative"
-                        onClick={() => {
-                            setCurrentIndex(index);
-                            setIsOpen(true);
-                        }}
-                    >
-                        <img
-                            src={item.url}
-                            alt={`${isAr ? 'صورة' : 'Image'} ${index + 1}`}
-                            className="w-full h-36 object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading="lazy"
-                        />
-                        <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                    </button>
-                ))}
+                {availableImages.map((item, index) => {
+                    const key = item.id || `${item.url}-${item._index}`;
+                    return (
+                        <button
+                            key={key}
+                            type="button"
+                            className="group overflow-hidden rounded-2xl border border-border relative"
+                            onClick={() => {
+                                setCurrentIndex(index);
+                                setIsOpen(true);
+                            }}
+                        >
+                            <img
+                                src={item.url}
+                                alt={`${isAr ? 'صورة' : 'Image'} ${index + 1}`}
+                                className="w-full h-36 object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                                onError={() => markImageAsFailed(key)}
+                            />
+                            <span className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        </button>
+                    );
+                })}
             </div>
 
             <AppModal
@@ -74,61 +109,72 @@ export default function MaintenanceImageGallery({ locale, images }: MaintenanceI
                 title={isAr ? 'صور الصيانة' : 'Maintenance Images'}
                 onClose={() => setIsOpen(false)}
             >
-                <div className="space-y-4">
-                    <div className="relative h-[clamp(280px,62vh,620px)] rounded-2xl overflow-hidden border border-border bg-black/5">
-                        <img
-                            src={currentImage?.url}
-                            alt={`${isAr ? 'صورة' : 'Image'} ${currentIndex + 1}`}
-                            className="w-full h-full object-contain bg-black/5"
-                        />
+                {total > 0 && currentImage ? (
+                    <div className="space-y-4">
+                        <div className="relative h-[clamp(280px,62vh,620px)] rounded-2xl overflow-hidden border border-border bg-black/5">
+                            <img
+                                src={currentImage.url}
+                                alt={`${isAr ? 'صورة' : 'Image'} ${currentIndex + 1}`}
+                                className="w-full h-full object-contain bg-black/5"
+                                onError={() => markImageAsFailed(currentImage.id || `${currentImage.url}-${currentImage._index}`)}
+                            />
+
+                            {total > 1 && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={goPrev}
+                                        className="absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 rounded-full bg-white/90 border border-border shadow flex items-center justify-center"
+                                        aria-label={isAr ? 'الصورة السابقة' : 'Previous image'}
+                                    >
+                                        ‹
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={goNext}
+                                        className="absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 rounded-full bg-white/90 border border-border shadow flex items-center justify-center"
+                                        aria-label={isAr ? 'الصورة التالية' : 'Next image'}
+                                    >
+                                        ›
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs font-bold text-text-muted">
+                            <span>{isAr ? 'المعرض' : 'Gallery'}</span>
+                            <span>{currentIndex + 1} / {total}</span>
+                        </div>
 
                         {total > 1 && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={goPrev}
-                                    className="absolute top-1/2 -translate-y-1/2 left-3 w-10 h-10 rounded-full bg-white/90 border border-border shadow flex items-center justify-center"
-                                    aria-label={isAr ? 'الصورة السابقة' : 'Previous image'}
-                                >
-                                    ‹
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={goNext}
-                                    className="absolute top-1/2 -translate-y-1/2 right-3 w-10 h-10 rounded-full bg-white/90 border border-border shadow flex items-center justify-center"
-                                    aria-label={isAr ? 'الصورة التالية' : 'Next image'}
-                                >
-                                    ›
-                                </button>
-                            </>
+                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                {availableImages.map((item, index) => {
+                                    const key = item.id || `${item.url}-thumb-${item._index}`;
+                                    return (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setCurrentIndex(index)}
+                                            className={`shrink-0 rounded-xl overflow-hidden border-2 ${index === currentIndex ? 'border-primary' : 'border-transparent'}`}
+                                        >
+                                            <img
+                                                src={item.url}
+                                                alt={`${isAr ? 'صورة مصغرة' : 'Thumbnail'} ${index + 1}`}
+                                                className="w-20 h-16 object-cover"
+                                                loading="lazy"
+                                                onError={() => markImageAsFailed(item.id || `${item.url}-${item._index}`)}
+                                            />
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         )}
                     </div>
-
-                    <div className="flex items-center justify-between text-xs font-bold text-text-muted">
-                        <span>{isAr ? 'المعرض' : 'Gallery'}</span>
-                        <span>{currentIndex + 1} / {total}</span>
+                ) : (
+                    <div className="rounded-2xl border border-border bg-black/5 p-6 text-sm font-bold text-text-muted text-center">
+                        {isAr ? 'تعذّر تحميل صور الصيانة حالياً.' : 'Unable to load maintenance images right now.'}
                     </div>
-
-                    {total > 1 && (
-                        <div className="flex gap-2 overflow-x-auto pb-1">
-                            {images.map((item, index) => (
-                                <button
-                                    key={item.id || `${item.url}-thumb-${index}`}
-                                    type="button"
-                                    onClick={() => setCurrentIndex(index)}
-                                    className={`shrink-0 rounded-xl overflow-hidden border-2 ${index === currentIndex ? 'border-primary' : 'border-transparent'}`}
-                                >
-                                    <img
-                                        src={item.url}
-                                        alt={`${isAr ? 'صورة مصغرة' : 'Thumbnail'} ${index + 1}`}
-                                        className="w-20 h-16 object-cover"
-                                        loading="lazy"
-                                    />
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                )}
             </AppModal>
         </div>
     );
