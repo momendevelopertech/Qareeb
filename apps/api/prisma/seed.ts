@@ -1,4 +1,4 @@
-import { PrismaClient, AdminRole, SubmissionStatus, HalqaType, MaintenanceType } from '@prisma/client';
+import { PrismaClient, AdminRole, SubmissionStatus, HalqaType, MaintenanceType, ImprovementStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -11,6 +11,7 @@ async function main() {
     // Clean existing data for a consistent seed run (order matters because of FKs)
     await prisma.mediaAsset.deleteMany();
     await prisma.auditLog?.deleteMany?.().catch(() => undefined);
+    await prisma.improvement.deleteMany();
     await prisma.maintenanceRequest.deleteMany();
     await prisma.halqa.deleteMany();
     await prisma.imam.deleteMany();
@@ -834,6 +835,31 @@ async function main() {
         }
     }
     console.log(`✅ ${maintenanceCount} maintenance requests seeded`);
+
+    // Seed Improvements (24 items) for pagination/date filter tests
+    const improvements = Array.from({ length: 24 }, (_, i) => {
+        const createdAt = new Date();
+        createdAt.setDate(createdAt.getDate() - i * 3);
+
+        const statusesCycle = [
+            ImprovementStatus.pending,
+            ImprovementStatus.planned,
+            ImprovementStatus.completed,
+            ImprovementStatus.rejected,
+        ];
+
+        return {
+            suggestionText: `اقتراح تحسين رقم ${i + 1}: تطوير تجربة المستخدم داخل لوحة التحكم مع تحسين الوضوح وسهولة الوصول للفلاتر.`,
+            name: `${arabicNames[i % arabicNames.length]?.first || 'مستخدم'} ${arabicNames[i % arabicNames.length]?.last || `تجريبي-${i + 1}`}`,
+            email: `improvement${i + 1}@qareeb.app`,
+            status: statusesCycle[i % statusesCycle.length],
+            internalNote: i % 2 === 0 ? `ملاحظة داخلية للاختبار رقم ${i + 1}` : null,
+            createdAt,
+        };
+    });
+
+    await prisma.improvement.createMany({ data: improvements });
+    console.log(`✅ ${improvements.length} improvements seeded`);
 
     console.log('🎉 Seeding complete!');
 }

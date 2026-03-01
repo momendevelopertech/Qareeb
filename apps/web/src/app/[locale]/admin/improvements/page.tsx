@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FaSave, FaTrash } from 'react-icons/fa';
 import { adminApi } from '@/lib/api';
 import { useAuthStore, useToastStore } from '@/lib/store';
+import Pagination from '@/components/ui/Pagination';
 
 const statusTabs = ['all', 'pending', 'planned', 'completed', 'rejected'] as const;
 
@@ -28,6 +29,8 @@ export default function AdminImprovementsPage() {
     const [status, setStatus] = useState<(typeof statusTabs)[number]>('all');
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+    const [page, setPage] = useState(1);
+    const pageSize = 6;
 
     const queryString = useMemo(() => {
         const params = new URLSearchParams();
@@ -58,6 +61,10 @@ export default function AdminImprovementsPage() {
         void fetchData();
     }, [token, queryString]);
 
+    useEffect(() => {
+        setPage(1);
+    }, [status, fromDate, toDate, items.length]);
+
     const updateItem = async (id: string, data: { status?: string; internal_note?: string }) => {
         if (!token) return;
         try {
@@ -84,33 +91,54 @@ export default function AdminImprovementsPage() {
         }
     };
 
+    const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+    const paginatedItems = items.slice((page - 1) * pageSize, page * pageSize);
+
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-black">{locale === 'ar' ? 'التحسينات' : 'Improvements'}</h1>
-
-            <div className="bg-white border border-border rounded-2xl p-4 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold">{locale === 'ar' ? 'التحسينات' : 'Improvements'}</h1>
+                    <p className="text-text-muted text-sm">{locale === 'ar' ? 'متابعة واقتراحات التحسين مع الفلاتر' : 'Track and manage improvement suggestions'}</p>
+                </div>
                 <div className="flex flex-wrap gap-2">
+                    <button onClick={() => void fetchData()} className="px-4 py-2 rounded-btn text-sm font-bold bg-white border border-border">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-card border border-border p-4 md:p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
                     {statusTabs.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setStatus(tab)}
-                            className={`px-4 py-2 rounded-xl text-sm font-bold border ${status === tab ? 'bg-primary text-white border-primary' : 'bg-white border-border'}`}
+                            className={`px-4 py-2 rounded-btn text-sm font-bold ${status === tab ? 'bg-primary text-white' : 'bg-gray-100 text-text'}`}
                         >
                             {locale === 'ar' ? statusLabels[tab].ar : statusLabels[tab].en}
                         </button>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="input-field" />
                     <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="input-field" />
-                    <button onClick={() => void fetchData()} className="px-4 py-2 rounded-xl border border-border font-semibold">{locale === 'ar' ? 'تحديث' : 'Refresh'}</button>
+                    <button onClick={() => {
+                        setFromDate('');
+                        setToDate('');
+                    }} className="px-4 py-2 rounded-btn border border-border font-semibold">
+                        {locale === 'ar' ? 'إعادة ضبط التاريخ' : 'Reset dates'}
+                    </button>
+                    <button onClick={() => void fetchData()} className="px-4 py-2 rounded-btn border border-border font-semibold">
+                        {locale === 'ar' ? 'تحديث' : 'Refresh'}
+                    </button>
                 </div>
             </div>
 
             {loading ? <p>{locale === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}</p> : (
                 <div className="space-y-3">
-                    {items.map((item) => (
+                    {paginatedItems.map((item) => (
                         <div key={item.id} className="bg-white border border-border rounded-2xl p-4 space-y-3">
                             <p className="font-semibold text-dark whitespace-pre-wrap">{item.suggestionText}</p>
                             <div className="text-sm text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -160,6 +188,8 @@ export default function AdminImprovementsPage() {
                     {!items.length && <p className="text-sm text-gray-600">{locale === 'ar' ? 'لا توجد تحسينات حالياً.' : 'No improvements yet.'}</p>}
                 </div>
             )}
+
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} locale={locale} />
         </div>
     );
 }
