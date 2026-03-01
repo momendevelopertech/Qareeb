@@ -31,9 +31,10 @@ export default function AdminMaintenancePage() {
     const [editAreas, setEditAreas] = useState<any[]>([]);
     const [newImageUrls, setNewImageUrls] = useState<string[]>([]);
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
+    const [totalPages, setTotalPages] = useState(1);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const importInputRef = useRef<HTMLInputElement | null>(null);
-    const pageSize = 12;
 
     const getStatusLabel = (status: string) => {
         if (locale === 'ar') {
@@ -45,7 +46,7 @@ export default function AdminMaintenancePage() {
     useEffect(() => {
         if (!token) { router.push(`/${locale}/admin`); return; }
         void fetchData();
-    }, [token, statusFilter]);
+    }, [token, statusFilter, searchTerm, page, pageSize]);
 
     useEffect(() => {
         api.getGovernorates().then(setGovernorates).catch(() => setGovernorates([]));
@@ -57,20 +58,28 @@ export default function AdminMaintenancePage() {
 
     useEffect(() => {
         setPage(1);
-    }, [searchTerm]);
+    }, [searchTerm, pageSize]);
 
     useEffect(() => {
         setSelectedIds([]);
-    }, [statusFilter, searchTerm, page]);
+    }, [statusFilter, searchTerm, page, pageSize]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            // جلب كل البيانات لهذا الفلتر؛ الباجنيشن يتم على الواجهة
-            const result = await adminApi.getAdminMaintenance(token!, `status=${statusFilter}`);
+            const params = new URLSearchParams({
+                status: statusFilter,
+                page: page.toString(),
+                limit: pageSize.toString(),
+            });
+            if (searchTerm.trim()) params.set('query', searchTerm.trim());
+            const result = await adminApi.getAdminMaintenance(token!, params.toString());
             setItems(result?.data || []);
+            setTotalPages(result?.meta?.totalPages || 1);
         } catch {
             pushToast(locale === 'ar' ? 'فشل تحميل البيانات' : 'Failed to load data', 'error');
+            setItems([]);
+            setTotalPages(1);
         }
         setLoading(false);
     };
@@ -297,20 +306,7 @@ export default function AdminMaintenancePage() {
         }
     };
 
-    const filteredItems = items.filter((item) => {
-        if (!searchTerm) return true;
-        const q = searchTerm.toLowerCase();
-        return [
-            item.mosqueName,
-            item.description,
-            (item.maintenanceTypes || []).join(', '),
-            item.status,
-            item.whatsapp,
-        ].some((field: any) => (field || '').toString().toLowerCase().includes(q));
-    });
-
-    const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
-    const paginatedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize);
+    const paginatedItems = items;
     const allCurrentSelected = paginatedItems.length > 0 && paginatedItems.every((item) => selectedIds.includes(item.id));
 
     return (
@@ -360,6 +356,15 @@ export default function AdminMaintenancePage() {
                         placeholder={locale === 'ar' ? 'بحث بالمسجد أو الوصف أو النوع' : 'Search by mosque, description or type'}
                         className="input-field max-w-xs text-sm"
                     />
+                    <select
+                        value={pageSize}
+                        onChange={(e) => setPageSize(Number(e.target.value))}
+                        className="input-field !py-2 text-sm w-44"
+                    >
+                        {[20, 50, 100, 500].map((size) => (
+                            <option key={size} value={size}>{locale === 'ar' ? `عدد السجلات: ${size}` : `${size} records / page`}</option>
+                        ))}
+                    </select>
                     <div className="flex gap-2 flex-wrap">
                         {['pending', 'approved', 'rejected'].map((s) => (
                             <button
@@ -384,7 +389,7 @@ export default function AdminMaintenancePage() {
                         </thead>
                         <tbody className="divide-y">
                             {loading && <tr><td colSpan={5} className="px-4 py-10 text-center">{locale === 'ar' ? 'جارٍ التحميل...' : 'Loading...'}</td></tr>}
-                            {!loading && !filteredItems.length && <tr><td colSpan={5} className="px-4 py-10 text-center">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>}
+                            {!loading && !paginatedItems.length && <tr><td colSpan={5} className="px-4 py-10 text-center">{locale === 'ar' ? 'لا توجد بيانات' : 'No data'}</td></tr>}
                             {!loading && paginatedItems.map((item) => (
                                 <tr key={item.id}>
                                     <td className="px-4 py-4"><input type="checkbox" checked={selectedIds.includes(item.id)} onChange={(e) => setSelectedIds((prev) => e.target.checked ? [...new Set([...prev, item.id])] : prev.filter((id) => id !== item.id))} /></td>
