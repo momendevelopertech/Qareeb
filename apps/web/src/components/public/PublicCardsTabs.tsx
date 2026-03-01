@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Pagination from '@/components/ui/Pagination';
 import { useLocale } from 'next-intl';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import UnifiedCard from './UnifiedCard';
 import PublicCardModals from './PublicCardModals';
@@ -12,7 +13,10 @@ type TabType = 'all' | 'imams' | 'halqa' | 'maintenance';
 
 export default function PublicCardsTabs() {
     const locale = useLocale();
-    const [tab, setTab] = useState<TabType>('all');
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const [tab, setTab] = useState<TabType>((searchParams.get('tab') as TabType) || 'all');
     const [imams, setImams] = useState<any[]>([]);
     const [halaqat, setHalaqat] = useState<any[]>([]);
     const [maintenance, setMaintenance] = useState<any[]>([]);
@@ -27,19 +31,61 @@ export default function PublicCardsTabs() {
     const [metaMaintenance, setMetaMaintenance] = useState<any>({ totalPages: 1 });
     const limit = 6; // show 6 cards per category per page
 
+    const query = searchParams.get('query')?.trim() || '';
+    const governorateId = searchParams.get('governorateId') || '';
+    const areaId = searchParams.get('areaId') || '';
+
+    useEffect(() => {
+        const incomingTab = (searchParams.get('tab') as TabType) || 'all';
+        setTab(incomingTab);
+    }, [searchParams]);
+
+    useEffect(() => {
+        setPageAll(1);
+        setPageImams(1);
+        setPageHalaqat(1);
+        setPageMaintenance(1);
+    }, [query, governorateId, areaId]);
+
     // fetch each category with pagination
     useEffect(() => {
         const activePageImams = tab === 'all' ? pageAll : pageImams;
         const activePageHalaqat = tab === 'all' ? pageAll : pageHalaqat;
         const activePageMaintenance = tab === 'all' ? pageAll : pageMaintenance;
 
-        const qIm = `limit=${limit}&page=${activePageImams}`;
-        const qHa = `limit=${limit}&page=${activePageHalaqat}`;
-        const qMa = `limit=${limit}&page=${activePageMaintenance}`;
+        const imamParams = new URLSearchParams({
+            limit: String(limit),
+            page: String(activePageImams),
+        });
+        const halqaParams = new URLSearchParams({
+            limit: String(limit),
+            page: String(activePageHalaqat),
+        });
+        const maintenanceParams = new URLSearchParams({
+            limit: String(limit),
+            page: String(activePageMaintenance),
+        });
+
+        if (query) {
+            imamParams.set('query', query);
+            halqaParams.set('query', query);
+            maintenanceParams.set('query', query);
+        }
+        if (governorateId) {
+            imamParams.set('governorateId', governorateId);
+            halqaParams.set('governorateId', governorateId);
+            maintenanceParams.set('governorateId', governorateId);
+        }
+        if (areaId) {
+            imamParams.set('area_id', areaId);
+            halqaParams.set('area_id', areaId);
+            maintenanceParams.set('area_id', areaId);
+        }
+
         void Promise.all([
-            api.getImams(qIm),
-            api.getHalaqat(qHa),
-            api.getMaintenance(qMa),
+            api.getImams(imamParams.toString()),
+            api.getHalaqat(halqaParams.toString()),
+            api.getMaintenance(maintenanceParams.toString()),
         ])
             .then(([im, ha, ma]) => {
                 setImams(im?.data || []);
@@ -50,7 +96,7 @@ export default function PublicCardsTabs() {
                 setMetaMaintenance(ma?.meta || { totalPages: 1 });
             })
             .catch(() => undefined);
-    }, [pageAll, pageImams, pageHalaqat, pageMaintenance, tab]);
+    }, [pageAll, pageImams, pageHalaqat, pageMaintenance, tab, query, governorateId, areaId]);
 
     const cards = useMemo(() => {
         const toCard = (item: any, entity: 'imam' | 'halqa' | 'maintenance') => ({
@@ -104,6 +150,17 @@ export default function PublicCardsTabs() {
         window.open(`/${locale}${base}/${card.id}`, '_blank');
     };
 
+    const handleTabChange = (nextTab: TabType) => {
+        setTab(nextTab);
+        const params = new URLSearchParams(searchParams.toString());
+        if (nextTab === 'all') {
+            params.delete('tab');
+        } else {
+            params.set('tab', nextTab);
+        }
+        router.replace(`${pathname}?${params.toString()}`);
+    };
+
     return (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
             {/* Tabs */}
@@ -116,7 +173,7 @@ export default function PublicCardsTabs() {
                 ].map((item) => (
                     <button
                         key={item.key}
-                        onClick={() => setTab(item.key as TabType)}
+                        onClick={() => handleTabChange(item.key as TabType)}
                         className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
                             tab === item.key
                                 ? 'bg-primary text-white shadow-md'
