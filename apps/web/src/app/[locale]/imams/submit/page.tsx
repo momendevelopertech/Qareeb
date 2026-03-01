@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 import EgyptWhatsAppInput from '@/components/form/EgyptWhatsAppInput';
 
 type FormStep = 'type' | 'info' | 'contact' | 'review';
+const ALLOWED_MAINTENANCE_TYPES = ['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'AC_Repair', 'Cleaning', 'Other'] as const;
 
 const normalizeEgyptWhatsapp = (value: unknown): string => {
     const digits = String(value ?? '').replace(/\D/g, '');
@@ -47,6 +48,8 @@ export default function SubmitPage() {
     const [uploadSuccess, setUploadSuccess] = useState('');
     const [draggingImage, setDraggingImage] = useState(false);
     const [whatsappError, setWhatsappError] = useState('');
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [submitError, setSubmitError] = useState('');
     const { register, handleSubmit, watch, setValue } = useForm();
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
@@ -62,6 +65,9 @@ export default function SubmitPage() {
             : (locale === 'ar' ? 'إضافة صيانة' : 'Add Maintenance');
 
     useEffect(() => {
+        setFormErrors({});
+        setSubmitError('');
+        setWhatsappError('');
         if (pathname.includes('/halaqat/submit')) {
             setEntityType('halqa');
             setStep('info');
@@ -90,9 +96,22 @@ export default function SubmitPage() {
         setValue('areaId', undefined);
     }, [selectedGovernorateId, setValue]);
 
+    const clearFieldError = (field: string) => {
+        setFormErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
+    };
+
+    const getErrorMessage = (field: string) => formErrors[field] || '';
+
     const onSubmit = async (data: any) => {
         setSubmitting(true);
         setWhatsappError('');
+        setSubmitError('');
+        setFormErrors({});
         try {
             const toNum = (value: unknown) => {
                 if (value === '' || value === null || value === undefined) return undefined;
@@ -104,17 +123,57 @@ export default function SubmitPage() {
                 lat: toNum(data.lat),
                 lng: toNum(data.lng),
             };
+            const selectedMaintenanceTypes = Array.isArray(payload.maintenanceTypes)
+                ? payload.maintenanceTypes.filter(Boolean)
+                : payload.maintenanceTypes
+                    ? [payload.maintenanceTypes]
+                    : [];
             const normalizedWhatsapp = normalizeEgyptWhatsapp(payload.whatsapp);
             const isWhatsappRequired = entityType !== 'imam';
+            const nextErrors: Record<string, string> = {};
+
+            if (entityType !== 'maintenance' && !String(payload.name || '').trim()) {
+                nextErrors.name = locale === 'ar' ? 'من فضلك اكتب الاسم.' : 'Please enter the name.';
+            }
+
+            if (!(entityType === 'halqa' && payload.isOnline)) {
+                if (!String(payload.mosqueName || '').trim()) {
+                    nextErrors.mosqueName = locale === 'ar' ? 'من فضلك اكتب اسم المسجد.' : 'Please enter the mosque name.';
+                }
+                if (!payload.governorateId) {
+                    nextErrors.governorateId = locale === 'ar' ? 'من فضلك اختر المحافظة.' : 'Please select a governorate.';
+                }
+                if (!payload.areaId) {
+                    nextErrors.areaId = locale === 'ar' ? 'من فضلك اختر المنطقة.' : 'Please select an area.';
+                }
+                if (!String(payload.googleMapsUrl || '').trim()) {
+                    nextErrors.googleMapsUrl = locale === 'ar' ? 'من فضلك أضف رابط خرائط جوجل.' : 'Please provide a Google Maps link.';
+                }
+            }
+
+            if (entityType === 'maintenance') {
+                if (!selectedMaintenanceTypes.length) {
+                    nextErrors.maintenanceTypes = locale === 'ar' ? 'من فضلك اختر نوع صيانة واحد على الأقل.' : 'Please select at least one maintenance type.';
+                } else if (selectedMaintenanceTypes.some((x: string) => !ALLOWED_MAINTENANCE_TYPES.includes(x as any))) {
+                    nextErrors.maintenanceTypes = locale === 'ar' ? 'نوع الصيانة المختار غير صحيح.' : 'One or more selected maintenance types are invalid.';
+                }
+                if (!String(payload.description || '').trim()) {
+                    nextErrors.description = locale === 'ar' ? 'من فضلك اكتب وصف الصيانة.' : 'Please enter a maintenance description.';
+                }
+            }
 
             if (!normalizedWhatsapp && isWhatsappRequired) {
-                setWhatsappError(locale === 'ar' ? 'رقم الواتساب مطلوب في هذه الصفحة.' : 'WhatsApp number is required on this page.');
-                setSubmitting(false);
-                return;
+                nextErrors.whatsapp = locale === 'ar' ? 'رقم الواتساب مطلوب في هذه الصفحة.' : 'WhatsApp number is required on this page.';
             }
 
             if (normalizedWhatsapp && !isValidEgyptWhatsapp(normalizedWhatsapp)) {
-                setWhatsappError(locale === 'ar' ? 'رقم واتساب غير صحيح. اكتب 10 أرقام بعد +20.' : 'Invalid WhatsApp number. Enter 10 digits after +20.');
+                nextErrors.whatsapp = locale === 'ar' ? 'رقم واتساب غير صحيح. اكتب 10 أرقام بعد +20.' : 'Invalid WhatsApp number. Enter 10 digits after +20.';
+            }
+
+            if (Object.keys(nextErrors).length > 0) {
+                setFormErrors(nextErrors);
+                setSubmitError(Object.values(nextErrors)[0]);
+                if (nextErrors.whatsapp) setWhatsappError(nextErrors.whatsapp);
                 setSubmitting(false);
                 return;
             }
@@ -168,7 +227,7 @@ export default function SubmitPage() {
                     google_maps_url: payload.googleMapsUrl,
                     lat: payload.lat,
                     lng: payload.lng,
-                    maintenance_types: payload.maintenanceTypes || ['other'],
+                    maintenance_types: selectedMaintenanceTypes,
                     description: payload.description,
                     estimated_cost_min: parseInt(payload.costMin) || undefined,
                     estimated_cost_max: parseInt(payload.costMax) || undefined,
@@ -177,8 +236,26 @@ export default function SubmitPage() {
                 });
             }
             setSubmitted(true);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Submit error:', err);
+            const message = String(err?.message || '').toLowerCase();
+            let friendly = locale === 'ar' ? 'تعذر إرسال الطلب. تأكد من البيانات وحاول مرة أخرى.' : 'Could not submit your request. Please check your data and try again.';
+
+            if (message.includes('maintenance_types')) {
+                friendly = locale === 'ar'
+                    ? 'من فضلك اختر نوع صيانة واحد على الأقل من القائمة.'
+                    : 'Please select at least one maintenance type from the list.';
+            } else if (message.includes('google_maps_url')) {
+                friendly = locale === 'ar'
+                    ? 'رابط خرائط جوجل غير صالح. من فضلك استخدم رابط صحيح.'
+                    : 'Google Maps link is invalid. Please provide a valid link.';
+            } else if (message.includes('whatsapp')) {
+                friendly = locale === 'ar'
+                    ? 'رقم الواتساب غير صحيح. اكتب الرقم بعد +20.'
+                    : 'WhatsApp number is invalid. Enter a valid number after +20.';
+            }
+
+            setSubmitError(friendly);
         }
         setSubmitting(false);
     };
@@ -408,7 +485,12 @@ export default function SubmitPage() {
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                             {entityType === 'imam' ? ti('imamName') : th('circleName')} <span className="text-red-500">*</span>
                                         </label>
-                                        <input {...register('name', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'الاسم كاملاً...' : 'Full name...'} />
+                                        <input
+                                            {...register('name', { required: true, onChange: () => clearFieldError('name') })}
+                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
+                                            placeholder={locale === 'ar' ? 'الاسم كاملاً...' : 'Full name...'}
+                                        />
+                                        {getErrorMessage('name') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('name')}</p>}
                                     </div>
                                 )}
 
@@ -417,7 +499,12 @@ export default function SubmitPage() {
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">
                                             {entityType === 'imam' ? ti('mosqueName') : entityType === 'halqa' ? th('mosqueName') : tm('mosqueName')} <span className="text-red-500">*</span>
                                         </label>
-                                        <input {...register('mosqueName', { required: entityType !== 'halqa' || !isOnline })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold" placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'} />
+                                        <input
+                                            {...register('mosqueName', { required: entityType !== 'halqa' || !isOnline, onChange: () => clearFieldError('mosqueName') })}
+                                            className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
+                                            placeholder={locale === 'ar' ? 'اسم المسجد التابع له...' : 'Mosque name...'}
+                                        />
+                                        {getErrorMessage('mosqueName') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('mosqueName')}</p>}
                                     </div>
                                 )}
 
@@ -451,17 +538,23 @@ export default function SubmitPage() {
                                                         <input
                                                             type="checkbox"
                                                             value={type.value}
-                                                            {...register('maintenanceTypes')}
+                                                            {...register('maintenanceTypes', { onChange: () => clearFieldError('maintenanceTypes') })}
                                                             className="w-5 h-5 rounded border-2 border-gray-300 text-primary focus:ring-primary"
                                                         />
                                                         <span className="text-sm font-bold">{type.icon} {type.label}</span>
                                                     </label>
                                                 ))}
                                             </div>
+                                            {getErrorMessage('maintenanceTypes') && <p className="text-xs text-red-600 mt-2 ms-1">{getErrorMessage('maintenanceTypes')}</p>}
                                         </div>
                                         <div className="group">
                                             <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{tm('description')} <span className="text-red-500">*</span></label>
-                                            <textarea {...register('description', { required: true })} className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold min-h-[120px]" placeholder={locale === 'ar' ? 'اشرح بالتفصيل حالة المسجد والاحتياجات...' : 'Describe مسجد condition and needs...'} />
+                                            <textarea
+                                                {...register('description', { required: true, onChange: () => clearFieldError('description') })}
+                                                className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold min-h-[120px]"
+                                                placeholder={locale === 'ar' ? 'اشرح بالتفصيل حالة المسجد والاحتياجات...' : 'Describe مسجد condition and needs...'}
+                                            />
+                                            {getErrorMessage('description') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('description')}</p>}
                                         </div>
                                     </>
                                 )}
@@ -477,6 +570,7 @@ export default function SubmitPage() {
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             value={selectedGovernorateId || ''}
                                             onChange={(e) => {
+                                                clearFieldError('governorateId');
                                                 setValue('governorateId', e.target.value);
                                                 const gov = governorates.find((g) => g.id === e.target.value);
                                                 setValue('governorate', gov?.nameAr || gov?.nameEn || '');
@@ -488,6 +582,7 @@ export default function SubmitPage() {
                                                 <option key={g.id} value={g.id}>{locale === 'ar' ? g.nameAr : g.nameEn}</option>
                                             ))}
                                         </select>
+                                        {getErrorMessage('governorateId') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('governorateId')}</p>}
                                     </div>
                                     <div className="group">
                                         <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{locale === 'ar' ? 'المنطقة' : 'Area'} <span className="text-red-500">*</span></label>
@@ -496,6 +591,7 @@ export default function SubmitPage() {
                                             className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                             disabled={!selectedGovernorateId}
                                             onChange={(e) => {
+                                                clearFieldError('areaId');
                                                 setValue('areaId', e.target.value);
                                                 const area = areas.find((a) => a.id === e.target.value);
                                                 setValue('city', area?.nameAr || area?.nameEn || '');
@@ -506,6 +602,7 @@ export default function SubmitPage() {
                                                 <option key={a.id} value={a.id}>{locale === 'ar' ? a.nameAr : a.nameEn}</option>
                                             ))}
                                         </select>
+                                        {getErrorMessage('areaId') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('areaId')}</p>}
                                     </div>
                                 </div>
                                 )}
@@ -516,11 +613,12 @@ export default function SubmitPage() {
                                         {locale === 'ar' ? 'رابط خرائط جوجل' : 'Google Maps Link'}
                                     </label>
                                     <input
-                                        {...register('googleMapsUrl', { required: entityType !== 'halqa' || !isOnline })}
+                                        {...register('googleMapsUrl', { required: entityType !== 'halqa' || !isOnline, onChange: () => clearFieldError('googleMapsUrl') })}
                                         type="url"
                                         className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                         placeholder="https://maps.google.com/...?q=30.0444,31.2357"
                                     />
+                                    {getErrorMessage('googleMapsUrl') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('googleMapsUrl')}</p>}
                                     <span className="text-[10px] text-text-muted mt-2 block ms-1 font-bold">
                                         {locale === 'ar' ? 'سنستخرج الإحداثيات تلقائياً من الرابط' : 'We will extract coordinates automatically from the link'}
                                     </span>
@@ -543,6 +641,8 @@ export default function SubmitPage() {
                                     error={whatsappError}
                                     onChange={(next) => {
                                         setWhatsappError('');
+                                        clearFieldError('whatsapp');
+                                        setSubmitError('');
                                         setValue('whatsapp', next || '');
                                     }}
                                 />
@@ -569,6 +669,11 @@ export default function SubmitPage() {
                             </div>
 
                             <div className="pt-4">
+                                {submitError && (
+                                    <div className="mb-3 rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-bold">
+                                        {submitError}
+                                    </div>
+                                )}
                                 <button type="submit" disabled={submitting} className="btn-primary w-full rounded-2xl group flex items-center justify-center">
                                     {submitting
                                         ? (locale === 'ar' ? 'جاري الإرسال...' : 'Submitting...')
@@ -608,6 +713,8 @@ export default function SubmitPage() {
                                     error={whatsappError}
                                     onChange={(next) => {
                                         setWhatsappError('');
+                                        clearFieldError('whatsapp');
+                                        setSubmitError('');
                                         setValue('whatsapp', next || '');
                                     }}
                                 />
@@ -633,6 +740,11 @@ export default function SubmitPage() {
                                 )}
                             </div>
 
+                            {submitError && (
+                                <div className="rounded-2xl border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm font-bold">
+                                    {submitError}
+                                </div>
+                            )}
                             <div className="flex gap-4 pt-4">
                                 <button type="button" onClick={() => setStep('info')} className="btn-outline flex-1 rounded-2xl border-2 hover:bg-cream">
                                     {locale === 'ar' ? 'السابق' : 'Previous'}
