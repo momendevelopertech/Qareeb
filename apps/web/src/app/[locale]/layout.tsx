@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import { Cairo, Tajawal } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import '../globals.css';
 import ToastHost from '@/components/ui/ToastHost';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
+import ServiceWorkerCleanup from '@/components/system/ServiceWorkerCleanup';
 
 const cairo = Cairo({
     subsets: ['arabic', 'latin'],
@@ -20,7 +21,7 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-    title: 'قريب | Qareeb — خدمات دينية قريبة منك',
+    title: 'قريب | Qareeb - خدمات دينية قريبة منك',
     description:
         'منصة مجتمعية تربط المسلمين بالأئمة وحلقات تحفيظ القرآن وصيانة المساجد. A community platform connecting Muslims with nearby religious services.',
     keywords: ['قريب', 'Qareeb', 'أئمة', 'حلقات تحفيظ', 'مساجد', 'صيانة', 'imams', 'mosques', 'Quran circles'],
@@ -39,6 +40,7 @@ export default async function LocaleLayout({
         <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${tajawal.variable}`}>
             <body className={locale === 'ar' ? 'font-arabic' : 'font-latin'}>
                 <NextIntlClientProvider messages={messages}>
+                    <ServiceWorkerCleanup />
                     <LoadingOverlay />
                     {children}
                     <ToastHost />
