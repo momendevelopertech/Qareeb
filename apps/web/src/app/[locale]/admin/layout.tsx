@@ -18,6 +18,7 @@ import {
     FaUsers,
     FaUserTie,
     FaClipboardList,
+    FaLightbulb,
 } from 'react-icons/fa';
 import { adminApi } from '@/lib/api';
 import { useAuthStore, useNotificationStore, useThemeStore } from '@/lib/store';
@@ -195,6 +196,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: `/${locale}/admin/imams`, label: locale === 'ar' ? 'الأئمة' : 'Imams', icon: FaUserTie },
         { href: `/${locale}/admin/halaqat`, label: locale === 'ar' ? 'الحلقات' : 'Halaqat', icon: FaBook },
         { href: `/${locale}/admin/maintenance`, label: locale === 'ar' ? 'الصيانة' : 'Maintenance', icon: FaTools },
+        { href: `/${locale}/admin/improvements`, label: locale === 'ar' ? 'التحسينات' : 'Improvements', icon: FaLightbulb },
         { href: `/${locale}/admin/audit`, label: locale === 'ar' ? 'سجل التدقيق' : 'Audit Logs', icon: FaClipboardList },
         { href: `/${locale}/admin/settings`, label: locale === 'ar' ? 'الإعدادات' : 'Settings', icon: FaCog },
     ];

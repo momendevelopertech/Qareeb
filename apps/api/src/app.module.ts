@@ -17,6 +17,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { CacheModule } from './cache/cache.module';
 import { GeoModule } from './geo/geo.module';
+import { ImprovementsModule } from './improvements/improvements.module';
 
 @Module({
     imports: [
@@ -44,6 +45,7 @@ import { GeoModule } from './geo/geo.module';
         SearchModule,
         CacheModule,
         GeoModule,
+        ImprovementsModule,
     ],
     providers: [
         {

@@ -60,6 +60,10 @@ export const api = {
     getMaintenanceItem: (id: string) => fetchAPI<any>(`/maintenance/${id}`),
     createMaintenance: (data: any) => fetchAPI<any>('/maintenance', { method: 'POST', body: JSON.stringify(data) }),
 
+    // Improvements
+    createImprovement: (data: { suggestion_text: string; name?: string; email?: string }) =>
+        fetchAPI<any>('/improvements', { method: 'POST', body: JSON.stringify(data) }),
+
     // Media
     getSignedUploadParams: () => fetchAPI<any>('/media/sign', { method: 'POST' }),
 
@@ -139,6 +143,14 @@ export const adminApi = {
         fetchAPI<any>(`/admin/maintenance/${id}/reject`, { method: 'PATCH', token, body: JSON.stringify({ reason }) }),
     updateMaintenance: (token: string, id: string, data: any) =>
         fetchAPI<any>(`/admin/maintenance/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+
+    // Improvements admin
+    getAdminImprovements: (token: string, params?: string) =>
+        fetchAPI<any>(`/admin/improvements${params ? `?${params}` : ''}`, { token }),
+    updateImprovement: (token: string, id: string, data: { status?: string; internal_note?: string }) =>
+        fetchAPI<any>(`/admin/improvements/${id}`, { method: 'PATCH', token, body: JSON.stringify(data) }),
+    deleteImprovement: (token: string, id: string) =>
+        fetchAPI<any>(`/admin/improvements/${id}`, { method: 'DELETE', token }),
     deleteMediaAsset: (token: string, publicId: string) =>
         fetchAPI<any>(`/media/${encodeURIComponent(publicId)}`, { method: 'DELETE', token }),
 

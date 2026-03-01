@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { FormEvent, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { FaFacebook, FaInstagram, FaWhatsapp, FaXTwitter, FaYoutube } from 'react-icons/fa6';
 import { FaMosque } from 'react-icons/fa';
+import AppModal from '@/components/ui/AppModal';
+import { api } from '@/lib/api';
 
 const socialLinks = [
     { href: 'https://www.instagram.com/qareeb.platform/', icon: FaInstagram, label: 'Instagram' },
@@ -16,6 +19,44 @@ const socialLinks = [
 export default function Footer() {
     const t = useTranslations('nav');
     const locale = useLocale();
+
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [form, setForm] = useState({ suggestion_text: '', name: '', email: '' });
+    const [error, setError] = useState('');
+
+    const openModal = () => {
+        setError('');
+        setSuccessMessage('');
+        setIsOpen(true);
+    };
+
+    const submitSuggestion = async (event: FormEvent) => {
+        event.preventDefault();
+        if (form.suggestion_text.trim().length < 10) {
+            setError(locale === 'ar' ? 'يرجى كتابة اقتراح لا يقل عن 10 أحرف' : 'Please write at least 10 characters');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            setError('');
+            await api.createImprovement({
+                suggestion_text: form.suggestion_text.trim(),
+                name: form.name.trim() || undefined,
+                email: form.email.trim() || undefined,
+            });
+            setForm({ suggestion_text: '', name: '', email: '' });
+            setSuccessMessage(locale === 'ar'
+                ? 'تم إرسال اقتراحك بنجاح، شكرًا لمساهمتك ❤️'
+                : 'Your suggestion was sent successfully. Thank you for your contribution ❤️');
+        } catch {
+            setError(locale === 'ar' ? 'تعذر إرسال الاقتراح، حاول مرة أخرى' : 'Failed to send suggestion, please try again');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <footer className="bg-gray-900 text-gray-300">
@@ -60,6 +101,9 @@ export default function Footer() {
                             <Link href={`/${locale}/halaqat`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('halaqat')}</Link>
                             <Link href={`/${locale}/maintenance`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('maintenance')}</Link>
                             <Link href={`/${locale}/about`} className="text-gray-400 hover:text-primary transition-colors text-sm">{locale === 'ar' ? 'عن قريب' : 'About'}</Link>
+                            <button onClick={openModal} className="text-start text-gray-400 hover:text-primary transition-colors text-sm">
+                                {locale === 'ar' ? 'اقترح تحسين' : 'Suggest improvement'}
+                            </button>
                         </div>
                     </div>
 
@@ -78,6 +122,61 @@ export default function Footer() {
                     </div>
                 </div>
             </div>
+
+            <AppModal
+                isOpen={isOpen}
+                type="edit"
+                title={locale === 'ar' ? 'التحسينات والمقترحات' : 'Improvements & Suggestions'}
+                onClose={() => setIsOpen(false)}
+            >
+                <form onSubmit={submitSuggestion} className="space-y-4">
+                    <div>
+                        <label className="block mb-1 text-sm font-semibold text-dark">
+                            {locale === 'ar' ? 'اكتب التحسين المقترح' : 'Write your suggestion'}
+                        </label>
+                        <textarea
+                            rows={5}
+                            className="input-field"
+                            value={form.suggestion_text}
+                            onChange={(e) => setForm((s) => ({ ...s, suggestion_text: e.target.value }))}
+                            placeholder={locale === 'ar' ? 'شاركنا فكرة التحسين...' : 'Share your improvement idea...'}
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block mb-1 text-sm font-semibold text-dark">
+                            {locale === 'ar' ? 'الاسم (اختياري)' : 'Name (optional)'}
+                        </label>
+                        <input
+                            className="input-field"
+                            value={form.name}
+                            onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
+                            maxLength={120}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block mb-1 text-sm font-semibold text-dark">
+                            {locale === 'ar' ? 'البريد الإلكتروني (اختياري)' : 'Email (optional)'}
+                        </label>
+                        <input
+                            type="email"
+                            className="input-field"
+                            value={form.email}
+                            onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+                            maxLength={255}
+                        />
+                    </div>
+
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
+
+                    <button type="submit" disabled={isSubmitting} className="btn-primary disabled:opacity-60">
+                        {isSubmitting ? (locale === 'ar' ? 'جارٍ الإرسال...' : 'Submitting...') : (locale === 'ar' ? 'إرسال' : 'Submit')}
+                    </button>
+                </form>
+            </AppModal>
         </footer>
     );
 }

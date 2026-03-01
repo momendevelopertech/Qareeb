@@ -51,6 +51,13 @@ enum NotificationType {
   maintenance
 }
 
+enum ImprovementStatus {
+  pending
+  planned
+  completed
+  rejected
+}
+
 // ──────────────────────────────────────────────
 // Locations
 // ──────────────────────────────────────────────
@@ -234,6 +241,22 @@ model MediaAsset {
   maintenanceRequest MaintenanceRequest? @relation("MaintenanceMedia", fields: [entityId], references: [id], map: "fk_media_maintenance")
 
   @@map("media_assets")
+}
+
+
+model Improvement {
+  id             String            @id @default(uuid()) @db.Uuid
+  suggestionText String            @map("suggestion_text")
+  name           String?           @db.VarChar(120)
+  email          String?           @db.VarChar(255)
+  status         ImprovementStatus @default(pending)
+  internalNote   String?           @map("internal_note")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("improvements")
 }
 
 model Notification {
