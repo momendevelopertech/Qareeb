@@ -74,6 +74,24 @@ export default function ChatWidget() {
         googleMapUrl: item.google_maps_url || item.googleMapsUrl || '',
     });
 
+    const getBrowserCoords = async (): Promise<{ lat: number; lng: number }> => {
+        if (!navigator.geolocation) throw new Error('Geolocation not supported');
+
+        const getPosition = (options?: PositionOptions) => new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                reject,
+                options,
+            );
+        });
+
+        try {
+            return await getPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 });
+        } catch {
+            return getPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        }
+    };
+
     const send = async (text?: string) => {
         const value = (text ?? input).trim();
         if (!value) return;
@@ -172,22 +190,17 @@ export default function ChatWidget() {
         if (!pendingType) return;
         setLoadingSearch(true);
         try {
-            const coords = await new Promise<{ lat: number; lng: number }>((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error('Geolocation not supported'));
-                    return;
-                }
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                    reject,
-                    { timeout: 10000 },
-                );
-            });
+            const coords = await getBrowserCoords();
             await searchByNearest(pendingType, coords.lat, coords.lng);
             setShowLocationChooser(false);
             setPendingType(null);
         } catch {
-            addMessage('bot', locale === 'ar' ? 'تعذر الوصول للموقع الحالي. اختر المحافظة والمنطقة.' : 'Could not access current location. Select governorate and area.');
+            addMessage(
+                'bot',
+                locale === 'ar'
+                    ? 'تعذر تحديد موقعك الحالي تلقائياً. تأكد من تفعيل إذن الموقع/‏GPS ثم أعد المحاولة، أو اختر المحافظة والمنطقة.'
+                    : 'Could not determine your current location automatically. Please enable location permission/GPS and try again, or select governorate and area.',
+            );
         }
         setLoadingSearch(false);
     };
