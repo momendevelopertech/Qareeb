@@ -227,6 +227,12 @@ export default function AdminMaintenancePage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-2xl font-black">{locale === 'ar' ? 'إدارة الصيانة' : 'Manage Maintenance'}</h1>
                 <div className="flex flex-wrap gap-2 items-center">
+                    <button
+                        onClick={() => void fetchData()}
+                        className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-border"
+                    >
+                        Refresh
+                    </button>
                     <input
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

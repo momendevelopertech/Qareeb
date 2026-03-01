@@ -18,27 +18,28 @@ export default function NotificationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const limit = 10;
 
+    const fetchNotifications = async () => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const res = await adminApi.getNotifications(token, status);
+            setNotifications((res || []).map((n: any) => ({
+                id: n.id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                recordId: n.referenceId,
+                createdAt: n.createdAt,
+                read: n.isRead,
+            })));
+        } catch (err) {
+            console.error('Notifications fetch error', err);
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const load = async () => {
-            if (!token) return;
-            setLoading(true);
-            try {
-                const res = await adminApi.getNotifications(token, status);
-                setNotifications((res || []).map((n: any) => ({
-                    id: n.id,
-                    type: n.type,
-                    title: n.title,
-                    message: n.message,
-                    recordId: n.referenceId,
-                    createdAt: n.createdAt,
-                    read: n.isRead,
-                })));
-            } catch (err) {
-                console.error('Notifications fetch error', err);
-            }
-            setLoading(false);
-        };
-        void load();
+        void fetchNotifications();
     }, [status, token]);
 
     useEffect(() => {
@@ -81,6 +82,12 @@ export default function NotificationsPage() {
                     <p className="text-text-muted text-sm">{locale === 'ar' ? 'تحديث لحظي بدون Refresh' : 'Live updates without refresh'}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={() => void fetchNotifications()}
+                        className="px-4 py-2 rounded-btn text-sm font-bold bg-white border border-border"
+                    >
+                        Refresh
+                    </button>
                     <input
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}

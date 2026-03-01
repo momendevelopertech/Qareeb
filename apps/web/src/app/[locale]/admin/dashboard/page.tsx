@@ -92,6 +92,9 @@ export default function AdminDashboard() {
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
+                    <button onClick={() => void fetchStats()} className="btn-outline !py-2.5 !px-4 text-sm">
+                        {locale === 'ar' ? 'Refresh Usage' : 'Refresh Usage'}
+                    </button>
                     <Link href={`/${locale}/imams/submit`} className="btn-primary !py-2.5 !px-4 text-sm">{locale === 'ar' ? 'إضافة إمام' : 'Add Imam'}</Link>
                     <Link href={`/${locale}/halaqat/submit`} className="btn-outline !py-2.5 !px-4 text-sm">{locale === 'ar' ? 'إضافة حلقة' : 'Add Halqa'}</Link>
                     <Link href={`/${locale}/maintenance/submit`} className="btn-outline !py-2.5 !px-4 text-sm">{locale === 'ar' ? 'إضافة صيانة' : 'Add Maintenance'}</Link>

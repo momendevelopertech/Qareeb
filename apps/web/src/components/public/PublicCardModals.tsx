@@ -21,7 +21,6 @@ export default function PublicCardModals() {
             >
                 {videoUrl ? (
                     <VideoEmbedPanel
-                        locale={locale}
                         url={videoUrl}
                         title="video-modal"
                     />

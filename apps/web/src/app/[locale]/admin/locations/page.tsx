@@ -63,7 +63,18 @@ export default function LocationsPage() {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-2xl font-bold">{locale === 'ar' ? 'المحافظات والمناطق' : 'Governorates & Areas'}</h1>
+            <div className="flex items-center justify-between gap-3">
+                <h1 className="text-2xl font-bold">{locale === 'ar' ? 'المحافظات والمناطق' : 'Governorates & Areas'}</h1>
+                <button
+                    onClick={async () => {
+                        await loadGovs();
+                        if (selectedGov) await loadAreas(selectedGov);
+                    }}
+                    className="btn-outline text-sm"
+                >
+                    Refresh
+                </button>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="card p-6 space-y-4">
                     <h3 className="font-semibold">{locale === 'ar' ? 'إضافة محافظة' : 'Add Governorate'}</h3>

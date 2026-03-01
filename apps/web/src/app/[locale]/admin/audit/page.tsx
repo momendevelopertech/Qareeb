@@ -98,6 +98,9 @@ export default function AuditPage() {
             </div>
 
             <div className="card p-4 grid grid-cols-1 md:grid-cols-6 gap-3">
+                <button className="btn-outline text-sm" onClick={() => void fetchLogs()}>
+                    Refresh
+                </button>
                 <select
                     className="input-field"
                     value={entityType}

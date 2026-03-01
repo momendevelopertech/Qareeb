@@ -1,17 +1,14 @@
 'use client';
 
-import { useState } from 'react';
 import { getEmbeddableVideoUrl } from '@/lib/video';
 
 type VideoEmbedPanelProps = {
-    locale: string;
     url: string;
     title: string;
 };
 
-export default function VideoEmbedPanel({ locale, url, title }: VideoEmbedPanelProps) {
+export default function VideoEmbedPanel({ url, title }: VideoEmbedPanelProps) {
     const embedUrl = getEmbeddableVideoUrl(url);
-    const [loadEmbed, setLoadEmbed] = useState(false);
 
     if (!embedUrl) {
         return (
@@ -23,20 +20,6 @@ export default function VideoEmbedPanel({ locale, url, title }: VideoEmbedPanelP
             >
                 {url}
             </a>
-        );
-    }
-
-    if (!loadEmbed) {
-        return (
-            <div className="rounded-2xl border border-primary/10 bg-white p-4 flex items-center justify-center">
-                <button
-                    type="button"
-                    onClick={() => setLoadEmbed(true)}
-                    className="btn-primary !py-2.5 !px-4 text-sm"
-                >
-                    {locale === 'ar' ? 'تشغيل الفيديو' : 'Load video'}
-                </button>
-            </div>
         );
     }
 

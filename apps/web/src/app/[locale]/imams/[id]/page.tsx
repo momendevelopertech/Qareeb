@@ -106,7 +106,6 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                                             <span>🔊</span> {locale === 'ar' ? 'نموذج التلاوة' : 'Sample Recitation'}
                                         </h3>
                                         <VideoEmbedPanel
-                                            locale={locale}
                                             url={recitationUrl}
                                             title={locale === 'ar' ? 'تلاوة الإمام' : 'Imam recitation'}
                                         />
