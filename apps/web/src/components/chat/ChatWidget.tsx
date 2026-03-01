@@ -5,6 +5,8 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useChatStore, useGeolocationStore } from '@/lib/store';
 import { api } from '@/lib/api';
+import { FaMosque, FaTools } from 'react-icons/fa';
+import { GiPrayerBeads } from 'react-icons/gi';
 
 type SearchType = 'imam' | 'halqa' | 'maintenance';
 
@@ -117,7 +119,8 @@ export default function ChatWidget() {
     };
 
     const searchByNearest = async (type: SearchType, userLat: number, userLng: number) => {
-        const res = await api.nearestSearch(userLat, userLng, type);
+        const radiusKm = 5;
+        const res = await api.nearestSearch(userLat, userLng, type, { radiusKm, limit: 10 });
         const result = Array.isArray(res?.data) ? res.data : [];
         setCards(result.map((c: any) => ({
             id: c.id,
@@ -132,7 +135,12 @@ export default function ChatWidget() {
             return;
         }
 
-        addMessage('bot', locale === 'ar' ? `هذه أقرب النتائج في ${typeLabel(type)}.` : `Here are the nearest ${typeLabel(type)} results.`);
+        addMessage(
+            'bot',
+            locale === 'ar'
+                ? `هذه أقرب النتائج في ${typeLabel(type)} داخل نطاق ${radiusKm} كم.`
+                : `Here are the nearest ${typeLabel(type)} results within ${radiusKm} km.`,
+        );
     };
 
     const searchByAddress = async (type: SearchType) => {
@@ -224,9 +232,24 @@ export default function ChatWidget() {
     };
 
     const quickButtons = [
-        { label: 'أقرب مسجد', type: 'imam' as const },
-        { label: 'أقرب حلقة', type: 'halqa' as const },
-        { label: 'مسجد يحتاج صيانة', type: 'maintenance' as const },
+        {
+            label: locale === 'ar' ? 'أقرب مسجد' : 'Nearest mosque',
+            type: 'imam' as const,
+            icon: <FaMosque className="text-base" aria-hidden="true" />,
+            style: 'border-emerald-200 bg-emerald-50/80 text-emerald-900 hover:bg-emerald-600 hover:text-white hover:border-emerald-600',
+        },
+        {
+            label: locale === 'ar' ? 'أقرب حلقة' : 'Nearest halqa',
+            type: 'halqa' as const,
+            icon: <GiPrayerBeads className="text-base" aria-hidden="true" />,
+            style: 'border-sky-200 bg-sky-50/80 text-sky-900 hover:bg-sky-600 hover:text-white hover:border-sky-600',
+        },
+        {
+            label: locale === 'ar' ? 'مسجد يحتاج صيانة' : 'Mosque needs maintenance',
+            type: 'maintenance' as const,
+            icon: <FaTools className="text-sm" aria-hidden="true" />,
+            style: 'border-amber-200 bg-amber-50/80 text-amber-900 hover:bg-amber-600 hover:text-white hover:border-amber-600',
+        },
     ];
 
     if (!isOpen) {
@@ -246,13 +269,21 @@ export default function ChatWidget() {
 
             <div className="h-80 overflow-y-auto p-4 space-y-3 bg-cream/30">
                 <div className="text-xs bg-white border border-border rounded-xl p-3">
-                    {locale === 'ar' ? 'اسأل عن الأسئلة الدينية أو أقرب خدمة حولك.' : 'Ask religious questions or nearest services.'}
+                    {locale === 'ar' ? 'اختَر الخدمة المطلوبة وسنبحث لك عن الأقرب.' : 'Choose the needed service and we will find the nearest options.'}
                 </div>
 
                 <div className="grid gap-2">
                     {quickButtons.map((item) => (
-                        <button key={item.label} onClick={() => quickSearch(item.type, item.label)} className="text-xs bg-white border border-border px-3 py-2 rounded-xl text-start hover:bg-primary hover:text-white transition-colors" disabled={loadingSearch}>
-                            {item.label}
+                        <button
+                            key={item.label}
+                            onClick={() => quickSearch(item.type, item.label)}
+                            className={`text-xs border px-3 py-2.5 rounded-xl text-start transition-all duration-200 flex items-center gap-2 ${item.style}`}
+                            disabled={loadingSearch}
+                        >
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/85 text-current shadow-sm">
+                                {item.icon}
+                            </span>
+                            <span className="font-semibold">{item.label}</span>
                         </button>
                     ))}
                 </div>

@@ -3,9 +3,16 @@ import { PrismaService } from '../prisma/prisma.service';
 
 type EntityType = 'imam' | 'halqa' | 'maintenance';
 
+type NearestOptions = {
+    radiusKm?: number;
+    limit?: number;
+};
+
 @Injectable()
 export class SearchService {
     constructor(private readonly prisma: PrismaService) { }
+
+    private readonly DEFAULT_RADIUS_KM = 5;
 
     private toCard(item: any, type: EntityType) {
         return {
@@ -21,32 +28,55 @@ export class SearchService {
         };
     }
 
-    async nearest(lat: number, lng: number, type: EntityType) {
+    private clampLimit(limit?: number) {
+        if (!Number.isFinite(limit)) return 10;
+        return Math.min(Math.max(Math.floor(limit as number), 1), 20);
+    }
+
+    private normalizeRadius(radiusKm?: number) {
+        if (!Number.isFinite(radiusKm) || (radiusKm as number) <= 0) return this.DEFAULT_RADIUS_KM;
+        return Math.min(radiusKm as number, 50);
+    }
+
+    async nearest(lat: number, lng: number, type: EntityType, options: NearestOptions = {}) {
+        const radiusKm = this.normalizeRadius(options.radiusKm);
+        const limit = this.clampLimit(options.limit);
+        const radiusMeters = radiusKm * 1000;
         const postgisEnabled = process.env.POSTGIS_ENABLED === 'true';
+
         if (postgisEnabled) {
             const table = type === 'imam' ? 'imams' : type === 'halqa' ? 'halaqat' : 'maintenance_requests';
             const rows = await this.prisma.$queryRawUnsafe<any[]>(
                 `
-                SELECT *
-                FROM ${table}
-                WHERE status = 'approved' AND location IS NOT NULL
-                ORDER BY ST_Distance(
+                SELECT *, ST_Distance(
                     location,
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-                ) ASC
-                LIMIT 3
+                ) AS distance_meters
+                FROM ${table}
+                WHERE status = 'approved'
+                    AND location IS NOT NULL
+                    AND ST_DWithin(
+                        location,
+                        ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                        $3
+                    )
+                ORDER BY distance_meters ASC
+                LIMIT $4
                 `,
                 lng,
                 lat,
+                radiusMeters,
+                limit,
             );
-            return { data: rows.map((row) => this.toCard(row, type)) };
+
+            return { data: rows.map((row) => this.toCard(row, type)), radiusKm };
         }
 
         const modelRows = type === 'imam'
-            ? await this.prisma.imam.findMany({ where: { status: 'approved' }, take: 200, orderBy: { createdAt: 'desc' } })
+            ? await this.prisma.imam.findMany({ where: { status: 'approved' }, take: 300, orderBy: { createdAt: 'desc' } })
             : type === 'halqa'
-                ? await this.prisma.halqa.findMany({ where: { status: 'approved' }, take: 200, orderBy: { createdAt: 'desc' } })
-                : await this.prisma.maintenanceRequest.findMany({ where: { status: 'approved' }, take: 200, orderBy: { createdAt: 'desc' } });
+                ? await this.prisma.halqa.findMany({ where: { status: 'approved' }, take: 300, orderBy: { createdAt: 'desc' } })
+                : await this.prisma.maintenanceRequest.findMany({ where: { status: 'approved' }, take: 300, orderBy: { createdAt: 'desc' } });
 
         const toRad = (v: number) => (v * Math.PI) / 180;
         const distance = (aLat: number, aLng: number) => {
@@ -60,13 +90,15 @@ export class SearchService {
         };
 
         const ranked = (modelRows as any[])
+            .filter((row) => Number.isFinite(row.latitude) && Number.isFinite(row.longitude))
             .map((row) => ({
                 ...row,
                 distance_meters: distance(row.latitude, row.longitude),
             }))
+            .filter((row) => row.distance_meters <= radiusMeters)
             .sort((a, b) => a.distance_meters - b.distance_meters)
-            .slice(0, 3);
+            .slice(0, limit);
 
-        return { data: ranked.map((row) => this.toCard(row, type)) };
+        return { data: ranked.map((row) => this.toCard(row, type)), radiusKm };
     }
 }

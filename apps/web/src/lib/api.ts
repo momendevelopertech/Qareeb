@@ -70,8 +70,16 @@ export const api = {
     // Chat
     chatNearest: (data: { text: string; lat?: number; lng?: number }) =>
         fetchAPI<any>('/chat/nearest', { method: 'POST', body: JSON.stringify(data) }),
-    nearestSearch: (lat: number, lng: number, type: 'imam' | 'halqa' | 'maintenance') =>
-        fetchAPI<any>(`/search/nearest?lat=${lat}&lng=${lng}&type=${type}`),
+    nearestSearch: (
+        lat: number,
+        lng: number,
+        type: 'imam' | 'halqa' | 'maintenance',
+        options?: { radiusKm?: number; limit?: number },
+    ) => {
+        const radiusKm = options?.radiusKm ?? 5;
+        const limit = options?.limit ?? 10;
+        return fetchAPI<any>(`/search/nearest?lat=${lat}&lng=${lng}&type=${type}&radiusKm=${radiusKm}&limit=${limit}`);
+    },
     getGeoCountry: () => fetchAPI<{ country: string }>('/geo'),
 
     // Locations admin
