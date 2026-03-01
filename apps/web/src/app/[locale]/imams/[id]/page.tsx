@@ -64,6 +64,12 @@ function getVideoEmbedUrl(url: string | null | undefined): string | null {
         }
 
         if (host === 'facebook.com' || host === 'm.facebook.com' || host === 'fb.watch') {
+            const parts = parsed.pathname.split('/').filter(Boolean);
+            const reelIndex = parts.indexOf('reel');
+            if (reelIndex !== -1 && parts[reelIndex + 1]) {
+                const watchUrl = `https://www.facebook.com/watch/?v=${parts[reelIndex + 1]}`;
+                return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(watchUrl)}&show_text=false&width=1280`;
+            }
             return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=1280`;
         }
 
