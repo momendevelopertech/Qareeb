@@ -1,24 +1,10 @@
-﻿import type { Metadata } from 'next';
-import { Cairo, Tajawal } from 'next/font/google';
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import '../globals.css';
 import ToastHost from '@/components/ui/ToastHost';
 import LoadingOverlay from '@/components/ui/LoadingOverlay';
 import ServiceWorkerCleanup from '@/components/system/ServiceWorkerCleanup';
-
-const cairo = Cairo({
-    subsets: ['arabic', 'latin'],
-    variable: '--font-cairo',
-    display: 'swap',
-});
-
-const tajawal = Tajawal({
-    subsets: ['arabic', 'latin'],
-    weight: ['300', '400', '500', '700', '800'],
-    variable: '--font-tajawal',
-    display: 'swap',
-});
 
 export const metadata: Metadata = {
     title: 'قريب | Qareeb - خدمات دينية قريبة منك',
@@ -37,7 +23,7 @@ export default async function LocaleLayout({
     const messages = await getMessages();
 
     return (
-        <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className={`${cairo.variable} ${tajawal.variable}`}>
+        <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
             <body className={locale === 'ar' ? 'font-arabic' : 'font-latin'}>
                 <NextIntlClientProvider messages={messages}>
                     <ServiceWorkerCleanup />

@@ -54,8 +54,8 @@
     caret-color: #25d366;
   }
 
-  .font-arabic { font-family: var(--font-cairo), var(--font-tajawal), sans-serif; }
-  .font-latin { font-family: var(--font-cairo), "Segoe UI", Tahoma, sans-serif; }
+  .font-arabic { font-family: 'Cairo', 'Tajawal', 'Noto Sans Arabic', Tahoma, sans-serif; }
+  .font-latin { font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif; }
 }
 
 /* Component classes */

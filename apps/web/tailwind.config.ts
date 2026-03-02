@@ -34,9 +34,9 @@ const config: Config = {
                 maintenance: '#E74C3C',
             },
             fontFamily: {
-                arabic: ['var(--font-cairo)', 'var(--font-tajawal)', 'sans-serif'],
-                tajawal: ['var(--font-tajawal)', 'var(--font-cairo)', 'sans-serif'],
-                english: ['var(--font-tajawal)', 'sans-serif'],
+                arabic: ['Cairo', 'Tajawal', 'Noto Sans Arabic', 'sans-serif'],
+                tajawal: ['Tajawal', 'Cairo', 'Noto Sans Arabic', 'sans-serif'],
+                english: ['Cairo', 'Segoe UI', 'Tahoma', 'sans-serif'],
             },
             borderRadius: {
                 card: '16px',
