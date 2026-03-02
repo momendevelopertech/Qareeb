@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useAuthStore, useGeolocationStore, useModalStore, useNotificationStore } from '@/lib/store';
 import { adminApi } from '@/lib/api';
 import { usePathname } from 'next/navigation';
-import { useGeolocationStore } from '@/lib/store';
 
 export default function Header() {
     const t = useTranslations('nav');
