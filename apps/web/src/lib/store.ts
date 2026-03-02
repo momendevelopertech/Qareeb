@@ -11,7 +11,7 @@ interface GeolocationState {
     lng: number | null;
     loading: boolean;
     error: string | null;
-    requestLocation: () => void;
+    requestLocation: (forceFresh?: boolean) => void;
 }
 
 // simple global loading indicator (used by fetch wrapper)
@@ -66,7 +66,7 @@ export const useGeolocationStore = create<GeolocationState>((set) => ({
     lng: null,
     loading: false,
     error: null,
-    requestLocation: () => {
+    requestLocation: (forceFresh = false) => {
         if (!navigator.geolocation) {
             set({ error: 'Geolocation is not supported' });
             return;
@@ -86,7 +86,7 @@ export const useGeolocationStore = create<GeolocationState>((set) => ({
             {
                 enableHighAccuracy: false,
                 timeout: 15000,
-                maximumAge: 60000,
+                maximumAge: forceFresh ? 0 : 60000,
             },
         );
     },

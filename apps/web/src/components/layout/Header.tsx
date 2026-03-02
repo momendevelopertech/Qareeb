@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore, useModalStore, useNotificationStore } from '@/lib/store';
 import { adminApi } from '@/lib/api';
 import { usePathname } from 'next/navigation';
+import { useGeolocationStore } from '@/lib/store';
 
 export default function Header() {
     const t = useTranslations('nav');
@@ -14,6 +15,7 @@ export default function Header() {
     const { token, admin } = useAuthStore();
     const { openModal } = useModalStore();
     const { items, unreadCount, markRead } = useNotificationStore();
+    const { lat, lng, requestLocation, loading: geoLoading } = useGeolocationStore();
     const pathname = usePathname();
     const isAdminPath = pathname.startsWith(`/${locale}/admin`);
     const otherLocale = locale === 'ar' ? 'en' : 'ar';
@@ -36,6 +38,10 @@ export default function Header() {
         if (!token || !admin?.role || !isAdminPath) return;
         void adminApi.getNotificationCount(token).catch(() => undefined);
     }, [token, admin?.role, isAdminPath]);
+
+    useEffect(() => {
+        requestLocation();
+    }, [requestLocation]);
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
@@ -78,7 +84,26 @@ export default function Header() {
                             ))}
                         </nav>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="hidden xl:flex items-center gap-2 bg-cream rounded-xl px-3 py-2 border border-transparent">
+                                <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span className="text-xs font-bold text-dark whitespace-nowrap">
+                                    {geoLoading ? tc('loading') : lat ? `${lat.toFixed(2)}, ${lng?.toFixed(2)}` : (locale === 'ar' ? 'حدد موقعك الحالي' : 'Set location')}
+                                </span>
+                                <button
+                                    onClick={() => requestLocation(true)}
+                                    className="p-1 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                                    aria-label={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}
+                                    title={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m14.836 2A8.003 8.003 0 005.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-13.837-2m13.837 2H15" />
+                                    </svg>
+                                </button>
+                            </div>
                             {token && isAdminPath && (
                                 <div className="relative">
                                     <button

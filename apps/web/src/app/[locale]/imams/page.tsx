@@ -20,7 +20,7 @@ export default function ImamsPage() {
     const tc = useTranslations('common');
     const locale = useLocale();
     const searchParams = useSearchParams();
-    const { lat, lng, requestLocation, loading: geoLoading } = useGeolocationStore();
+    const { lat, lng, requestLocation } = useGeolocationStore();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [governorates, setGovernorates] = useState<any[]>([]);
@@ -96,15 +96,6 @@ export default function ImamsPage() {
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
                     <div className="bg-white rounded-[24px] p-6 shadow-card border border-border flex flex-wrap gap-4 items-center">
-                        <div className="flex-1 min-w-[200px] flex items-center gap-3 bg-cream rounded-xl px-4 py-3 border-2 border-transparent transition-all">
-                            <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span className="text-sm font-bold text-dark">
-                                {geoLoading ? tc('loading') : lat ? `${lat.toFixed(2)}, ${lng?.toFixed(2)}` : (locale === 'ar' ? 'حدد موقعك الحالي' : 'Set location')}
-                            </span>
-                        </div>
                         <select
                             value={governorateId}
                             onChange={(e) => setGovernorateId(e.target.value)}
