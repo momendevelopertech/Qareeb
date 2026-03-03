@@ -168,7 +168,7 @@ export default function HalaqatPage() {
                                         halqa.district,
                                     ]),
                                     typeLabel: typeLabels[locale]?.[halqaType] || halqaType || (locale === 'ar' ? 'حلقة' : 'Circle'),
-                                    typeIcon: '',
+                                    typeIcon: 'halqa',
                                     map: halqa.google_maps_url || halqa.googleMapsUrl,
                                     video: halqa.video_url || halqa.videoUrl,
                                     whatsapp: halqa.whatsapp,
