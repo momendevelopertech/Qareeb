@@ -1,8 +1,9 @@
 ﻿'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import Pusher from 'pusher-js';
 import { useLocale, useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -36,6 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const { unreadCount, items, setNotifications, markRead } = useNotificationStore();
 
     const [showNotifMenu, setShowNotifMenu] = useState(false);
+    const notificationAudioRef = useRef<HTMLAudioElement | null>(null);
 
     const isLoginPage = pathname === `/${locale}/admin`;
     const otherLocale = locale === 'ar' ? 'en' : 'ar';
@@ -95,6 +97,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }, [rememberMe, isLoginPage, setAuth]);
 
     useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const audio = new Audio('/sounds/notification.mp3');
+        audio.preload = 'auto';
+        notificationAudioRef.current = audio;
+
+        const unlockAudio = () => {
+            if (!notificationAudioRef.current) return;
+            notificationAudioRef.current.play()
+                .then(() => {
+                    notificationAudioRef.current?.pause();
+                    if (notificationAudioRef.current) {
+                        notificationAudioRef.current.currentTime = 0;
+                    }
+                })
+                .catch(() => undefined);
+        };
+
+        window.addEventListener('pointerdown', unlockAudio, { once: true });
+        window.addEventListener('keydown', unlockAudio, { once: true });
+
+        return () => {
+            window.removeEventListener('pointerdown', unlockAudio);
+            window.removeEventListener('keydown', unlockAudio);
+            notificationAudioRef.current = null;
+        };
+    }, []);
+
+    useEffect(() => {
         const mapNotification = (n: any) => ({
             id: n.id,
             type: n.type,
@@ -107,7 +138,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         const playNotificationSound = () => {
             if (document.visibilityState !== 'visible') return;
-            const audio = new Audio('/sounds/notification.mp3');
+            const audio = notificationAudioRef.current;
+            if (!audio) return;
+            audio.currentTime = 0;
             audio.play().catch(() => undefined);
         };
 
@@ -136,9 +169,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }, 20000);
 
         let socket: Socket | null = null;
+        let pusher: Pusher | null = null;
+        let pusherChannel: ReturnType<Pusher['subscribe']> | null = null;
         const socketDisabled = typeof window !== 'undefined' && window.sessionStorage.getItem(SOCKET_DISABLED_SESSION_KEY) === '1';
+        const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+        const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
 
-        if (admin?.role && !socketDisabled) {
+        if (admin?.role && pusherKey && pusherCluster) {
+            pusher = new Pusher(pusherKey, { cluster: pusherCluster, forceTLS: true });
+            pusherChannel = pusher.subscribe(`role-${admin.role}`);
+            pusherChannel.bind('notification', () => {
+                void syncUnreadNotifications(true);
+            });
+        }
+
+        if (admin?.role && !socketDisabled && !pusher) {
             const base = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 'http://localhost:3001';
             socket = io(`${base}/notifications`, {
                 transports: ['polling', 'websocket'],
@@ -176,6 +221,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return () => {
             clearInterval(pollingInterval);
             socket?.disconnect();
+            if (pusherChannel) {
+                pusherChannel.unbind_all();
+                pusher?.unsubscribe(pusherChannel.name);
+            }
+            pusher?.disconnect();
         };
     }, [token, admin?.role, setNotifications]);
 
