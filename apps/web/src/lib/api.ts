@@ -1,7 +1,6 @@
-const API_URL =
-    typeof window !== 'undefined'
-        ? '/api/v1'
-        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1');
+const DIRECT_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1';
+const PROXY_API_URL = '/api/v1';
+const API_URL = typeof window !== 'undefined' ? PROXY_API_URL : DIRECT_API_URL;
 
 interface FetchOptions extends RequestInit {
     token?: string;
@@ -22,10 +21,28 @@ async function fetchAPI<T>(endpoint: string, options: FetchOptions = {}): Promis
             ...(init.headers as Record<string, string>),
         };
 
-        const res = await fetch(`${API_URL}${endpoint}`, {
+        const requestInit: RequestInit = {
             ...init,
             headers,
-        });
+        };
+
+        const sendRequest = async (baseUrl: string) => fetch(`${baseUrl}${endpoint}`, requestInit);
+
+        let res = await sendRequest(API_URL);
+
+        // Vercel's edge proxy may occasionally fail with FUNCTION_INVOCATION_FAILED.
+        // In that case, retry once against the API origin directly.
+        if (
+            typeof window !== 'undefined' &&
+            API_URL === PROXY_API_URL &&
+            !res.ok &&
+            res.status >= 500
+        ) {
+            const responseText = await res.clone().text();
+            if (responseText.includes('FUNCTION_INVOCATION_FAILED')) {
+                res = await sendRequest(DIRECT_API_URL);
+            }
+        }
 
         if (!res.ok) {
             const error = await res.json().catch(() => ({ message: 'An error occurred' })) as { message?: string };
