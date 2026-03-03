@@ -19,6 +19,12 @@ export class SettingsService implements OnModuleInit {
     constructor(private readonly prisma: PrismaService) { }
 
     async onModuleInit() {
+        const isTableAvailable = await this.isSystemSettingsTableAvailable();
+        if (!isTableAvailable) {
+            this.logger.warn('system_settings table is not available yet; skipping environment seeding.');
+            return;
+        }
+
         await this.seedSettingFromEnv({
             key: 'CLOUDINARY_CLOUD_NAME',
             group: 'CLOUDINARY',
@@ -249,5 +255,18 @@ export class SettingsService implements OnModuleInit {
 
         await this.set(input.key, envValue, input.group, input.isSecret);
         this.logger.log(`Seeded setting ${input.key} from environment variable ${input.envVar}`);
+    }
+
+    private async isSystemSettingsTableAvailable(): Promise<boolean> {
+        try {
+            await this.prisma.systemSetting.findFirst({ select: { id: true } });
+            return true;
+        } catch (error: any) {
+            const message = String(error?.message || error || '');
+            if (message.includes('system_settings') || message.includes('does not exist') || message.includes('P2021')) {
+                return false;
+            }
+            throw error;
+        }
     }
 }
