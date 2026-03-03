@@ -55,7 +55,18 @@ export class SettingsService implements OnModuleInit {
         const setting = await this.prisma.systemSetting.findUnique({ where: { key } });
         if (!setting) return null;
 
-        const value = setting.isSecret ? this.decrypt(setting.value) : setting.value;
+        let value = setting.value;
+        if (setting.isSecret) {
+            try {
+                value = this.decrypt(setting.value);
+            } catch (error: any) {
+                this.logger.error(
+                    `Failed to decrypt setting ${key}. Check SETTINGS_ENCRYPTION_KEY.`,
+                    error?.stack || error?.message || String(error),
+                );
+                return null;
+            }
+        }
         this.cache.set(key, {
             value,
             group: setting.group,
@@ -225,6 +236,13 @@ export class SettingsService implements OnModuleInit {
     }) {
         const envValue = process.env[input.envVar];
         if (!envValue || !envValue.trim()) return;
+
+        if (input.isSecret && !(process.env.SETTINGS_ENCRYPTION_KEY || '').trim()) {
+            this.logger.warn(
+                `Skipped seeding secret setting ${input.key} from ${input.envVar} because SETTINGS_ENCRYPTION_KEY is missing.`,
+            );
+            return;
+        }
 
         const existing = await this.prisma.systemSetting.findUnique({ where: { key: input.key } });
         if (existing?.value?.trim()) return;
