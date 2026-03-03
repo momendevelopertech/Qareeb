@@ -243,7 +243,7 @@ export default function ChatWidget() {
         );
     };
 
-    const useCurrentLocationNow = async (forceFresh = false) => {
+    const handleCurrentLocationNow = async (forceFresh = false) => {
         if (!pendingType) return;
         setLoadingSearch(true);
         setLocationStatus('loading');
@@ -388,8 +388,8 @@ export default function ChatWidget() {
                                 role="button"
                                 tabIndex={0}
                                 title={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}
-                                onClick={() => useCurrentLocationNow(false)}
-                                onKeyDown={(e) => e.key === 'Enter' && useCurrentLocationNow(false)}
+                                onClick={() => handleCurrentLocationNow(false)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCurrentLocationNow(false)}
                             >
                                 <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z"></path>
@@ -406,7 +406,7 @@ export default function ChatWidget() {
                                     title={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        void useCurrentLocationNow(true);
+                                        void handleCurrentLocationNow(true);
                                     }}
                                 >
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
