@@ -15,7 +15,7 @@ const cspDirectives = [
     "img-src 'self' data: blob: https://res.cloudinary.com https://tile.openstreetmap.org https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
     "font-src 'self' data:",
     `connect-src 'self' ${apiOrigin} https://res.cloudinary.com wss: https:`,
-    "media-src 'self' blob: https://res.cloudinary.com",
+    "media-src 'self' blob: https://res.cloudinary.com https://actions.google.com",
     "worker-src 'self' blob:",
     "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://www.instagram.com https://drive.google.com https://www.google.com",
     "form-action 'self'",
