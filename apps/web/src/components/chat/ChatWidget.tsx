@@ -253,15 +253,19 @@ export default function ChatWidget() {
                 ? 'انت كده اللوكيشن بتاعك اهو.. جاري البحث عن الأقرب.'
                 : 'Got it — using your current location. Searching for nearest results.',
         );
-        try {
-            let coords: { lat: number; lng: number };
-            let usedIpFallback = false;
+        let coords: { lat: number; lng: number };
+        let usedIpFallback = false;
 
-            try {
-                coords = await getBrowserCoords(forceFresh);
-            } catch {
-                coords = await getLocationByIP();
-                usedIpFallback = true;
+        try {
+            if (Number.isFinite(lat) && Number.isFinite(lng) && !forceFresh) {
+                coords = { lat: lat as number, lng: lng as number };
+            } else {
+                try {
+                    coords = await getBrowserCoords(forceFresh);
+                } catch {
+                    coords = await getLocationByIP();
+                    usedIpFallback = true;
+                }
             }
 
             setLocationCoords(coords);
@@ -269,25 +273,34 @@ export default function ChatWidget() {
             setLocationLabel(readableLocation);
             setLocationStatus('ready');
 
-            await searchByNearest(pendingType, coords.lat, coords.lng);
+            try {
+                await searchByNearest(pendingType, coords.lat, coords.lng);
 
-            addMessage(
-                'bot',
-                locale === 'ar'
-                    ? `موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
-                    : `Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
-            );
-
-            if (usedIpFallback) {
                 addMessage(
                     'bot',
                     locale === 'ar'
-                        ? 'تعذر الوصول لـ GPS، فتم استخدام موقع تقريبي حسب الشبكة لإظهار النتائج الأقرب.'
-                        : 'GPS location was unavailable, so a network/IP-based approximate location was used to find nearby results.',
+                        ? `موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
+                        : `Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
+                );
+
+                if (usedIpFallback) {
+                    addMessage(
+                        'bot',
+                        locale === 'ar'
+                            ? 'تعذر الوصول لـ GPS، فتم استخدام موقع تقريبي حسب الشبكة لإظهار النتائج الأقرب.'
+                            : 'GPS location was unavailable, so a network/IP-based approximate location was used to find nearby results.',
+                    );
+                }
+                setShowLocationChooser(false);
+                setPendingType(null);
+            } catch {
+                addMessage(
+                    'bot',
+                    locale === 'ar'
+                        ? 'تعذر البحث بالموقع الحالي الآن. حاول مرة أخرى أو اختر المحافظة والمنطقة.'
+                        : 'Could not search by current location right now. Please try again or select governorate and area.',
                 );
             }
-            setShowLocationChooser(false);
-            setPendingType(null);
         } catch {
             setLocationStatus('idle');
             addMessage(
