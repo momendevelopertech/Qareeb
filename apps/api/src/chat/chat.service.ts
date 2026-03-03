@@ -28,6 +28,10 @@ export class ChatService {
         return 'all';
     }
 
+    private hasServiceInterest(text: string): boolean {
+        return /(imam|إمام|مسجد|المساجد|حلقة|حلقات|halqa|halaqa|تحفيظ|قرآن|دار تحفيظ|صيانة|إعمار|maintenance|تبرع|donate|donation)/i.test(text);
+    }
+
     async findNearest(text: string, userLat?: number, userLng?: number) {
         if (!text || !text.trim()) throw new BadRequestException('text is required');
 
@@ -90,6 +94,19 @@ export class ChatService {
             return {
                 mode: 'ask_type',
                 message: 'عايز تدور على إيه بالضبط؟ أقرب مسجد، أقرب حلقة، ولا مسجد يحتاج صيانة؟',
+                cards: [],
+            };
+        }
+
+        if (this.hasServiceInterest(text)) {
+            return {
+                mode: 'suggest_types',
+                message: 'اختار نوع الخدمة عشان أجيب الأقرب ليك:',
+                choices: [
+                    { type: 'imam', labelAr: 'أقرب مسجد', labelEn: 'Nearest mosque' },
+                    { type: 'halqa', labelAr: 'أقرب حلقة', labelEn: 'Nearest halqa' },
+                    { type: 'maintenance', labelAr: 'مسجد يحتاج صيانة', labelEn: 'Mosque needs maintenance' },
+                ],
                 cards: [],
             };
         }

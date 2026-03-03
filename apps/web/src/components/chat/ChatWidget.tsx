@@ -27,6 +27,7 @@ export default function ChatWidget() {
 
     const [input, setInput] = useState('');
     const [cards, setCards] = useState<ChatCard[]>([]);
+    const [suggestedTypes, setSuggestedTypes] = useState<{ type: SearchType; label: string }[]>([]);
 
     const [pendingType, setPendingType] = useState<SearchType | null>(null);
     const [showLocationChooser, setShowLocationChooser] = useState(false);
@@ -161,6 +162,7 @@ export default function ChatWidget() {
         addMessage('user', value);
         setInput('');
         setActionLinks([]);
+        setSuggestedTypes([]);
 
         try {
             const res = await api.chatNearest({ text: value, lat: lat ?? undefined, lng: lng ?? undefined });
@@ -184,6 +186,17 @@ export default function ChatWidget() {
                         .filter((x) => x.label && x.path),
                 );
             }
+            const serverChoices = Array.isArray(res?.choices) ? (res.choices as any[]) : [];
+            if (serverChoices.length) {
+                setSuggestedTypes(
+                    serverChoices
+                        .map((choice) => ({
+                            type: choice.type as SearchType,
+                            label: locale === 'ar' ? (choice.labelAr || choice.label || '') : (choice.labelEn || choice.label || ''),
+                        }))
+                        .filter((x) => x.type && x.label),
+                );
+            }
             if (res?.mode === 'need_location' && res?.intent) {
                 setPendingType(res.intent);
                 setShowLocationChooser(true);
@@ -195,6 +208,7 @@ export default function ChatWidget() {
             addMessage('bot', locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.');
             setCards([]);
             setActionLinks([]);
+            setSuggestedTypes([]);
             setShowLocationChooser(false);
             setPendingType(null);
         }
@@ -253,6 +267,7 @@ export default function ChatWidget() {
         addMessage('user', promptLabel);
         setCards([]);
         setActionLinks([]);
+        setSuggestedTypes([]);
 
         setPendingType(type);
         setShowLocationChooser(true);
@@ -461,6 +476,23 @@ export default function ChatWidget() {
                                     onClick={() => router.push(`/${locale}${link.path}`)}
                                 >
                                     {link.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {suggestedTypes.length > 0 && (
+                    <div className="bg-white border border-border rounded-xl p-3 space-y-2 text-xs">
+                        <p className="font-bold">{locale === 'ar' ? 'اختار نوع الخدمة' : 'Choose service type'}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {suggestedTypes.map((choice) => (
+                                <button
+                                    key={choice.type}
+                                    className="btn-outline !py-1.5 !px-3 text-xs"
+                                    onClick={() => quickSearch(choice.type, choice.label)}
+                                >
+                                    {choice.label}
                                 </button>
                             ))}
                         </div>
