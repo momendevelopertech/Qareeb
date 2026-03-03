@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -12,10 +12,38 @@ type CacheItem = {
 const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 @Injectable()
-export class SettingsService {
+export class SettingsService implements OnModuleInit {
     private readonly cache = new Map<string, CacheItem>();
+    private readonly logger = new Logger(SettingsService.name);
 
     constructor(private readonly prisma: PrismaService) { }
+
+    async onModuleInit() {
+        await this.seedSettingFromEnv({
+            key: 'CLOUDINARY_CLOUD_NAME',
+            group: 'CLOUDINARY',
+            envVar: 'CLOUDINARY_CLOUD_NAME',
+            isSecret: false,
+        });
+        await this.seedSettingFromEnv({
+            key: 'CLOUDINARY_API_KEY',
+            group: 'CLOUDINARY',
+            envVar: 'CLOUDINARY_API_KEY',
+            isSecret: true,
+        });
+        await this.seedSettingFromEnv({
+            key: 'CLOUDINARY_API_SECRET',
+            group: 'CLOUDINARY',
+            envVar: 'CLOUDINARY_API_SECRET',
+            isSecret: true,
+        });
+        await this.seedSettingFromEnv({
+            key: 'CLOUDINARY_URL',
+            group: 'CLOUDINARY',
+            envVar: 'CLOUDINARY_URL',
+            isSecret: false,
+        });
+    }
 
     async get(key: string): Promise<string | null> {
         const now = Date.now();
@@ -187,5 +215,21 @@ export class SettingsService {
         if (!value) return '';
         const suffix = value.slice(-4);
         return `********${suffix}`;
+    }
+
+    private async seedSettingFromEnv(input: {
+        key: string;
+        group: string;
+        envVar: string;
+        isSecret: boolean;
+    }) {
+        const envValue = process.env[input.envVar];
+        if (!envValue || !envValue.trim()) return;
+
+        const existing = await this.prisma.systemSetting.findUnique({ where: { key: input.key } });
+        if (existing?.value?.trim()) return;
+
+        await this.set(input.key, envValue, input.group, input.isSecret);
+        this.logger.log(`Seeded setting ${input.key} from environment variable ${input.envVar}`);
     }
 }
