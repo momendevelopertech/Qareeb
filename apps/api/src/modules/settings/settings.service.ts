@@ -150,17 +150,21 @@ export class SettingsService {
         return { success: true };
     }
 
-    private getEncryptionKey(): Buffer {
+    private getEncryptionKey(): Buffer | null {
         const raw = process.env.SETTINGS_ENCRYPTION_KEY || '';
         if (!raw.trim()) {
-            throw new InternalServerErrorException('SETTINGS_ENCRYPTION_KEY is not configured');
+            return null;
         }
         return scryptSync(raw, 'qareeb-settings', 32);
     }
 
     private encrypt(plainText: string): string {
-        const iv = randomBytes(12);
         const key = this.getEncryptionKey();
+        if (!key) {
+            this.logger.warn('SETTINGS_ENCRYPTION_KEY is missing; storing secret setting in plain text.');
+            return `plain:${plainText}`;
+        }
+        const iv = randomBytes(12);
         const cipher = createCipheriv('aes-256-gcm', key, iv);
         const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
         const tag = cipher.getAuthTag();
@@ -168,12 +172,21 @@ export class SettingsService {
     }
 
     private decrypt(payload: string): string {
+        if (payload.startsWith('plain:')) {
+            return payload.slice('plain:'.length);
+        }
+
         const [version, ivBase64, tagBase64, encryptedBase64] = payload.split(':');
         if (version !== 'v1' || !ivBase64 || !tagBase64 || !encryptedBase64) {
-            throw new InternalServerErrorException('Invalid encrypted setting payload format');
+            return payload;
         }
 
         const key = this.getEncryptionKey();
+        if (!key) {
+            this.logger.warn('SETTINGS_ENCRYPTION_KEY is missing; cannot decrypt secret setting.');
+            return '';
+        }
+
         const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivBase64, 'base64'));
         decipher.setAuthTag(Buffer.from(tagBase64, 'base64'));
         const plain = Buffer.concat([
