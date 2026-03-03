@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsUrl, IsArray, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsUrl, IsArray, IsNotEmpty, IsUUID, Min, Max } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class CreateImamDto {
@@ -28,9 +28,10 @@ export class CreateImamDto {
     @Transform(({ value }) => (value === '' ? undefined : value))
     area_id?: string;
 
+    @IsOptional()
     @IsUrl()
-    @IsNotEmpty()
-    google_maps_url!: string;
+    @Transform(({ value }) => (value === '' ? undefined : value))
+    google_maps_url?: string;
 
     @IsUrl()
     @IsOptional()
@@ -38,12 +39,16 @@ export class CreateImamDto {
 
     @IsNumber()
     @IsOptional()
+    @Min(-90)
+    @Max(90)
     @Type(() => Number)
     @Transform(({ value }) => (value === '' || value === null || Number.isNaN(Number(value)) ? undefined : Number(value)))
     lat?: number; // legacy fallback
 
     @IsNumber()
     @IsOptional()
+    @Min(-180)
+    @Max(180)
     @Type(() => Number)
     @Transform(({ value }) => (value === '' || value === null || Number.isNaN(Number(value)) ? undefined : Number(value)))
     lng?: number; // legacy fallback

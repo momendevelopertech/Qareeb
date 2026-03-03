@@ -10,6 +10,7 @@
         "start:dev": "nest start --watch",
         "start:prod": "node dist/main",
         "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+        "test:location-util": "ts-node scripts/test-location-util.ts",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:seed": "ts-node prisma/seed.ts && ts-node prisma/sync-locations.ts",

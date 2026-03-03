@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsEnum, IsNotEmpty, IsUrl, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsArray, IsEnum, IsNotEmpty, IsUrl, IsUUID, Min, Max } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export enum MaintenanceType {
@@ -34,18 +34,23 @@ export class CreateMaintenanceDto {
     @Transform(({ value }) => (value === '' ? undefined : value))
     area_id?: string;
 
+    @IsOptional()
     @IsUrl()
-    @IsNotEmpty()
-    google_maps_url!: string;
+    @Transform(({ value }) => (value === '' ? undefined : value))
+    google_maps_url?: string;
 
     @IsNumber()
     @IsOptional()
+    @Min(-90)
+    @Max(90)
     @Type(() => Number)
     @Transform(({ value }) => (value === '' || value === null || Number.isNaN(Number(value)) ? undefined : Number(value)))
     lat?: number; // legacy fallback
 
     @IsNumber()
     @IsOptional()
+    @Min(-180)
+    @Max(180)
     @Type(() => Number)
     @Transform(({ value }) => (value === '' || value === null || Number.isNaN(Number(value)) ? undefined : Number(value)))
     lng?: number; // legacy fallback

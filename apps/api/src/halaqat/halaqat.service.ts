@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateHalqaDto, HalqaQueryDto } from './dto/halqa.dto';
-import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
+import { resolveSubmissionLocation } from '../common/location.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../cache/cache.service';
@@ -123,14 +123,17 @@ export class HalaqatService {
 
     async create(dto: CreateHalqaDto, createdBy?: string) {
         const isOnline = Boolean(dto.is_online);
-        const coords = !isOnline
-            ? extractLatLngFromGoogleMaps(dto.google_maps_url)
-                || await resolveLatLngFromGoogleMaps(dto.google_maps_url)
-                || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null)
+        const resolvedLocation = !isOnline
+            ? await resolveSubmissionLocation({
+                googleMapsUrl: dto.google_maps_url,
+                manualLat: dto.lat,
+                manualLng: dto.lng,
+            })
             : null;
-        if (!isOnline && !coords) {
-            throw new BadRequestException('Invalid Google Maps link. Please share a link that contains coordinates (e.g., open map > share > copy link).');
+        if (!isOnline && !resolvedLocation) {
+            throw new BadRequestException('Unable to determine valid coordinates. Provide a valid Google Maps URL or select a location manually on the map.');
         }
+        const coords = resolvedLocation?.coordinates ?? null;
         const halqa = await this.prisma.halqa.create({
             data: {
                 circleName: dto.circle_name,
@@ -140,7 +143,7 @@ export class HalaqatService {
                 city: isOnline ? '' : (dto.city || dto.governorate || ''),
                 district: isOnline ? null : (dto.district || null),
                 areaId: isOnline ? null : (dto.area_id || null),
-                googleMapsUrl: isOnline ? null : dto.google_maps_url,
+                googleMapsUrl: isOnline ? null : resolvedLocation?.googleMapsUrl,
                 latitude: coords?.lat ?? 0,
                 longitude: coords?.lng ?? 0,
                 whatsapp: dto.whatsapp,
@@ -204,9 +207,18 @@ export class HalaqatService {
         const before = await this.prisma.halqa.findUnique({ where: { id } });
         if (!before) throw new Error('Halqa not found');
         const nextOnline = data.is_online !== undefined ? Boolean(data.is_online) : (before.additionalInfo || '').startsWith('[ONLINE]');
-        const coords = data.google_maps_url
-            ? (extractLatLngFromGoogleMaps(data.google_maps_url) || await resolveLatLngFromGoogleMaps(data.google_maps_url))
+        const shouldResolveLocation = !nextOnline && (data.google_maps_url !== undefined || data.lat !== undefined || data.lng !== undefined);
+        const resolvedLocation = !nextOnline && shouldResolveLocation
+            ? await resolveSubmissionLocation({
+                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                manualLat: data.lat,
+                manualLng: data.lng,
+            })
             : null;
+
+        if (!nextOnline && shouldResolveLocation && !resolvedLocation) {
+            throw new BadRequestException('Unable to determine valid coordinates. Provide a valid Google Maps URL or select a location manually on the map.');
+        }
 
         const updated = await this.prisma.halqa.update({
             where: { id },
@@ -218,9 +230,9 @@ export class HalaqatService {
                 city: nextOnline ? '' : ((data.city ?? data.governorate) ?? before.city),
                 district: nextOnline ? null : (data.district ?? before.district),
                 areaId: nextOnline ? null : (data.area_id ?? before.areaId),
-                googleMapsUrl: nextOnline ? null : (data.google_maps_url ?? before.googleMapsUrl),
-                latitude: nextOnline ? 0 : (coords ? coords.lat : before.latitude),
-                longitude: nextOnline ? 0 : (coords ? coords.lng : before.longitude),
+                googleMapsUrl: nextOnline ? null : (resolvedLocation?.googleMapsUrl ?? before.googleMapsUrl),
+                latitude: nextOnline ? 0 : (resolvedLocation?.coordinates.lat ?? before.latitude),
+                longitude: nextOnline ? 0 : (resolvedLocation?.coordinates.lng ?? before.longitude),
                 whatsapp: data.whatsapp ?? before.whatsapp,
                 additionalInfo: data.additional_info !== undefined
                     ? `${nextOnline ? '[ONLINE] ' : ''}${data.additional_info || ''}`.trim() || null

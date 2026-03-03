@@ -16,7 +16,7 @@ export default function Header() {
     const { token, admin } = useAuthStore();
     const { openModal } = useModalStore();
     const { items, unreadCount, markRead } = useNotificationStore();
-    const { lat, lng, requestLocation, loading: geoLoading } = useGeolocationStore();
+    const { lat, lng, requestLocation, loading: geoLoading, error: geoError } = useGeolocationStore();
     const pathname = usePathname();
     const isAdminPath = pathname.startsWith(`/${locale}/admin`);
     const otherLocale = locale === 'ar' ? 'en' : 'ar';
@@ -93,13 +93,34 @@ export default function Header() {
                         </nav>
 
                         <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="hidden md:flex items-center gap-2 bg-cream rounded-xl px-3 py-2 border border-transparent max-w-[220px]">
+                            <div
+                                className={`hidden md:flex items-center gap-2 bg-cream rounded-xl px-3 py-2 border max-w-[220px] cursor-pointer transition-colors ${geoError ? 'border-red-200' : 'border-transparent hover:border-primary/20'}`}
+                                onClick={() => requestLocation(true)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        requestLocation(true);
+                                    }
+                                }}
+                                title={geoError || (locale === 'ar' ? 'تحديث الموقع' : 'Refresh location')}
+                            >
                                 <AppIcon name="location" className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                                <span className="text-xs font-bold text-dark truncate">
-                                    {geoLoading ? tc('loading') : lat ? `${lat.toFixed(2)}, ${lng?.toFixed(2)}` : (locale === 'ar' ? 'حدد موقعك الحالي' : 'Set location')}
+                                <span className={`text-xs font-bold truncate ${geoError ? 'text-red-600' : 'text-dark'}`}>
+                                    {geoLoading
+                                        ? tc('loading')
+                                        : lat
+                                        ? `${lat.toFixed(2)}, ${lng?.toFixed(2)}`
+                                        : geoError
+                                        ? (locale === 'ar' ? 'تعذر تحديد الموقع' : 'Location unavailable')
+                                        : (locale === 'ar' ? 'حدد موقعك الحالي' : 'Set location')}
                                 </span>
                                 <button
-                                    onClick={() => requestLocation(true)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        requestLocation(true);
+                                    }}
                                     className="p-1 rounded-lg text-primary hover:bg-primary/10 transition-colors"
                                     aria-label={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}
                                     title={locale === 'ar' ? 'تحديث الموقع' : 'Refresh location'}

@@ -8,6 +8,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { api } from '@/lib/api';
 import EgyptWhatsAppInput from '@/components/form/EgyptWhatsAppInput';
+import MapPickerModal from '@/components/form/MapPickerModal';
+import { generateGoogleMapsLink, resolveCoordinatesFromGoogleMapsInput, validateCoordinates } from '@/lib/maps';
 
 type FormStep = 'type' | 'info' | 'contact' | 'review';
 const ALLOWED_MAINTENANCE_TYPES = ['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'AC_Repair', 'Cleaning', 'Other'] as const;
@@ -50,6 +52,7 @@ export default function SubmitPage() {
     const [whatsappError, setWhatsappError] = useState('');
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [submitError, setSubmitError] = useState('');
+    const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
     const { register, handleSubmit, watch, setValue } = useForm();
     const [governorates, setGovernorates] = useState<any[]>([]);
     const [areas, setAreas] = useState<any[]>([]);
@@ -58,6 +61,8 @@ export default function SubmitPage() {
     const selectedGovernorateId = watch('governorateId');
     const isOnline = watch('isOnline');
     const whatsappValue = watch('whatsapp');
+    const selectedLat = watch('lat');
+    const selectedLng = watch('lng');
     const entityTitle = entityType === 'imam'
         ? (locale === 'ar' ? 'إضافة إمام' : 'Add Imam')
         : entityType === 'halqa'
@@ -107,6 +112,31 @@ export default function SubmitPage() {
 
     const getErrorMessage = (field: string) => formErrors[field] || '';
 
+    const applyManualCoordinates = (coords: { lat: number; lng: number }) => {
+        const normalized = validateCoordinates(coords);
+        if (!normalized) return;
+        setValue('lat', normalized.lat);
+        setValue('lng', normalized.lng);
+        setValue('googleMapsUrl', generateGoogleMapsLink(normalized));
+        clearFieldError('googleMapsUrl');
+        setSubmitError('');
+    };
+
+    const syncCoordinatesFromLink = async (rawUrl?: string) => {
+        const value = String(rawUrl || '').trim();
+        if (!value) return;
+        const resolved = await resolveCoordinatesFromGoogleMapsInput(value);
+        if (resolved.finalUrl) {
+            setValue('googleMapsUrl', resolved.finalUrl);
+        }
+        if (resolved.coordinates) {
+            setValue('lat', resolved.coordinates.lat);
+            setValue('lng', resolved.coordinates.lng);
+            clearFieldError('googleMapsUrl');
+            setSubmitError('');
+        }
+    };
+
     const onSubmit = async (data: any) => {
         setSubmitting(true);
         setWhatsappError('');
@@ -123,6 +153,11 @@ export default function SubmitPage() {
                 lat: toNum(data.lat),
                 lng: toNum(data.lng),
             };
+            const normalizedCoordinates = validateCoordinates({ lat: payload.lat, lng: payload.lng });
+            if (normalizedCoordinates) {
+                payload.lat = normalizedCoordinates.lat;
+                payload.lng = normalizedCoordinates.lng;
+            }
             const selectedMaintenanceTypes = Array.isArray(payload.maintenanceTypes)
                 ? payload.maintenanceTypes.filter(Boolean)
                 : payload.maintenanceTypes
@@ -146,7 +181,7 @@ export default function SubmitPage() {
                 if (!payload.areaId) {
                     nextErrors.areaId = t('validation.areaRequired');
                 }
-                if (!String(payload.googleMapsUrl || '').trim()) {
+                if (!String(payload.googleMapsUrl || '').trim() && !normalizedCoordinates) {
                     nextErrors.googleMapsUrl = t('validation.mapsRequired');
                 }
             }
@@ -595,11 +630,30 @@ export default function SubmitPage() {
                                         type="url"
                                         className="block w-full px-5 py-4 bg-cream border-2 border-transparent rounded-2xl focus:border-primary focus:bg-white transition-all outline-none font-bold"
                                         placeholder="https://maps.google.com/...?q=30.0444,31.2357"
+                                        onBlur={(e) => {
+                                            void syncCoordinatesFromLink(e.target.value);
+                                        }}
                                     />
+                                    <input type="hidden" {...register('lat')} />
+                                    <input type="hidden" {...register('lng')} />
                                     {getErrorMessage('googleMapsUrl') && <p className="text-xs text-red-600 mt-1 ms-1">{getErrorMessage('googleMapsUrl')}</p>}
                                     <span className="text-[10px] text-text-muted mt-2 block ms-1 font-bold">
                                         {locale === 'ar' ? 'سنستخرج الإحداثيات تلقائياً من الرابط' : 'We will extract coordinates automatically from the link'}
                                     </span>
+                                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsMapPickerOpen(true)}
+                                            className="btn-outline !px-4 !py-2 text-xs"
+                                        >
+                                            {locale === 'ar' ? 'اختيار الموقع من الخريطة' : 'Select location from map'}
+                                        </button>
+                                        {validateCoordinates({ lat: Number(selectedLat), lng: Number(selectedLng) }) && (
+                                            <span className="text-[11px] font-bold text-primary">
+                                                {`${Number(selectedLat).toFixed(6)}, ${Number(selectedLng).toFixed(6)}`}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 )}
                             </div>
@@ -734,6 +788,16 @@ export default function SubmitPage() {
                     )}
                 </div>
             </main>
+            <MapPickerModal
+                isOpen={isMapPickerOpen}
+                locale={locale}
+                initialCoordinates={validateCoordinates({ lat: Number(selectedLat), lng: Number(selectedLng) })}
+                onClose={() => setIsMapPickerOpen(false)}
+                onConfirm={(coords) => {
+                    applyManualCoordinates(coords);
+                    setIsMapPickerOpen(false);
+                }}
+            />
             <Footer />
         </div>
     );

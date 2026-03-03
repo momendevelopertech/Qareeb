@@ -67,6 +67,13 @@ export const useGeolocationStore = create<GeolocationState>((set) => ({
     loading: false,
     error: null,
     requestLocation: (forceFresh = false) => {
+        if (typeof window !== 'undefined' && !window.isSecureContext) {
+            set({
+                loading: false,
+                error: 'Location يحتاج HTTPS أو localhost في المتصفح.',
+            });
+            return;
+        }
         if (!navigator.geolocation) {
             set({ error: 'Geolocation is not supported' });
             return;

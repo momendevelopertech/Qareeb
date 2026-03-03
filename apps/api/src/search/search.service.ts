@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { calculateDistance } from '../common/location.util';
 
 type EntityType = 'imam' | 'halqa' | 'maintenance';
 
@@ -78,22 +79,14 @@ export class SearchService {
                 ? await this.prisma.halqa.findMany({ where: { status: 'approved' }, take: 300, orderBy: { createdAt: 'desc' } })
                 : await this.prisma.maintenanceRequest.findMany({ where: { status: 'approved' }, take: 300, orderBy: { createdAt: 'desc' } });
 
-        const toRad = (v: number) => (v * Math.PI) / 180;
-        const distance = (aLat: number, aLng: number) => {
-            const R = 6371e3;
-            const dLat = toRad(lat - aLat);
-            const dLng = toRad(lng - aLng);
-            const la1 = toRad(aLat);
-            const la2 = toRad(lat);
-            const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
-            return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
-        };
-
         const ranked = (modelRows as any[])
             .filter((row) => Number.isFinite(row.latitude) && Number.isFinite(row.longitude))
             .map((row) => ({
                 ...row,
-                distance_meters: distance(row.latitude, row.longitude),
+                distance_meters: calculateDistance(
+                    { lat: row.latitude, lng: row.longitude },
+                    { lat, lng },
+                ),
             }))
             .filter((row) => row.distance_meters <= radiusMeters)
             .sort((a, b) => a.distance_meters - b.distance_meters)

@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateImamDto, ImamQueryDto } from './dto/imam.dto';
-import { extractLatLngFromGoogleMaps, resolveLatLngFromGoogleMaps } from '../common/maps.util';
+import { resolveSubmissionLocation } from '../common/location.util';
 import { AuditService } from '../audit/audit.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CacheService } from '../cache/cache.service';
@@ -135,12 +135,15 @@ export class ImamsService {
     }
 
     async create(dto: CreateImamDto, ip?: string, createdBy?: string) {
-        const coords = extractLatLngFromGoogleMaps(dto.google_maps_url)
-            || await resolveLatLngFromGoogleMaps(dto.google_maps_url)
-            || (dto.lat && dto.lng ? { lat: dto.lat, lng: dto.lng } : null);
-        if (!coords) {
-            throw new BadRequestException('Invalid Google Maps link. Please share a link that contains coordinates (e.g., open map > share > copy link).');
+        const resolvedLocation = await resolveSubmissionLocation({
+            googleMapsUrl: dto.google_maps_url,
+            manualLat: dto.lat,
+            manualLng: dto.lng,
+        });
+        if (!resolvedLocation) {
+            throw new BadRequestException('Unable to determine valid coordinates. Provide a valid Google Maps URL or select a location manually on the map.');
         }
+        const coords = resolvedLocation.coordinates;
 
         const imam = await this.prisma.imam.create({
             data: {
@@ -150,7 +153,7 @@ export class ImamsService {
                 city: dto.city || dto.governorate,
                 district: dto.district,
                 areaId: dto.area_id || null,
-                googleMapsUrl: dto.google_maps_url,
+                googleMapsUrl: resolvedLocation.googleMapsUrl,
                 videoUrl: dto.video_url,
                 latitude: coords.lat,
                 longitude: coords.lng,
@@ -223,9 +226,19 @@ export class ImamsService {
     async update(id: string, adminId: string, data: Partial<CreateImamDto>) {
         const before = await this.prisma.imam.findUnique({ where: { id } });
         if (!before) throw new Error('Imam not found');
-        const coords = data.google_maps_url
-            ? (extractLatLngFromGoogleMaps(data.google_maps_url) || await resolveLatLngFromGoogleMaps(data.google_maps_url))
+
+        const shouldResolveLocation = data.google_maps_url !== undefined || data.lat !== undefined || data.lng !== undefined;
+        const resolvedLocation = shouldResolveLocation
+            ? await resolveSubmissionLocation({
+                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                manualLat: data.lat,
+                manualLng: data.lng,
+            })
             : null;
+
+        if (shouldResolveLocation && !resolvedLocation) {
+            throw new BadRequestException('Unable to determine valid coordinates. Provide a valid Google Maps URL or select a location manually on the map.');
+        }
 
         const updated = await this.prisma.imam.update({
             where: { id },
@@ -236,10 +249,10 @@ export class ImamsService {
                 city: (data.city ?? data.governorate) ?? before.city,
                 district: data.district ?? before.district,
                 areaId: data.area_id ?? before.areaId,
-                googleMapsUrl: data.google_maps_url ?? before.googleMapsUrl,
+                googleMapsUrl: resolvedLocation?.googleMapsUrl ?? before.googleMapsUrl,
                 videoUrl: data.video_url ?? before.videoUrl,
-                latitude: coords ? coords.lat : before.latitude,
-                longitude: coords ? coords.lng : before.longitude,
+                latitude: resolvedLocation?.coordinates.lat ?? before.latitude,
+                longitude: resolvedLocation?.coordinates.lng ?? before.longitude,
                 whatsapp: data.whatsapp ?? before.whatsapp,
                 recitationUrl: data.recitation_url ?? before.recitationUrl,
             },
