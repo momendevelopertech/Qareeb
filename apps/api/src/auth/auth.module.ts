@@ -7,6 +7,9 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 
+const hasAccessPrivateKey = Boolean(process.env.JWT_ACCESS_PRIVATE_KEY);
+const accessAlgorithm = hasAccessPrivateKey ? 'RS256' : 'HS256';
+
 @Module({
     imports: [
         PassportModule.register({ defaultStrategy: 'jwt' }),
@@ -14,7 +17,7 @@ import { RolesGuard } from './roles.guard';
             secret: process.env.JWT_ACCESS_PRIVATE_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
             signOptions: {
                 expiresIn: process.env.JWT_ACCESS_TTL || '15m',
-                algorithm: process.env.JWT_ACCESS_PRIVATE_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256',
+                algorithm: accessAlgorithm,
                 issuer: process.env.JWT_ISSUER || 'qareeb-api',
                 audience: process.env.JWT_AUDIENCE || 'qareeb-web',
             },

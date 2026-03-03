@@ -40,12 +40,16 @@ export class AuthService {
         };
 
         const accessToken = this.jwtService.sign({ ...payload, typ: 'access' }, { jwtid: randomUUID() });
+        const hasRefreshPrivateKey = Boolean(process.env.JWT_REFRESH_PRIVATE_KEY);
+        const refreshAlgorithm = hasRefreshPrivateKey ? 'RS256' : 'HS256';
+        const refreshSecret = process.env.JWT_REFRESH_PRIVATE_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key';
+
         const refreshToken = this.jwtService.sign(
             { ...payload, typ: 'refresh' },
             {
-                secret: process.env.JWT_REFRESH_PRIVATE_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
+                secret: refreshSecret,
                 expiresIn: rememberMe ? process.env.JWT_REFRESH_REMEMBER_TTL || '30d' : process.env.JWT_REFRESH_TTL || '1d',
-                algorithm: process.env.JWT_REFRESH_PRIVATE_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256',
+                algorithm: refreshAlgorithm,
                 issuer: process.env.JWT_ISSUER || 'qareeb-api',
                 audience: process.env.JWT_AUDIENCE || 'qareeb-web',
                 jwtid: randomUUID(),
@@ -65,11 +69,17 @@ export class AuthService {
 
     async refreshToken(token: string) {
         try {
+            const hasRefreshPrivateKey = Boolean(process.env.JWT_REFRESH_PRIVATE_KEY);
+            const refreshAlgorithm = hasRefreshPrivateKey ? 'RS256' : 'HS256';
+            const refreshSecret = hasRefreshPrivateKey
+                ? (process.env.JWT_REFRESH_PUBLIC_KEY || process.env.JWT_PUBLIC_KEY || process.env.JWT_REFRESH_PRIVATE_KEY)
+                : (process.env.JWT_PRIVATE_KEY || 'dev-secret-key');
+
             const payload = this.jwtService.verify(token, {
-                secret: process.env.JWT_REFRESH_PUBLIC_KEY || process.env.JWT_PUBLIC_KEY || process.env.JWT_PRIVATE_KEY || 'dev-secret-key',
+                secret: refreshSecret,
                 issuer: process.env.JWT_ISSUER || 'qareeb-api',
                 audience: process.env.JWT_AUDIENCE || 'qareeb-web',
-                algorithms: [process.env.JWT_REFRESH_PUBLIC_KEY || process.env.JWT_PUBLIC_KEY ? 'RS256' : 'HS256'],
+                algorithms: [refreshAlgorithm],
             });
 
             if (payload.typ !== 'refresh') {
