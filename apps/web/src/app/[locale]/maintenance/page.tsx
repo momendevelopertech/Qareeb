@@ -15,6 +15,7 @@ import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 import { formatLocationParts } from '@/lib/location';
 import { normalizeArabicSearch } from '@/lib/utils';
+import { AppIconName } from '@/components/ui/AppIcon';
 
 const maintenanceLabels: Record<string, Record<string, string>> = {
     ar: { Plumbing: 'سباكة', Electrical: 'كهرباء', Carpentry: 'نجارة', Painting: 'دهان', AC_Repair: 'تكييف', Cleaning: 'تنظيف', Other: 'أخرى' },
@@ -142,7 +143,7 @@ export default function MaintenancePage() {
                                             : locale === 'ar'
                                             ? 'إعمار'
                                             : 'Maintenance',
-                                    typeIcon: '',
+                                    typeIcon: 'maintenance' as AppIconName,
                                     map: item.google_maps_url || item.googleMapsUrl,
                                     video: item.video_url || item.videoUrl,
                                     whatsapp: item.whatsapp,

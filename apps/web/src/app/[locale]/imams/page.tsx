@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
 import { formatLocationParts } from '@/lib/location';
 import { normalizeArabicSearch } from '@/lib/utils';
+import { AppIconName } from '@/components/ui/AppIcon';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
@@ -155,7 +156,7 @@ export default function ImamsPage() {
                                         imam.district,
                                     ]),
                                     typeLabel: locale === 'ar' ? 'إمام' : 'Imam',
-                                    typeIcon: '',
+                                    typeIcon: 'imam' as AppIconName,
                                     map: imam.google_maps_url || imam.googleMapsUrl,
                                     video: imam.video_url || imam.videoUrl,
                                     whatsapp: imam.whatsapp,

@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import AppIcon from '@/components/ui/AppIcon';
+import AppIcon, { AppIconName } from '@/components/ui/AppIcon';
 
 export default function SubmitServiceSection({ locale }: { locale: string }) {
-    const cards = [
+    const cards: Array<{ href: string; icon: AppIconName; title: string; desc: string }> = [
         {
             href: `/${locale}/imams/submit`,
             icon: 'imam',

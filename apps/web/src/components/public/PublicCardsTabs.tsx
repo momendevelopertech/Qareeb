@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import UnifiedCard from './UnifiedCard';
 import PublicCardModals from './PublicCardModals';
 import { formatLocationParts } from '@/lib/location';
-import AppIcon from '@/components/ui/AppIcon';
+import AppIcon, { AppIconName } from '@/components/ui/AppIcon';
 import { normalizeArabicSearch } from '@/lib/utils';
 
 type TabType = 'all' | 'imams' | 'halqa' | 'maintenance';
@@ -127,7 +127,7 @@ export default function PublicCardsTabs() {
                       : locale === 'ar'
                         ? 'صيانة'
                         : 'Maintenance',
-            typeIcon: entity === 'imam' ? 'imam' : entity === 'halqa' ? 'halqa' : 'maintenance',
+            typeIcon: (entity === 'imam' ? 'imam' : entity === 'halqa' ? 'halqa' : 'maintenance') as AppIconName,
             map: item.googleMapsUrl || item.google_maps_url || '',
             video: item.videoUrl || item.video_url || '',
             whatsapp: item.whatsapp || '',
