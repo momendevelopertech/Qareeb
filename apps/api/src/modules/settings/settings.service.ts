@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -14,6 +14,7 @@ const SETTINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 @Injectable()
 export class SettingsService {
     private readonly cache = new Map<string, CacheItem>();
+    private readonly logger = new Logger(SettingsService.name);
 
     constructor(private readonly prisma: PrismaService) { }
 
