@@ -55,7 +55,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
                     <div className="text-center">
                         <h1 className="text-2xl font-bold mb-4">{locale === 'ar' ? 'الطلب غير موجود' : 'Not Found'}</h1>
                         <Link href={`/${locale}/maintenance`} className="btn-primary">
-                            {locale === 'ar' ? 'العودة' : 'Back'}
+                            {locale === 'ar' ? 'العودة إلى صفحة الصيانة' : 'Back to Maintenance'}
                         </Link>
                     </div>
                 </main>
@@ -80,7 +80,7 @@ export default async function MaintenanceDetailPage({ params }: { params: { id: 
                             <svg className="w-5 h-5 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            <span className="font-bold text-sm">{locale === 'ar' ? 'العودة للمكتشف' : 'Back to Explorer'}</span>
+                            <span className="font-bold text-sm">{locale === 'ar' ? 'العودة إلى صفحة الصيانة' : 'Back to Maintenance'}</span>
                         </Link>
                         <span className="block text-accent font-black text-sm uppercase tracking-widest mb-2">
                             {locale === 'ar' ? 'طلب إعمار مسجد' : 'Mosque Maintenance Request'}

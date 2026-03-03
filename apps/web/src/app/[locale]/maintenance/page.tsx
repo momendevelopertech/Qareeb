@@ -14,6 +14,7 @@ import { useGeolocationStore } from '@/lib/store';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 import { formatLocationParts } from '@/lib/location';
+import { normalizeArabicSearch } from '@/lib/utils';
 
 const maintenanceLabels: Record<string, Record<string, string>> = {
     ar: { Plumbing: 'سباكة', Electrical: 'كهرباء', Carpentry: 'نجارة', Painting: 'دهان', AC_Repair: 'تكييف', Cleaning: 'تنظيف', Other: 'أخرى' },
@@ -53,7 +54,8 @@ export default function MaintenancePage() {
         try {
             const params = new URLSearchParams();
             if (!searchTerm && lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '15000'); }
-            if (searchTerm.trim()) params.set('query', searchTerm.trim());
+            const normalizedSearch = normalizeArabicSearch(searchTerm.trim());
+            if (normalizedSearch) params.set('query', normalizedSearch);
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -140,12 +142,18 @@ export default function MaintenancePage() {
                                             : locale === 'ar'
                                             ? 'إعمار'
                                             : 'Maintenance',
-                                    typeIcon: '🏗️',
+                                    typeIcon: '',
                                     map: item.google_maps_url || item.googleMapsUrl,
                                     video: item.video_url || item.videoUrl,
                                     whatsapp: item.whatsapp,
                                     online: false,
                                     images: item.media ? item.media.map((m: any) => m.url) : [],
+                                    chips: types.map((type: string) => maintenanceLabels[locale]?.[type] || type),
+                                    note: item.description ? String(item.description) : undefined,
+                                    meta: (item.estimated_cost_min || item.estimatedCostMin) ? {
+                                        label: locale === 'ar' ? '??????? ?????????' : 'Est. Cost',
+                                        value: `${item.estimated_cost_min || item.estimatedCostMin} - ${item.estimated_cost_max || item.estimatedCostMax} ${locale === 'ar' ? '?.?' : 'EGP'}`
+                                    } : undefined,
                                     raw: item,
                                 };
 

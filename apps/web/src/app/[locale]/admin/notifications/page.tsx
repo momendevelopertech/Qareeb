@@ -6,6 +6,7 @@ import { adminApi } from '@/lib/api';
 import { useAuthStore, useModalStore, useNotificationStore } from '@/lib/store';
 import AppModal from '@/components/ui/AppModal';
 import Pagination from '@/components/ui/Pagination';
+import AppIcon from '@/components/ui/AppIcon';
 
 export default function NotificationsPage() {
     const locale = useLocale();
@@ -124,7 +125,9 @@ export default function NotificationsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         {paginatedItems.map((n) => (
                             <div key={n.id} className="p-4 rounded-xl border border-border bg-white hover:shadow-sm transition-shadow flex items-start gap-3">
-                                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-lg ${n.read ? 'bg-gray-100 text-gray-500' : 'bg-primary/10 text-primary'}`}>🔔</div>
+                                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${n.read ? 'bg-gray-100 text-gray-500' : 'bg-primary/10 text-primary'}`}>
+                                    <AppIcon name="bell" className="w-5 h-5" />
+                                </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-xs font-black uppercase text-primary">{entityLabel(n.type)}</span>

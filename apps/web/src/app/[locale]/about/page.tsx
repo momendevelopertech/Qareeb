@@ -4,6 +4,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
 import ChatWidget from '@/components/chat/ChatWidget';
+import AppIcon, { AppIconName } from '@/components/ui/AppIcon';
 
 export const metadata = {
     title: 'About | Qareeb',
@@ -16,28 +17,28 @@ export default async function AboutPage() {
 
     const features = [
         {
-            icon: '🎯',
+            icon: 'target',
             titleAr: 'رؤيتنا',
             titleEn: 'Our Vision',
             descAr: 'منصة إلكترونية غير ربحية تهدف إلى ربط المسلمين بالخدمات الدينية القريبة منهم جغرافياً في جميع أنحاء مصر — من الإسكندرية إلى أسوان.',
             descEn: 'A non-profit digital platform aimed at connecting Muslims with religious services near them geographically across all of Egypt — from Alexandria to Aswan.',
         },
         {
-            icon: '🚀',
+            icon: 'rocket',
             titleAr: 'مهمتنا',
             titleEn: 'Our Mission',
             descAr: 'نؤمن أن كل مسلم في مصر يستحق أن يجد بسهولة مسجداً يصلي فيه، وإماماً يتعلم منه، وحلقة لتحفيظ أولاده — بضغطة واحدة.',
             descEn: 'We believe every Muslim in Egypt deserves to easily find a mosque to pray in, an imam to learn from, and a Quran circle for their children — with just one click.',
         },
         {
-            icon: '🤝',
+            icon: 'handshake',
             titleAr: 'كيف تعمل المنصة',
             titleEn: 'How We Work',
             descAr: 'المنصة تعتمد على مجتمع المستخدمين لإضافة المعلومات. كل إضافة تمر بمراجعة من فريق إداري متخصص قبل النشر للحفاظ على جودة المحتوى ودقته.',
             descEn: 'The platform relies on our community to add information. Every submission goes through review by our specialized admin team before publishing to ensure content quality and accuracy.',
         },
         {
-            icon: '💡',
+            icon: 'bulb',
             titleAr: 'قيمنا',
             titleEn: 'Our Values',
             descAr: 'الشفافية — المجانية — خدمة المجتمع — الدقة في المعلومات — الخصوصية وعدم التعامل بأي بيانات مالية.',
@@ -57,7 +58,7 @@ export default async function AboutPage() {
                             {isAr ? 'عن المنصة' : 'About the Platform'}
                         </div>
                         <h1 className="text-4xl md:text-5xl font-black text-dark mb-6">
-                            {isAr ? 'قريب — دليل المسلمين في مصر 🇪🇬' : 'Qareeb — Guide for Muslims in Egypt 🇪🇬'}
+                            {isAr ? 'قريب — دليل المسلمين في مصر ' : 'Qareeb — Guide for Muslims in Egypt '}
                         </h1>
                         <p className="text-lg text-text-muted leading-relaxed">
                             {isAr
@@ -75,7 +76,7 @@ export default async function AboutPage() {
                                 key={idx}
                                 className="flex gap-6 md:gap-8 items-start bg-white rounded-[24px] p-6 md:p-8 border border-border shadow-card hover:-translate-y-1 transition-all duration-300"
                             >
-                                <div className="text-5xl md:text-6xl flex-shrink-0">{feature.icon}</div>
+                                <div className="text-5xl md:text-6xl flex-shrink-0 text-primary"><AppIcon name={feature.icon as AppIconName} className="w-12 h-12" /></div>
                                 <div className="flex-1">
                                     <h2 className="text-2xl md:text-3xl font-black text-dark mb-3">
                                         {isAr ? feature.titleAr : feature.titleEn}
@@ -105,13 +106,13 @@ export default async function AboutPage() {
                                 href={`/${locale}/search`}
                                 className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-accent text-white rounded-xl font-bold shadow-lg hover:bg-accent-dark hover:-translate-y-1 transition-all"
                             >
-                                {isAr ? '🔍 ابحث الآن' : '🔍 Search Now'}
+                                {isAr ? ' ابحث الآن' : ' Search Now'}
                             </Link>
                             <Link
                                 href={`/${locale}/imams/submit`}
                                 className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-primary rounded-xl font-bold shadow-lg hover:bg-gray-50 hover:-translate-y-1 transition-all"
                             >
-                                {isAr ? '➕ أضف خدمة' : '➕ Add Service'}
+                                {isAr ? ' أضف خدمة' : ' Add Service'}
                             </Link>
                         </div>
                     </div>

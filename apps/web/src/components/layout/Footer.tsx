@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { FormEvent, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { FaFacebook, FaInstagram, FaWhatsapp, FaXTwitter, FaYoutube } from 'react-icons/fa6';
-import { FaLightbulb, FaMosque } from 'react-icons/fa';
+import { FaLightbulb } from 'react-icons/fa';
 import AppModal from '@/components/ui/AppModal';
 import EgyptWhatsAppInput from '@/components/form/EgyptWhatsAppInput';
 import { api } from '@/lib/api';
@@ -73,8 +74,14 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div>
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white text-xl">
-                                <FaMosque />
+                            <div className="w-10 h-10 rounded-xl bg-white border border-primary/10 flex items-center justify-center shadow-sm">
+                                <Image
+                                    src="/logo.png"
+                                    alt={isArabic ? 'شعار قريب' : 'Qareeb Logo'}
+                                    width={40}
+                                    height={40}
+                                    className="w-8 h-8 object-contain"
+                                />
                             </div>
                             <span className="text-xl font-bold text-white">{isArabic ? 'قريب' : 'Qareeb'}</span>
                         </div>
@@ -109,7 +116,7 @@ export default function Footer() {
                             <Link href={`/${locale}/imams`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('imams')}</Link>
                             <Link href={`/${locale}/halaqat`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('halaqat')}</Link>
                             <Link href={`/${locale}/maintenance`} className="text-gray-400 hover:text-primary transition-colors text-sm">{t('maintenance')}</Link>
-                            <Link href={`/${locale}/about`} className="text-gray-400 hover:text-primary transition-colors text-sm">{isArabic ? 'عن قريب' : 'About'}</Link>
+                            <Link href={`/${locale}/about`} className="text-gray-400 hover:text-primary transition-colors text-sm">{isArabic ? 'عن منصة قريب' : 'About'}</Link>
                         </div>
                     </div>
 
@@ -130,7 +137,7 @@ export default function Footer() {
                                 className="inline-flex items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-bold text-accent hover:bg-accent/20 transition-colors"
                             >
                                 <FaLightbulb className="text-base" />
-                                <span>{isArabic ? 'اقترح تحسين' : 'Suggest improvement'}</span>
+                                <span>{isArabic ? 'أضف مقترح' : 'Suggest improvement'}</span>
                             </button>
                         </div>
                     </div>

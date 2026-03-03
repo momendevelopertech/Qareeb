@@ -3,6 +3,7 @@
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { AppIconName } from '@/components/ui/AppIcon';
 
 type EntityType = 'imam' | 'halqa' | 'maintenance';
 
@@ -13,7 +14,7 @@ interface LatestUnifiedCardProps {
     mosque?: string;
     location?: string;
     typeLabel: string;
-    typeIcon: string;
+    typeIcon: AppIconName;
     link: string;
     map?: string;
     video?: string;

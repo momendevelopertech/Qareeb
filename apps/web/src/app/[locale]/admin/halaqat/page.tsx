@@ -321,8 +321,8 @@ export default function AdminHalaqatPage() {
                                 }`}
                             >
                                 {type === 'all' ? (locale === 'ar' ? 'الكل' : 'All') : 
-                                 type === 'online' ? '📺 ' + (locale === 'ar' ? 'أونلاين' : 'Online') : 
-                                 '🏢 ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}
+                                 type === 'online' ? ' ' + (locale === 'ar' ? 'أونلاين' : 'Online') : 
+                                 ' ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}
                             </button>
                         ))}
                     </div>
@@ -342,7 +342,7 @@ export default function AdminHalaqatPage() {
                                     <td className="px-4 py-4 font-semibold">{item.circleName}</td>
                                     <td className="px-4 py-4 text-sm text-text-muted">{item.mosqueName}</td>
                                     <td className="px-4 py-4 text-sm">
-                                        <span className="mr-1">{item.isOnline ? '📺' : '🏢'}</span>
+                                        <span className="mr-1">{item.isOnline ? '' : ''}</span>
                                         {item.isOnline ? (locale === 'ar' ? 'أونلاين' : 'Online') : (locale === 'ar' ? 'في المسجد' : 'In Mosque')}
                                     </td>
                                     <td className="px-4 py-4"><span className={`px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' : item.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{getStatusLabel(item.status)}</span></td>
@@ -369,7 +369,7 @@ export default function AdminHalaqatPage() {
                     <p><strong>{locale === 'ar' ? 'المحافظة:' : 'Governorate:'}</strong> {payload.governorate}</p>
                     <p><strong>{locale === 'ar' ? 'المنطقة:' : 'Area:'}</strong> {getAreaLabel(payload) || '-'}</p>
                     <p><strong>WhatsApp:</strong> {payload.whatsapp}</p>
-                    <p><strong>{locale === 'ar' ? 'نوع الحلقة' : 'Circle Type'}:</strong> {payload.isOnline ? '📺 ' + (locale === 'ar' ? 'أونلاين' : 'Online') : '🏢 ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}</p>
+                    <p><strong>{locale === 'ar' ? 'نوع الحلقة' : 'Circle Type'}:</strong> {payload.isOnline ? ' ' + (locale === 'ar' ? 'أونلاين' : 'Online') : ' ' + (locale === 'ar' ? 'في المسجد' : 'In Mosque')}</p>
                     {payload.isOnline && payload.onlineLink && <p><strong>{locale === 'ar' ? 'رابط الحضور' : 'Join Link'}:</strong> <a href={payload.onlineLink} target="_blank" rel="noreferrer" className="text-blue-600 underline">{payload.onlineLink}</a></p>}
                     {payload.googleMapsUrl && <div className="flex gap-2"><a className="btn-outline" href={payload.googleMapsUrl} target="_blank" rel="noreferrer">{locale === 'ar' ? 'فتح الخريطة' : 'Open map'}</a><button className="btn-outline" onClick={() => navigator.clipboard.writeText(payload.googleMapsUrl)}>{locale === 'ar' ? 'نسخ الرابط' : 'Copy link'}</button></div>}
                 </div>}

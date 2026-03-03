@@ -443,35 +443,13 @@ export default function SubmitPage() {
             <main className="flex-1 py-12">
                 <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl font-black text-dark mb-3">{t('title')}</h1>
+                        <h1 className="text-4xl font-black text-dark mb-3">{entityTitle || t('title')}</h1>
                         <p className="text-text-muted font-medium">{locale === 'ar' ? 'ساهم في بناء مجتمعنا المسلم في مصر' : 'Contribute to building our Muslim community in Egypt'}</p>
                     </div>
 
                     {/* Step: Info Form */}
                     {step === 'info' && entityType && (
                         <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-[40px] p-10 space-y-8 shadow-card border border-border animate-slide-up">
-                            <div className="flex flex-col gap-4 pb-6 border-b border-border sm:flex-row sm:items-center sm:justify-between">
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    <span className="px-4 py-2 bg-primary text-white rounded-2xl text-sm font-black shadow-btn whitespace-nowrap">
-                                        {entityTitle}
-                                    </span>
-                                    <div>
-                                        <h3 className="font-black text-dark text-lg leading-tight">{t('basicInfo')}</h3>
-                                        <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{entityType}</p>
-                                    </div>
-                                </div>
-                                {entityType === 'halqa' && (
-                                    <label
-                                        className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-2 sm:gap-3 rounded-2xl border border-primary/25 bg-primary/5 px-3 sm:px-4 py-2 cursor-pointer select-none hover:bg-primary/10 transition"
-                                        dir="ltr"
-                                    >
-                                        <input type="checkbox" {...register('isOnline')} className="peer sr-only" />
-                                        <span className="relative h-6 w-11 shrink-0 rounded-full bg-gray-300 transition-colors duration-300 peer-checked:bg-primary after:absolute after:top-0.5 after:left-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-300 after:ease-out peer-checked:after:translate-x-5" />
-                                        <span className="text-xs sm:text-sm font-black text-primary">{locale === 'ar' ? 'حلقة أونلاين' : 'Online Halqa'}</span>
-                                    </label>
-                                )}
-                            </div>
-
 
                             <div className="space-y-6">
                                 {entityType !== 'maintenance' && (
@@ -526,13 +504,13 @@ export default function SubmitPage() {
                                             <label className="block text-sm font-black text-dark mb-2 ms-1 transition-colors group-focus-within:text-primary">{tm('maintenanceTypes')} <span className="text-red-500">*</span></label>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
                                                 {[
-                                                    { value: 'Plumbing', label: locale === 'ar' ? 'سباكة' : 'Plumbing', icon: '🚿' },
-                                                    { value: 'Electrical', label: locale === 'ar' ? 'كهرباء' : 'Electrical', icon: '💡' },
-                                                    { value: 'Carpentry', label: locale === 'ar' ? 'نجارة' : 'Carpentry', icon: '🔨' },
-                                                    { value: 'Painting', label: locale === 'ar' ? 'دهان' : 'Painting', icon: '🎨' },
-                                                    { value: 'AC_Repair', label: locale === 'ar' ? 'تكييف' : 'AC Repair', icon: '❄️' },
-                                                    { value: 'Cleaning', label: locale === 'ar' ? 'تنظيف' : 'Cleaning', icon: '🧹' },
-                                                    { value: 'Other', label: locale === 'ar' ? 'أخرى' : 'Other', icon: '📋' },
+                                                    { value: 'Plumbing', label: locale === 'ar' ? 'سباكة' : 'Plumbing', icon: '' },
+                                                    { value: 'Electrical', label: locale === 'ar' ? 'كهرباء' : 'Electrical', icon: '' },
+                                                    { value: 'Carpentry', label: locale === 'ar' ? 'نجارة' : 'Carpentry', icon: '' },
+                                                    { value: 'Painting', label: locale === 'ar' ? 'دهان' : 'Painting', icon: '' },
+                                                    { value: 'AC_Repair', label: locale === 'ar' ? 'تكييف' : 'AC Repair', icon: '❄' },
+                                                    { value: 'Cleaning', label: locale === 'ar' ? 'تنظيف' : 'Cleaning', icon: '' },
+                                                    { value: 'Other', label: locale === 'ar' ? 'أخرى' : 'Other', icon: '' },
                                                 ].map((type) => (
                                                     <label key={type.value} className="flex items-center gap-2 cursor-pointer">
                                                         <input
@@ -541,7 +519,7 @@ export default function SubmitPage() {
                                                             {...register('maintenanceTypes', { onChange: () => clearFieldError('maintenanceTypes') })}
                                                             className="w-5 h-5 rounded border-2 border-gray-300 text-primary focus:ring-primary"
                                                         />
-                                                        <span className="text-sm font-bold">{type.icon} {type.label}</span>
+                                                        <span className="text-sm font-bold">{type.label}</span>
                                                     </label>
                                                 ))}
                                             </div>

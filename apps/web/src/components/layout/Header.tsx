@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { useAuthStore, useGeolocationStore, useModalStore, useNotificationStore } from '@/lib/store';
 import { adminApi } from '@/lib/api';
 import { usePathname } from 'next/navigation';
+import AppIcon from '@/components/ui/AppIcon';
 
 export default function Header() {
     const t = useTranslations('nav');
@@ -60,8 +62,15 @@ export default function Header() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <Link href={`/${locale}`} className="flex items-center gap-2.5 group">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-light rounded-xl flex items-center justify-center text-white text-xl shadow-[0_4px_12px_rgba(27,107,69,0.3)] transition-transform group-hover:scale-105">
-                                🕌
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-[0_4px_12px_rgba(27,107,69,0.2)] bg-white border border-primary/10 transition-transform group-hover:scale-105">
+                                <Image
+                                    src="/logo.png"
+                                    alt={locale === 'ar' ? 'شعار قريب' : 'Qareeb Logo'}
+                                    width={40}
+                                    height={40}
+                                    className="w-8 h-8 object-contain"
+                                    priority
+                                />
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-xl font-black text-primary leading-tight">{tc('appName')}</span>
@@ -85,10 +94,7 @@ export default function Header() {
 
                         <div className="flex items-center gap-2 sm:gap-3">
                             <div className="hidden md:flex items-center gap-2 bg-cream rounded-xl px-3 py-2 border border-transparent max-w-[220px]">
-                                <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                                <AppIcon name="location" className="w-4 h-4 text-primary" strokeWidth={2.5} />
                                 <span className="text-xs font-bold text-dark truncate">
                                     {geoLoading ? tc('loading') : lat ? `${lat.toFixed(2)}, ${lng?.toFixed(2)}` : (locale === 'ar' ? 'حدد موقعك الحالي' : 'Set location')}
                                 </span>
@@ -110,7 +116,7 @@ export default function Header() {
                                         className="relative p-2 rounded-btn hover:bg-gray-100 transition-colors"
                                         aria-label="Notifications"
                                     >
-                                        <span className="text-xl">🔔</span>
+                                        <AppIcon name="bell" className="w-5 h-5 text-primary" />
                                         {unreadCount > 0 && (
                                             <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">
                                                 {unreadCount > 99 ? '99+' : unreadCount}
@@ -230,13 +236,30 @@ export default function Header() {
 
                     {isMenuOpen && (
                         <div className="md:hidden pb-4 animate-slide-up">
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-3 bg-white rounded-2xl border border-border shadow-lg p-4">
+                                <div className="flex items-center gap-3 px-2">
+                                    <div className="w-12 h-12 rounded-xl bg-white border border-primary/10 shadow-sm flex items-center justify-center">
+                                        <Image
+                                            src="/logo.png"
+                                            alt={locale === 'ar' ? 'شعار قريب' : 'Qareeb Logo'}
+                                            width={48}
+                                            height={48}
+                                            className="w-9 h-9 object-contain"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-lg font-black text-primary">{tc('appName')}</span>
+                                        <span className="text-xs text-text-muted">
+                                            {locale === 'ar' ? 'دليل المسلمين في مصر' : 'Muslims Guide in Egypt'}
+                                        </span>
+                                    </div>
+                                </div>
                                 {navLinks.map((link) => (
                                     <Link
                                         key={link.href}
                                         href={link.href}
                                         onClick={() => setIsMenuOpen(false)}
-                                        className="px-4 py-3 rounded-btn text-text hover:bg-primary-light hover:text-primary transition-all font-medium"
+                                        className="px-4 py-3 rounded-xl text-dark hover:bg-primary/10 hover:text-primary transition-all font-semibold text-base"
                                     >
                                         {link.label}
                                     </Link>
@@ -245,7 +268,7 @@ export default function Header() {
                                 <Link
                                     href={`/${locale}/submit`}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className="btn-primary text-center mt-2"
+                                    className="btn-primary text-center mt-1 text-base"
                                 >
                                     {t('submit')}
                                 </Link>

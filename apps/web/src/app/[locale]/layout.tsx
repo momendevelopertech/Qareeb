@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     description:
         'منصة مجتمعية تربط المسلمين بالأئمة وحلقات تحفيظ القرآن وصيانة المساجد. A community platform connecting Muslims with nearby religious services.',
     keywords: ['قريب', 'Qareeb', 'أئمة', 'حلقات تحفيظ', 'مساجد', 'صيانة', 'imams', 'mosques', 'Quran circles'],
+    icons: {
+        icon: '/logo.png',
+    },
 };
 
 export default async function LocaleLayout({

@@ -12,6 +12,7 @@ import Pagination from '@/components/ui/Pagination';
 import { api } from '@/lib/api';
 import { useGeolocationStore } from '@/lib/store';
 import { formatLocationParts } from '@/lib/location';
+import { normalizeArabicSearch } from '@/lib/utils';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 
@@ -62,7 +63,8 @@ export default function ImamsPage() {
                 params.set('lng', lng.toString());
                 params.set('radius', '10000');
             }
-            if (searchTerm.trim()) params.set('query', searchTerm.trim());
+            const normalizedSearch = normalizeArabicSearch(searchTerm.trim());
+            if (normalizedSearch) params.set('query', normalizedSearch);
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -153,7 +155,7 @@ export default function ImamsPage() {
                                         imam.district,
                                     ]),
                                     typeLabel: locale === 'ar' ? 'إمام' : 'Imam',
-                                    typeIcon: '🕌',
+                                    typeIcon: '',
                                     map: imam.google_maps_url || imam.googleMapsUrl,
                                     video: imam.video_url || imam.videoUrl,
                                     whatsapp: imam.whatsapp,

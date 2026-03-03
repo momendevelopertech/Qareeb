@@ -1,5 +1,6 @@
 import { getLocale } from 'next-intl/server';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FAB from '@/components/ui/FAB';
@@ -7,6 +8,7 @@ import ChatWidget from '@/components/chat/ChatWidget';
 import SubmitServiceSection from '@/components/home/SubmitServiceSection';
 import LatestUnifiedCard from '@/components/home/LatestUnifiedCard';
 import HomeCardModals from '@/components/home/HomeCardModals';
+import AppIcon, { AppIconName } from '@/components/ui/AppIcon';
 import { formatLocationParts } from '@/lib/location';
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
@@ -26,7 +28,7 @@ type LatestItem = {
     createdAt?: string;
     link: string;
     badge: string;
-    icon: string;
+    icon: AppIconName;
     map?: string;
     video?: string;
     whatsapp?: string;
@@ -89,7 +91,7 @@ export default async function HomePage() {
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/imams/${item.id}`,
         badge: locale === 'ar' ? 'إمام' : 'Imam',
-        icon: '🕌',
+        icon: 'imam',
         map: item.google_maps_url || item.googleMapsUrl || '',
         video: item.video_url || item.videoUrl || '',
         whatsapp: item.whatsapp || '',
@@ -104,7 +106,7 @@ export default async function HomePage() {
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/halaqat/${item.id}`,
         badge: locale === 'ar' ? 'حلقة' : 'Circle',
-        icon: '📖',
+        icon: 'halqa',
         map: item.google_maps_url || item.googleMapsUrl || '',
         video: item.video_url || item.videoUrl || '',
         whatsapp: item.whatsapp || '',
@@ -120,7 +122,7 @@ export default async function HomePage() {
         createdAt: item.created_at || item.createdAt,
         link: `/${locale}/maintenance/${item.id}`,
         badge: locale === 'ar' ? 'إعمار' : 'Maintenance',
-        icon: '🔧',
+        icon: 'maintenance',
         map: item.google_maps_url || item.googleMapsUrl || '',
         video: item.video_url || item.videoUrl || '',
         whatsapp: item.whatsapp || '',
@@ -147,18 +149,34 @@ export default async function HomePage() {
                     <div className="absolute bottom-[-100px] -left-[100px] w-[440px] h-[440px] bg-accent/5 rounded-full blur-[80px] pointer-events-none" />
 
                     <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                        <div className="flex items-center justify-center gap-3 mb-6">
+                            <div className="w-14 h-14 rounded-2xl bg-white border border-primary/10 shadow-sm flex items-center justify-center">
+                                <Image
+                                    src="/logo.png"
+                                    alt={locale === 'ar' ? 'شعار قريب' : 'Qareeb Logo'}
+                                    width={56}
+                                    height={56}
+                                    className="w-11 h-11 object-contain"
+                                    priority
+                                />
+                            </div>
+                            <div className="text-left rtl:text-right">
+                                <span className="block text-lg font-black text-primary">{locale === 'ar' ? 'قريب' : 'Qareeb'}</span>
+                                <span className="block text-xs text-text-muted">{locale === 'ar' ? 'منصة الخدمات القريبة' : 'Nearby Services Platform'}</span>
+                            </div>
+                        </div>
                         <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full mb-8 animate-fade-in">
                             <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
                             <span className="text-sm font-bold text-primary">
-                                {locale === 'ar' ? 'منصة غير ربحية لخدمة المسلمين في مصر 🇪🇬' : 'Non-profit platform serving Muslims in Egypt 🇪🇬'}
+                                {locale === 'ar' ? 'منصة غير ربحية لخدمة المسلمين في مصر ' : 'Non-profit platform serving Muslims in Egypt '}
                             </span>
                         </div>
 
                         <h1 className="text-4xl md:text-7xl font-black text-dark mb-6 leading-[1.1]">
                             {locale === 'ar' ? (
-                                <>ابحث عن <span className="text-primary">مسجدك</span><br />و<span className="text-accent">إمامك</span> القريب 📍</>
+                                <>ابحث عن <span className="text-primary">مسجدك</span><br />و<span className="text-accent">إمامك</span> القريب </>
                             ) : (
-                                <>Find Your <span className="text-primary">Mosque</span><br />& <span className="text-accent">Imam</span> Nearby 📍</>
+                                <>Find Your <span className="text-primary">Mosque</span><br />& <span className="text-accent">Imam</span> Nearby </>
                             )}
                         </h1>
 
@@ -170,10 +188,10 @@ export default async function HomePage() {
 
                         <div className="flex flex-wrap justify-center gap-4 mb-16">
                             <Link href={`/${locale}/search`} className="btn-primary !px-10 !py-4 text-lg">
-                                {locale === 'ar' ? '🔍 ابحث الآن' : '🔍 Search Now'}
+                                {locale === 'ar' ? ' ابحث الآن' : ' Search Now'}
                             </Link>
                             <Link href={`/${locale}/imams/submit`} className="btn-outline !px-10 !py-4 text-lg">
-                                {locale === 'ar' ? '➕ أضف مكاناً' : '➕ Add a Place'}
+                                {locale === 'ar' ? ' أضف مكاناً' : ' Add a Place'}
                             </Link>
                         </div>
 
@@ -196,7 +214,7 @@ export default async function HomePage() {
                             {locale === 'ar' ? 'أحدث الإضافات' : 'Latest Additions'}
                         </span>
                         <h2 className="text-3xl md:text-4xl font-black text-dark mb-4">
-                            {locale === 'ar' ? 'تم إضافتها مؤخراً 🌟' : 'Recently Added 🌟'}
+                            {locale === 'ar' ? 'تم إضافتها مؤخراً ' : 'Recently Added '}
                         </h2>
                         <p className="max-w-md mx-auto text-text-muted text-sm leading-relaxed">
                             {locale === 'ar'
@@ -285,13 +303,13 @@ export default async function HomePage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { icon: '📍', title: locale === 'ar' ? 'تحديد الموقع' : 'Location Tech', desc: locale === 'ar' ? 'اعرف أقرب مسجد وإمام وحلقة منك فوراً' : 'Find the nearest mosque or imam instantly' },
-                                { icon: '✅', title: locale === 'ar' ? 'محتوى موثق' : 'Verified Content', desc: locale === 'ar' ? 'كل الإضافات تمر بمراجعة الإدارة قبل النشر' : 'All updates are reviewed by admins before publishing' },
-                                { icon: '💬', title: locale === 'ar' ? 'تواصل مباشر' : 'Direct Contact', desc: locale === 'ar' ? 'اتصل مباشرة عبر واتساب بضغطة واحدة' : 'Contact instantly via WhatsApp with one click' },
-                                { icon: '🇪🇬', title: locale === 'ar' ? 'شامل لمصر' : 'All of Egypt', desc: locale === 'ar' ? 'يغطي كل المحافظات الـ ٢٧ في مصر' : 'Covers all 27 governorates across Egypt' },
+                                { icon: '', title: locale === 'ar' ? 'تحديد الموقع' : 'Location Tech', desc: locale === 'ar' ? 'اعرف أقرب مسجد وإمام وحلقة منك فوراً' : 'Find the nearest mosque or imam instantly' },
+                                { icon: 'check', title: locale === 'ar' ? 'محتوى موثق' : 'Verified Content', desc: locale === 'ar' ? 'كل الإضافات تمر بمراجعة الإدارة قبل النشر' : 'All updates are reviewed by admins before publishing' },
+                                { icon: 'chat', title: locale === 'ar' ? 'تواصل مباشر' : 'Direct Contact', desc: locale === 'ar' ? 'اتصل مباشرة عبر واتساب بضغطة واحدة' : 'Contact instantly via WhatsApp with one click' },
+                                { icon: '', title: locale === 'ar' ? 'شامل لمصر' : 'All of Egypt', desc: locale === 'ar' ? 'يغطي كل المحافظات الـ ٢٧ في مصر' : 'Covers all 27 governorates across Egypt' },
                             ].map((feat, i) => (
                                 <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-border hover:-translate-y-1 transition-all">
-                                    <div className="text-3xl mb-3">{feat.icon}</div>
+                                    <div className="text-3xl mb-3 text-primary"><AppIcon name={feat.icon as AppIconName} className="w-8 h-8" /></div>
                                     <h3 className="font-black text-dark text-sm mb-2">{feat.title}</h3>
                                     <p className="text-[11px] text-text-muted leading-relaxed">{feat.desc}</p>
                                 </div>
@@ -303,7 +321,7 @@ export default async function HomePage() {
                 {/* Maintenance Strip */}
                 <section className="bg-gradient-to-r from-[#1B6B45] to-[#1B4D35] py-20 px-4 text-center text-white">
                     <div className="max-w-xl mx-auto">
-                        <div className="text-5xl mb-6">🏗️</div>
+                        <div className="text-5xl mb-6 text-white"><AppIcon name="maintenance" className="w-12 h-12 mx-auto" /></div>
                         <h2 className="text-3xl font-black mb-4">
                             {locale === 'ar' ? 'ساهم في إعمار بيوت الله' : 'Contribute to Mosque Maintenance'}
                         </h2>

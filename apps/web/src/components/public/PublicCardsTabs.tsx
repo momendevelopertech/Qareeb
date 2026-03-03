@@ -8,6 +8,8 @@ import { api } from '@/lib/api';
 import UnifiedCard from './UnifiedCard';
 import PublicCardModals from './PublicCardModals';
 import { formatLocationParts } from '@/lib/location';
+import AppIcon from '@/components/ui/AppIcon';
+import { normalizeArabicSearch } from '@/lib/utils';
 
 type TabType = 'all' | 'imams' | 'halqa' | 'maintenance';
 
@@ -32,7 +34,8 @@ export default function PublicCardsTabs() {
     const [metaMaintenance, setMetaMaintenance] = useState<any>({ totalPages: 1 });
     const limit = 6; // show 6 cards per category per page
 
-    const query = searchParams.get('query')?.trim() || '';
+    const rawQuery = searchParams.get('query')?.trim() || '';
+    const query = normalizeArabicSearch(rawQuery);
     const governorateId = searchParams.get('governorateId') || '';
     const areaId = searchParams.get('areaId') || '';
 
@@ -124,7 +127,7 @@ export default function PublicCardsTabs() {
                       : locale === 'ar'
                         ? 'صيانة'
                         : 'Maintenance',
-            typeIcon: entity === 'imam' ? '🕌' : entity === 'halqa' ? '📖' : '🏗️',
+            typeIcon: entity === 'imam' ? 'imam' : entity === 'halqa' ? 'halqa' : 'maintenance',
             map: item.googleMapsUrl || item.google_maps_url || '',
             video: item.videoUrl || item.video_url || '',
             whatsapp: item.whatsapp || '',
@@ -194,8 +197,8 @@ export default function PublicCardsTabs() {
 
             {loading ? (
                 <div className="py-20 flex flex-col items-center justify-center gap-3">
-                    <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-white text-3xl animate-spin">
-                        🕌
+                    <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-light text-white animate-spin">
+                        <AppIcon name="mosque" className="w-7 h-7" />
                     </div>
                     <p className="text-text-muted text-sm font-semibold">
                         {locale === 'ar' ? 'جارٍ تحميل النتائج...' : 'Loading results...'}
@@ -256,7 +259,9 @@ export default function PublicCardsTabs() {
             {/* No Results */}
             {!loading && cards.length === 0 && (
                 <div className="text-center py-16">
-                    <div className="text-5xl mb-4">🔍</div>
+                    <div className="text-5xl mb-4 text-primary">
+                        <AppIcon name="search" className="w-12 h-12 mx-auto" />
+                    </div>
                     <p className="text-text-muted text-lg">
                         {locale === 'ar' ? 'لا توجد نتائج' : 'No results found'}
                     </p>

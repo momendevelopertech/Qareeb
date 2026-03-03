@@ -1,22 +1,23 @@
 import Link from 'next/link';
+import AppIcon from '@/components/ui/AppIcon';
 
 export default function SubmitServiceSection({ locale }: { locale: string }) {
     const cards = [
         {
             href: `/${locale}/imams/submit`,
-            icon: '🕌',
+            icon: 'imam',
             title: locale === 'ar' ? 'إضافة إمام' : 'Add Imam',
             desc: locale === 'ar' ? 'أضف بيانات إمام مسجد موثقة' : 'Submit verified imam details',
         },
         {
             href: `/${locale}/halaqat/submit`,
-            icon: '📖',
+            icon: 'halqa',
             title: locale === 'ar' ? 'إضافة حلقة' : 'Add Halqa',
             desc: locale === 'ar' ? 'أضف حلقة تحفيظ جديدة' : 'Submit a Quran circle',
         },
         {
             href: `/${locale}/maintenance/submit`,
-            icon: '🏗️',
+            icon: 'maintenance',
             title: locale === 'ar' ? 'إضافة صيانة' : 'Add Maintenance',
             desc: locale === 'ar' ? 'أضف طلب صيانة لمسجد' : 'Submit a mosque maintenance request',
         },
@@ -41,7 +42,7 @@ export default function SubmitServiceSection({ locale }: { locale: string }) {
                             href={card.href}
                             className="bg-white rounded-[28px] p-7 border border-border shadow-card transition-all hover:-translate-y-1.5 hover:shadow-card-hover"
                         >
-                            <span className="text-4xl mb-4 block">{card.icon}</span>
+                            <span className="text-4xl mb-4 block text-primary"><AppIcon name={card.icon} className="w-10 h-10" /></span>
                             <h3 className="text-xl font-black text-dark">{card.title}</h3>
                             <p className="text-sm text-text-muted mt-2">{card.desc}</p>
                         </Link>

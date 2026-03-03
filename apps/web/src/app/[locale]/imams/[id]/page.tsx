@@ -6,6 +6,7 @@ import { extractLatLngFromGoogleMaps, getGoogleMapsEmbedUrl } from '@/lib/maps';
 import { formatLocationParts } from '@/lib/location';
 import LocationMapSection from '@/components/public/LocationMapSection';
 import VideoEmbedPanel from '@/components/public/VideoEmbedPanel';
+import AppIcon from '@/components/ui/AppIcon';
 
 export const revalidate = 300;
 
@@ -62,14 +63,14 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                             <svg className="w-5 h-5 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                             </svg>
-                            <span className="font-bold text-sm">{locale === 'ar' ? 'العودة للمكتشف' : 'Back to Explorer'}</span>
+                            <span className="font-bold text-sm">{locale === 'ar' ? 'العودة إلى صفحة الأئمة' : 'Back to Imams'}</span>
                         </Link>
                         <span className="block text-accent font-black text-sm uppercase tracking-widest mb-2">
                             {locale === 'ar' ? 'بيانات الإمام' : 'Imam Profile'}
                         </span>
                         <h1 className="text-4xl md:text-5xl font-black">{imam.imamName}</h1>
                         <div className="flex items-center gap-2 mt-4 text-white/90 font-bold">
-                            <span className="text-2xl">🕌</span>
+                            <AppIcon name="mosque" className="w-6 h-6" />
                             {imam.mosqueName}
                         </div>
                     </div>
@@ -81,7 +82,8 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                             <div className="space-y-8">
                                 <div className="p-6 bg-cream rounded-2xl border border-primary/5 space-y-2">
                                     <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-2 flex items-center gap-2">
-                                        <span>📍</span> {locale === 'ar' ? 'الموقع والتواجد' : 'Location & Presence'}
+                                        <AppIcon name="location" className="w-4 h-4" />
+                                        {locale === 'ar' ? 'الموقع والتواجد' : 'Location & Presence'}
                                     </h3>
                                     <p className="text-dark font-bold text-lg leading-relaxed">
                                         {formatLocationParts([
@@ -103,7 +105,8 @@ export default async function ImamDetailPage({ params }: { params: { id: string 
                                 {recitationUrl && (
                                     <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10">
                                         <h3 className="font-black text-primary text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                                            <span>🔊</span> {locale === 'ar' ? 'نموذج التلاوة' : 'Sample Recitation'}
+                                            <AppIcon name="audio" className="w-4 h-4" />
+                                            {locale === 'ar' ? 'نموذج التلاوة' : 'Sample Recitation'}
                                         </h3>
                                         <VideoEmbedPanel
                                             url={recitationUrl}

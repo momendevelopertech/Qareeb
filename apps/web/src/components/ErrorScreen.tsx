@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import AppIcon, { AppIconName } from '@/components/ui/AppIcon';
 import { useEffect, useState } from 'react';
 
 interface ErrorScreenProps {
@@ -11,7 +12,7 @@ interface ErrorScreenProps {
   reset?: () => void;
 }
 
-const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties>; icon: string; retry?: boolean }> = {
+const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties>; icon: AppIconName; retry?: boolean }> = {
   0: {
     bg: 'linear-gradient(160deg,#FFF8F0,#FAF8F3)',
     orbs: [
@@ -23,7 +24,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -90,
       },
     ],
-    icon: '📡',
+    icon: 'wifi',
     retry: true,
   },
   404: {
@@ -44,7 +45,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -80,
       },
     ],
-    icon: '🔍',
+    icon: 'search',
   },
   429: {
     bg: 'linear-gradient(160deg,#FFF8E1,#FAF8F3)',
@@ -57,7 +58,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -90,
       },
     ],
-    icon: '⌛',
+    icon: 'clock',
     retry: true,
   },
   500: {
@@ -71,7 +72,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -90,
       },
     ],
-    icon: '⚠️',
+    icon: 'alert',
     retry: true,
   },
   401: {
@@ -85,7 +86,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         right: -80,
       },
     ],
-    icon: '🔑',
+    icon: 'key',
   },
   403: {
     bg: 'linear-gradient(160deg,#FFF8E7,#FAF8F3)',
@@ -98,7 +99,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         right: -80,
       },
     ],
-    icon: '🔒',
+    icon: 'lock',
   },
   408: {
     bg: 'linear-gradient(160deg,#E0F2F1,#FAF8F3)',
@@ -111,7 +112,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -90,
       },
     ],
-    icon: '📶',
+    icon: 'wifi',
     retry: true,
   },
   503: {
@@ -132,7 +133,7 @@ const errorConfig: Record<number, { bg?: string; orbs: Array<React.CSSProperties
         left: -80,
       },
     ],
-    icon: '🔧',
+    icon: 'tool',
     retry: true,
   },
 };
@@ -265,7 +266,9 @@ export default function ErrorScreen({ status, locale, reset }: ErrorScreenProps)
           <div className="error-card">
             <div className="error-code-wrap">
               <div className="error-code">{status}</div>
-              <div className="error-icon-badge">{info.icon}</div>
+              <div className="error-icon-badge">
+                <AppIcon name={info.icon} className="w-7 h-7" />
+              </div>
             </div>
             <div className="error-tag">{tag}</div>
             <div className="error-title" dangerouslySetInnerHTML={{ __html: title }} />
@@ -283,21 +286,23 @@ export default function ErrorScreen({ status, locale, reset }: ErrorScreenProps)
 
             {status === 503 && (
               <div className="status-list">
-                <div className="status-row"><div className="status-dot ok" /><div className="status-name">{isAr ? 'قاعدة البيانات' : 'Database'}</div><div className="status-val ok">{isAr ? '✓ تعمل' : '✓ Operational'}</div></div>
-                <div className="status-row"><div className="status-dot warn" /><div className="status-name">{isAr ? 'الخادم الرئيسي' : 'Main server'}</div><div className="status-val warn">{isAr ? '⟳ تحديث' : '⟳ Updating'}</div></div>
-                <div className="status-row"><div className="status-dot err" /><div className="status-name">{isAr ? 'واجهة المستخدم' : 'Frontend'}</div><div className="status-val err">{isAr ? '✕ صيانة' : '✕ Maintenance'}</div></div>
-                <div className="status-row"><div className="status-dot ok" /><div className="status-name">{isAr ? 'نظام الواتساب' : 'WhatsApp system'}</div><div className="status-val ok">{isAr ? '✓ تعمل' : '✓ Operational'}</div></div>
+                <div className="status-row"><div className="status-dot ok" /><div className="status-name">{isAr ? 'قاعدة البيانات' : 'Database'}</div><div className="status-val ok">{isAr ? 'تعمل' : 'Operational'}</div></div>
+                <div className="status-row"><div className="status-dot warn" /><div className="status-name">{isAr ? 'الخادم الرئيسي' : 'Main server'}</div><div className="status-val warn">{isAr ? 'تحديث' : 'Updating'}</div></div>
+                <div className="status-row"><div className="status-dot err" /><div className="status-name">{isAr ? 'واجهة المستخدم' : 'Frontend'}</div><div className="status-val err">{isAr ? 'صيانة' : 'Maintenance'}</div></div>
+                <div className="status-row"><div className="status-dot ok" /><div className="status-name">{isAr ? 'نظام الواتساب' : 'WhatsApp system'}</div><div className="status-val ok">{isAr ? 'تعمل' : 'Operational'}</div></div>
               </div>
             )}
 
             <div className="error-btns">
               {info.retry && reset && (
-                <button onClick={() => reset()} className="btn-primary" disabled={status === 429 && cooldown > 0}>
-                  {isAr ? '🔄 إعادة المحاولة' : '🔄 Retry'}
+                <button onClick={() => reset()} className="btn-primary flex items-center justify-center gap-2" disabled={status === 429 && cooldown > 0}>
+                  <AppIcon name="clock" className="w-4 h-4" />
+                  {isAr ? 'إعادة المحاولة' : 'Retry'}
                 </button>
               )}
-              <Link href={`/${locale}`} className="btn-outline">
-                {isAr ? '🏠 الرئيسية' : '🏠 Home'}
+              <Link href={`/${locale}`} className="btn-outline flex items-center justify-center gap-2">
+                <AppIcon name="mosque" className="w-4 h-4" />
+                {isAr ? 'الرئيسية' : 'Home'}
               </Link>
             </div>
           </div>

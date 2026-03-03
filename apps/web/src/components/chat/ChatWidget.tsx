@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useChatStore, useGeolocationStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import { FaMosque, FaTools } from 'react-icons/fa';
+import AppIcon from '@/components/ui/AppIcon';
 import { GiPrayerBeads } from 'react-icons/gi';
 
 type SearchType = 'imam' | 'halqa' | 'maintenance';
@@ -235,8 +236,8 @@ export default function ChatWidget() {
                 addMessage(
                     'bot',
                     locale === 'ar'
-                        ? `✅ موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
-                        : `✅ Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
+                        ? `موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
+                        : `Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
                 );
                 setShowLocationChooser(false);
                 setPendingType(null);
@@ -277,8 +278,8 @@ export default function ChatWidget() {
             addMessage(
                 'bot',
                 locale === 'ar'
-                    ? `✅ موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
-                    : `✅ Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
+                    ? `موقعك الحالي الآن: ${readableLocation}. سنعتمد نفس طريقة القراءة دي لكل نتائج الأقرب.`
+                    : `Your current location is: ${readableLocation}. We'll use this same location reading method for nearest results.`,
             );
 
             if (usedIpFallback) {
@@ -344,7 +345,7 @@ export default function ChatWidget() {
     if (!isOpen) {
         return (
             <button onClick={toggleChat} className="fixed bottom-6 start-6 z-40 w-16 h-16 bg-primary text-white rounded-full shadow-fab flex items-center justify-center hover:scale-110 transition-all" aria-label="chat">
-                💬
+                <AppIcon name="chat" className="w-5 h-5" />
             </button>
         );
     }

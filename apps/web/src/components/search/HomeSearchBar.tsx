@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { api } from '@/lib/api';
+import AppIcon from '@/components/ui/AppIcon';
+import { normalizeArabicSearch } from '@/lib/utils';
 
 type Gov = { id: string; nameAr: string; nameEn: string };
 type Area = { id: string; nameAr: string; nameEn: string };
@@ -42,7 +44,7 @@ export default function HomeSearchBar() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const params = new URLSearchParams();
-        const normalizedSearch = searchTerm.trim();
+        const normalizedSearch = normalizeArabicSearch(searchTerm.trim());
         if (normalizedSearch) params.set('query', normalizedSearch);
         if (governorateId) params.set('governorateId', governorateId);
         if (areaId) params.set('areaId', areaId);
@@ -55,7 +57,7 @@ export default function HomeSearchBar() {
     return (
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-white rounded-[24px] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.12)] border border-border flex flex-wrap gap-3 items-center">
             <div className="flex-1 min-w-[200px] flex items-center gap-3 bg-cream rounded-xl px-4 py-3 border-2 border-transparent focus-within:border-primary focus-within:bg-white transition-all">
-                <span className="text-text-muted">🔍</span>
+                <AppIcon name="search" className="w-4 h-4 text-text-muted" />
                 <input
                     type="text"
                     value={searchTerm}

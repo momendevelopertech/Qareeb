@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { FaEye, FaEyeSlash, FaMosque } from 'react-icons/fa';
+import Image from 'next/image';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useAuthStore, useThemeStore } from '@/lib/store';
 import { adminApi } from '@/lib/api';
 
@@ -43,8 +44,15 @@ export default function AdminLoginPage() {
         <div className={`min-h-screen flex items-center justify-center ${pageClass}`}>
             <div className="w-full max-w-md mx-4">
                 <div className="text-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-fab bg-gradient-to-br from-primary to-primary-light text-white text-2xl">
-                        <FaMosque />
+                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-fab bg-white border border-primary/10">
+                        <Image
+                            src="/logo.png"
+                            alt={locale === 'ar' ? 'شعار قريب' : 'Qareeb Logo'}
+                            width={64}
+                            height={64}
+                            className="w-12 h-12 object-contain"
+                            priority
+                        />
                     </div>
                     <h1 className="text-2xl font-black">{locale === 'ar' ? 'قريب - لوحة التحكم' : 'Qareeb Dashboard'}</h1>
                     <p className="opacity-75 mt-1">{t('login')}</p>

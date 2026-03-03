@@ -14,6 +14,8 @@ import { useGeolocationStore } from '@/lib/store';
 import UnifiedCard from '@/components/public/UnifiedCard';
 import { useRouter } from 'next/navigation';
 import { formatLocationParts } from '@/lib/location';
+import { normalizeArabicSearch } from '@/lib/utils';
+import AppIcon from '@/components/ui/AppIcon';
 
 const typeLabels: Record<string, Record<string, string>> = {
     ar: { men: 'رجال', women: 'نساء', children: 'أطفال' },
@@ -62,7 +64,8 @@ export default function HalaqatPage() {
             if (!searchTerm && lat && lng) { params.set('lat', lat.toString()); params.set('lng', lng.toString()); params.set('radius', '10000'); }
             if (selectedType) params.set('type', selectedType);
             if (onlineOnly) params.set('isOnline', 'true');
-            if (searchTerm.trim()) params.set('query', searchTerm.trim());
+            const normalizedSearch = normalizeArabicSearch(searchTerm.trim());
+            if (normalizedSearch) params.set('query', normalizedSearch);
             if (areaId) {
                 params.set('area_id', areaId);
             } else if (governorateId) {
@@ -136,7 +139,8 @@ export default function HalaqatPage() {
                             onClick={() => setOnlineOnly(!onlineOnly)}
                             className={`px-6 py-2.5 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${onlineOnly ? 'bg-blue-100 text-blue-700 shadow-lg' : 'bg-cream text-text-muted hover:bg-blue-50 hover:text-blue-700'}`}
                         >
-                            📺 {locale === 'ar' ? 'أونلاين فقط' : 'Online only'}
+                            <AppIcon name="wifi" className="w-4 h-4" />
+                            {locale === 'ar' ? 'أونلاين فقط' : 'Online only'}
                         </button>
                     </div>
                 </div>
@@ -164,12 +168,13 @@ export default function HalaqatPage() {
                                         halqa.district,
                                     ]),
                                     typeLabel: typeLabels[locale]?.[halqaType] || halqaType || (locale === 'ar' ? 'حلقة' : 'Circle'),
-                                    typeIcon: '📖',
+                                    typeIcon: '',
                                     map: halqa.google_maps_url || halqa.googleMapsUrl,
                                     video: halqa.video_url || halqa.videoUrl,
                                     whatsapp: halqa.whatsapp,
                                     online: Boolean(halqa.is_online ?? halqa.isOnline) || (halqa.additional_info || halqa.additionalInfo || '').toString().startsWith('[ONLINE]'),
                                     images: [],
+                                    note: (halqa.additional_info || halqa.additionalInfo) ? String(halqa.additional_info || halqa.additionalInfo) : undefined,
                                     raw: halqa,
                                 };
 
@@ -181,11 +186,6 @@ export default function HalaqatPage() {
                                             showImages={false}
                                             onViewDetails={() => router.push(`/${locale}/halaqat/${halqa.id}`)}
                                         />
-                                        {(halqa.additional_info || halqa.additionalInfo) && (
-                                            <p className="text-sm text-text font-medium leading-relaxed italic line-clamp-3 ps-1">
-                                                " {halqa.additional_info || halqa.additionalInfo} "
-                                            </p>
-                                        )}
                                     </div>
                                 );
                             })}
