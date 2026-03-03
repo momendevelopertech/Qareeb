@@ -46,31 +46,36 @@ export class SearchService {
         const postgisEnabled = process.env.POSTGIS_ENABLED === 'true';
 
         if (postgisEnabled) {
-            const table = type === 'imam' ? 'imams' : type === 'halqa' ? 'halaqat' : 'maintenance_requests';
-            const rows = await this.prisma.$queryRawUnsafe<any[]>(
-                `
-                SELECT *, ST_Distance(
-                    location,
-                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-                ) AS distance_meters
-                FROM ${table}
-                WHERE status = 'approved'
-                    AND location IS NOT NULL
-                    AND ST_DWithin(
+            try {
+                const table = type === 'imam' ? 'imams' : type === 'halqa' ? 'halaqat' : 'maintenance_requests';
+                const rows = await this.prisma.$queryRawUnsafe<any[]>(
+                    `
+                    SELECT *, ST_Distance(
                         location,
-                        ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-                        $3
-                    )
-                ORDER BY distance_meters ASC
-                LIMIT $4
-                `,
-                lng,
-                lat,
-                radiusMeters,
-                limit,
-            );
+                        ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                    ) AS distance_meters
+                    FROM ${table}
+                    WHERE status = 'approved'
+                        AND location IS NOT NULL
+                        AND ST_DWithin(
+                            location,
+                            ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                            $3
+                        )
+                    ORDER BY distance_meters ASC
+                    LIMIT $4
+                    `,
+                    lng,
+                    lat,
+                    radiusMeters,
+                    limit,
+                );
 
-            return { data: rows.map((row) => this.toCard(row, type)), radiusKm };
+                return { data: rows.map((row) => this.toCard(row, type)), radiusKm };
+            } catch (error) {
+                // Fallback to non-PostGIS search if database extension/tables are not ready.
+                console.warn('[search.nearest] PostGIS query failed, falling back.', error);
+            }
         }
 
         const modelRows = type === 'imam'
