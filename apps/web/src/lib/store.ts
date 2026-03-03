@@ -148,13 +148,25 @@ interface ChatState {
     clearMessages: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-    isOpen: false,
-    messages: [],
-    toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
-    addMessage: (from, text) => set((state) => ({ messages: [...state.messages, { from, text }] })),
-    clearMessages: () => set({ messages: [] }),
-}));
+export const useChatStore = create<ChatState>()(
+    persist(
+        (set) => ({
+            isOpen: false,
+            messages: [],
+            toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
+            addMessage: (from, text) => set((state) => ({ messages: [...state.messages, { from, text }] })),
+            clearMessages: () => set({ messages: [] }),
+        }),
+        {
+            name: 'qareeb-chat',
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({
+                isOpen: state.isOpen,
+                messages: state.messages.slice(-30),
+            }),
+        },
+    ),
+);
 
 interface ModalState {
     isOpen: boolean;

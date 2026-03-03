@@ -185,10 +185,19 @@ export default function ChatWidget() {
                         .filter((x) => x.label && x.path),
                 );
             }
+            if (res?.mode === 'need_location' && res?.intent) {
+                setPendingType(res.intent);
+                setShowLocationChooser(true);
+            } else {
+                setShowLocationChooser(false);
+                setPendingType(null);
+            }
         } catch {
             addMessage('bot', locale === 'ar' ? 'حدث خطأ غير متوقع.' : 'Something went wrong.');
             setCards([]);
             setActionLinks([]);
+            setShowLocationChooser(false);
+            setPendingType(null);
         }
     };
 
