@@ -191,7 +191,7 @@ export default async function HomePage() {
                                 {locale === 'ar' ? ' ابحث الآن' : ' Search Now'}
                             </Link>
                             <Link href={`/${locale}/imams/submit`} className="btn-outline !px-10 !py-4 text-lg">
-                                {locale === 'ar' ? ' أضف مكاناً' : ' Add a Place'}
+                                {locale === 'ar' ? ' أضف مسجد' : ' Add Mosque'}
                             </Link>
                         </div>
 
@@ -282,8 +282,11 @@ export default async function HomePage() {
                 <section className="bg-gradient-to-br from-[#E8F5EE] to-[#FAF8F3] py-20 px-4">
                     <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div className="animate-fade-in">
-                            <span className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider mb-3">
-                                {locale === 'ar' ? 'لماذا قريب' : 'Why Qareeb'}
+                            <span className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider mb-3">
+                                <span>{locale === 'ar' ? 'لماذا' : 'Why'}</span>
+                                <span className="text-sm md:text-base px-2.5 py-0.5 rounded-md bg-primary text-white leading-none">
+                                    {locale === 'ar' ? 'قريب' : 'Qareeb'}
+                                </span>
                             </span>
                             <h2 className="text-4xl font-black text-dark mb-6 leading-tight">
                                 {locale === 'ar' ? (
@@ -303,10 +306,10 @@ export default async function HomePage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { icon: '', title: locale === 'ar' ? 'تحديد الموقع' : 'Location Tech', desc: locale === 'ar' ? 'اعرف أقرب مسجد وإمام وحلقة منك فوراً' : 'Find the nearest mosque or imam instantly' },
+                                { icon: 'location', title: locale === 'ar' ? 'تحديد الموقع' : 'Location Tech', desc: locale === 'ar' ? 'اعرف أقرب مسجد وإمام وحلقة منك فوراً' : 'Find the nearest mosque or imam instantly' },
                                 { icon: 'check', title: locale === 'ar' ? 'محتوى موثق' : 'Verified Content', desc: locale === 'ar' ? 'كل الإضافات تمر بمراجعة الإدارة قبل النشر' : 'All updates are reviewed by admins before publishing' },
                                 { icon: 'chat', title: locale === 'ar' ? 'تواصل مباشر' : 'Direct Contact', desc: locale === 'ar' ? 'اتصل مباشرة عبر واتساب بضغطة واحدة' : 'Contact instantly via WhatsApp with one click' },
-                                { icon: '', title: locale === 'ar' ? 'شامل لمصر' : 'All of Egypt', desc: locale === 'ar' ? 'يغطي كل المحافظات الـ ٢٧ في مصر' : 'Covers all 27 governorates across Egypt' },
+                                { icon: 'map', title: locale === 'ar' ? 'شامل لمصر' : 'All of Egypt', desc: locale === 'ar' ? 'يغطي كل المحافظات الـ ٢٧ في مصر' : 'Covers all 27 governorates across Egypt' },
                             ].map((feat, i) => (
                                 <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-border hover:-translate-y-1 transition-all">
                                     <div className="text-3xl mb-3 text-primary"><AppIcon name={feat.icon as AppIconName} className="w-8 h-8" /></div>

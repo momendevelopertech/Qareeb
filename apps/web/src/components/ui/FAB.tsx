@@ -48,8 +48,8 @@ export default function FAB() {
             {/* Main FAB button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 gradient-bg text-white rounded-full shadow-fab flex items-center justify-center
-                     transition-all duration-300 hover:shadow-xl active:scale-95
+                className={`w-14 h-14 gradient-bg text-white rounded-full border-2 border-white/90 ring-4 ring-white/35 shadow-[0_14px_34px_rgba(9,55,33,0.45)] flex items-center justify-center
+                     transition-all duration-300 hover:shadow-xl hover:ring-white/55 active:scale-95
                      ${isOpen ? 'rotate-45' : ''}`}
                 aria-label={t('submit')}
             >

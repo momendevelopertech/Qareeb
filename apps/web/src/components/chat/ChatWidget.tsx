@@ -344,7 +344,11 @@ export default function ChatWidget() {
 
     if (!isOpen) {
         return (
-            <button onClick={toggleChat} className="fixed bottom-6 start-6 z-40 w-16 h-16 bg-primary text-white rounded-full shadow-fab flex items-center justify-center hover:scale-110 transition-all" aria-label="chat">
+            <button
+                onClick={toggleChat}
+                className="fixed bottom-6 start-6 z-40 w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-dark text-white border-2 border-white/90 ring-4 ring-white/35 shadow-[0_14px_34px_rgba(9,55,33,0.45)] flex items-center justify-center transition-all duration-300 hover:scale-110 hover:ring-white/55"
+                aria-label="chat"
+            >
                 <AppIcon name="chat" className="w-5 h-5" />
             </button>
         );
